@@ -115,7 +115,7 @@ if (env.RESEND_API_KEY && (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com")
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: env.ORDER_FROM_EMAIL || "VolksVision <orders@thevolksvision.com>", to: (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com"),
+      from: env.ORDER_FROM_EMAIL || "VolksVision <shop@thevolksvision.com>", to: (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com"),
       subject: status === "published" ? `New Journal post is live: ${row.title}` : `New Journal draft ready: ${row.title}`,
       text: `${status === "published" ? "This week's post just went live" : "This week's post is waiting for your approval"}:\n\n${row.title}\n${SITE}/journal/${slug}/\n\nRead it, add a photo, or change anything from your phone:\n${SITE}/admin#posts\n\nAdding one of your own photos with a description helps it rank.`
     })

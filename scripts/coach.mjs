@@ -10,7 +10,7 @@ if (env.RESEND_API_KEY && (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com")
   const site = (env.SITE_URL || "https://thevolksvision.com").replace(/\/$/, "");
   await fetch("https://api.resend.com/emails", { method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.ORDER_FROM_EMAIL || "VolksVision <orders@thevolksvision.com>", to: (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com"),
+    body: JSON.stringify({ from: env.ORDER_FROM_EMAIL || "VolksVision <shop@thevolksvision.com>", to: (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com"),
       subject: `Your week: ${r.headline}`,
       text: `${r.headline}\n\nWhat worked:\n${r.wins.map(x => "- " + x).join("\n")}\n\nChange next week:\n${r.fixes.map(x => "- " + x).join("\n")}\n\nCrew move: ${r.crew_move}\n\nFull plan and one-tap ideas: ${site}/admin#grow` }) });
 }
