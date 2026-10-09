@@ -85,6 +85,16 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .archive .list{border-top:1px solid var(--rule)}
 .archive .prow:last-child{border-bottom:0}
 @media (min-width:1024px){.act-btn span{display:inline}.act-btn:hover{border-color:var(--ink)}.screen{padding-bottom:120px}}
+/* Photo editor */
+.pe{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;color:var(--ink)}
+.pe-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;background:var(--frame);border-bottom:1px solid var(--rule)}
+.pe-bar h2{font-size:16px;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pe-stage{position:relative;flex:1;min-height:0;touch-action:none;overflow:hidden;cursor:grab}
+.pe-canvas{position:absolute;inset:0}
+.pe-frame{position:absolute;box-shadow:0 0 0 100vmax rgb(0 0 0 / .62);outline:2px solid #fff;pointer-events:none;background-image:linear-gradient(rgb(255 255 255 / .25) 1px,transparent 1px),linear-gradient(90deg,rgb(255 255 255 / .25) 1px,transparent 1px);background-size:33.34% 33.34%;background-position:-1px -1px}
+.pe-tools{background:var(--frame);border-top:1px solid var(--rule);padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);display:flex;flex-direction:column;gap:10px;max-width:760px;width:100%;margin:0 auto}
+.pe-tools .chips{margin-bottom:0}
+@media (min-width:1024px){.pe{inset:24px;border-radius:14px;overflow:hidden;box-shadow:0 0 0 100vmax rgb(0 0 0 / .6)}}
 /* Sheets (editors) */
 .sheet{position:fixed;inset:0;z-index:10;background:var(--paper);display:flex;flex-direction:column}
 .sheet-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;border-bottom:1px solid var(--rule);background:var(--frame)}
@@ -761,9 +771,10 @@ async function addGallery(input) {
   const files = [...input.files]; input.value = "";
   state.settings = buildBody();
   for (const [n, f] of files.entries()) {
+    const blob = await editPhoto(f, { aspect: 0, title: files.length > 1 ? `Photo ${n + 1} of ${files.length}` : "Gallery photo" });
+    if (!blob) continue;                                         // Cancel skips just this photo
     toast(`Uploading ${n + 1} of ${files.length}…`);
     try {
-      const blob = await shrink(f);
       const { url } = await api("upload?kind=products", { method: "POST", raw: blob, type: blob.type || "image/jpeg" });
       state.settings.build.gallery = [...(state.settings.build.gallery || []), { url, alt: "" }];
     } catch (e) { fail(e); break; }
@@ -1415,18 +1426,104 @@ async function shrink(file) {
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.85));
 }
+// ---------- photo editor: crop, zoom, reposition, rotate, light ----------
+// Every photo goes through this before upload. Drag to move, pinch or slide to zoom.
+const ASPECTS = [["Original", 0], ["Square", 1], ["4:5", 4 / 5], ["Wide 16:9", 16 / 9]];
+function editPhoto(file, { aspect = 0, title = "Adjust photo" } = {}) {
+  return new Promise(async resolve => {
+    const src = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+    if (!src) { toast("That photo couldn't be opened. Try a JPEG or PNG.", true); return resolve(null); }
+    const ed = { rot: 0, zoom: 1, x: 0, y: 0, aspect, bright: 100, contrast: 100 };
+    const host = document.createElement("div"); host.className = "pe"; host.setAttribute("role", "dialog"); host.setAttribute("aria-modal", "true"); host.setAttribute("aria-label", title);
+    host.innerHTML = `<div class="pe-bar"><button class="link" type="button" data-pe="cancel">Cancel</button><h2>${esc(title)}</h2><button class="btn sea" type="button" data-pe="done">Use photo</button></div>
+      <div class="pe-stage"><canvas class="pe-canvas"></canvas><div class="pe-frame"></div></div>
+      <div class="pe-tools">
+        <div class="chips" role="group" aria-label="Shape">${ASPECTS.map(([l, a]) => `<button type="button" class="chip" data-pe-aspect="${a}" aria-pressed="${a === aspect}">${l}</button>`).join("")}<button type="button" class="chip" data-pe="rotate">⟳ Rotate</button><button type="button" class="chip" data-pe="reset">Reset</button></div>
+        <label class="range-pair">Zoom<input type="range" min="1" max="4" step="0.01" value="1" data-pe-range="zoom"><span></span></label>
+        <label class="range-pair">Light<input type="range" min="60" max="150" step="1" value="100" data-pe-range="bright"><span></span></label>
+        <label class="range-pair">Pop<input type="range" min="60" max="150" step="1" value="100" data-pe-range="contrast"><span></span></label>
+        <p class="r-sub" style="white-space:normal;margin:0">Drag the photo to line it up. Pinch or use Zoom to get closer.</p>
+      </div>`;
+    document.body.appendChild(host);
+    const cv = host.querySelector("canvas"), stage = host.querySelector(".pe-stage"), frame = host.querySelector(".pe-frame"), ctx = cv.getContext("2d");
+    const imgW = () => ed.rot % 180 ? src.height : src.width, imgH = () => ed.rot % 180 ? src.width : src.height;
+    let box = { w: 0, h: 0, l: 0, t: 0 };
+    function layout() {
+      const r = stage.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+      cv.width = r.width * dpr; cv.height = r.height * dpr; cv.style.width = r.width + "px"; cv.style.height = r.height + "px";
+      const a = ed.aspect || imgW() / imgH(), pad = 16, mw = r.width - pad * 2, mh = r.height - pad * 2;
+      box.w = Math.min(mw, mh * a); box.h = box.w / a; box.l = (r.width - box.w) / 2; box.t = (r.height - box.h) / 2;
+      Object.assign(frame.style, { left: box.l + "px", top: box.t + "px", width: box.w + "px", height: box.h + "px" });
+      clamp(); draw();
+    }
+    const base = () => Math.max(box.w / imgW(), box.h / imgH());          // scale where the photo just covers the frame
+    function clamp() {
+      const s = base() * ed.zoom, w = imgW() * s, h = imgH() * s;
+      const mx = Math.max(0, (w - box.w) / 2), my = Math.max(0, (h - box.h) / 2);
+      ed.x = Math.min(mx, Math.max(-mx, ed.x)); ed.y = Math.min(my, Math.max(-my, ed.y));
+    }
+    function paint(c, cw, ch, s, cx, cy) {
+      c.save(); c.translate(cx, cy); c.rotate(ed.rot * Math.PI / 180); c.scale(s, s);
+      c.drawImage(src, -src.width / 2, -src.height / 2); c.restore();
+    }
+    function draw() {
+      const dpr = devicePixelRatio || 1; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      paint(ctx, 0, 0, base() * ed.zoom, box.l + box.w / 2 + ed.x, box.t + box.h / 2 + ed.y);
+      cv.style.filter = `brightness(${ed.bright}%) contrast(${ed.contrast}%)`;
+      host.querySelectorAll("[data-pe-range]").forEach(i => { i.value = ed[i.dataset.peRange]; i.nextElementSibling.textContent = i.dataset.peRange === "zoom" ? ed.zoom.toFixed(1) + "×" : ed[i.dataset.peRange] + "%"; });
+    }
+    // drag + pinch
+    const pts = new Map(); let last = null, pinch = null;
+    stage.addEventListener("pointerdown", e => { stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); last = [e.clientX, e.clientY];
+      if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: ed.zoom }; } });
+    stage.addEventListener("pointermove", e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()]; ed.zoom = Math.min(4, Math.max(1, pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d)); }
+      else if (last) { ed.x += e.clientX - last[0]; ed.y += e.clientY - last[1]; last = [e.clientX, e.clientY]; }
+      clamp(); draw(); });
+    const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; last = pts.size ? [...pts.values()][0] : null; };
+    stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
+    stage.addEventListener("wheel", e => { e.preventDefault(); ed.zoom = Math.min(4, Math.max(1, ed.zoom * (e.deltaY < 0 ? 1.08 : 0.93))); clamp(); draw(); }, { passive: false });
+    host.addEventListener("input", e => { const k = e.target.dataset.peRange; if (!k) return; ed[k] = +e.target.value; clamp(); draw(); });
+    const close = v => { removeEventListener("resize", layout); host.remove(); src.close?.(); resolve(v); };
+    host.addEventListener("click", e => {
+      const a = e.target.closest("[data-pe-aspect]"); if (a) { ed.aspect = +a.dataset.peAspect; host.querySelectorAll("[data-pe-aspect]").forEach(b => b.setAttribute("aria-pressed", b === a)); return layout(); }
+      const act = e.target.closest("[data-pe]")?.dataset.pe;
+      if (act === "rotate") { ed.rot = (ed.rot + 90) % 360; ed.x = ed.y = 0; return layout(); }
+      if (act === "reset") { Object.assign(ed, { rot: 0, zoom: 1, x: 0, y: 0, bright: 100, contrast: 100 }); return layout(); }
+      if (act === "cancel") return close(null);
+      if (act === "done") {
+        // Export exactly what's inside the frame, up to 1600px on the long side.
+        const k = Math.min(1600 / Math.max(box.w, box.h), 1 / (base() * ed.zoom));   // never upscale past the original
+        const out = document.createElement("canvas"); out.width = Math.round(box.w * k); out.height = Math.round(box.h * k);
+        const o = out.getContext("2d"); o.fillStyle = "#000"; o.fillRect(0, 0, out.width, out.height);
+        paint(o, out.width, out.height, base() * ed.zoom * k, out.width / 2 + ed.x * k, out.height / 2 + ed.y * k);
+        if (ed.bright !== 100 || ed.contrast !== 100) {
+          const im = o.getImageData(0, 0, out.width, out.height), d = im.data, br = ed.bright / 100, ct = ed.contrast / 100;
+          for (let i = 0; i < d.length; i += 4) for (let j = 0; j < 3; j++) d[i + j] = Math.max(0, Math.min(255, ((d[i + j] * br) - 128) * ct + 128));
+          o.putImageData(im, 0, 0);
+        }
+        out.toBlob(b => close(b), "image/jpeg", 0.88);
+      }
+    });
+    addEventListener("resize", layout);
+    requestAnimationFrame(layout);
+  });
+}
+const PHOTO_SHAPE = { p: { aspect: 4 / 5, title: "Product photo" }, b: { aspect: 16 / 9, title: "Post photo" }, h: { aspect: 16 / 9, title: "Homepage photo" } };
 async function upload(input) {
   const file = input.files[0]; if (!file) return;
-  const prefix = input.dataset.upload, box = $(`#${prefix}-photo`);
+  const prefix = input.dataset.upload, box = $(`#${prefix}-photo`), before = box.innerHTML;
+  input.value = "";
+  const blob = await editPhoto(file, PHOTO_SHAPE[prefix] || { aspect: 0, title: prefix.startsWith("sp") ? "Partner logo" : "Adjust photo" });
+  if (!blob) return;
   box.innerHTML = `<div class="ph">Uploading…</div>`;
   try {
-    const blob = await shrink(file);
     const { url } = await api(`upload?kind=${input.dataset.kind}`, { method: "POST", raw: blob, type: blob.type || "image/jpeg" });
     $(`#${prefix}-image`).value = url; box.innerHTML = `<img src="${esc(url)}" alt="">`;
     $(`#${prefix}-alt`)?.focus();
     $("#sheetBody").dispatchEvent(new Event("input"));
-  } catch (e) { box.innerHTML = `<div class="ph">Upload failed. Try again.</div>`; fail(e); }
-  input.value = "";
+  } catch (e) { box.innerHTML = before || `<div class="ph">Upload failed. Try again.</div>`; fail(e); }
 }
 
 // ---------- events ----------
