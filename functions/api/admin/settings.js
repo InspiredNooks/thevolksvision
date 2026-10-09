@@ -1,6 +1,6 @@
 // /api/admin/settings - shop-wide settings RJ can change from his phone.
 // GET   current settings   PUT {...}   save (only the fields below are accepted)
-import { db, json, adminRoute, publishSite, str, UserError } from "../../../lib/server.js";
+import { db, json, adminRoute, adminWho, publishSite, str, UserError } from "../../../lib/server.js";
 import { getSettings } from "../../../lib/content.js";
 
 const url = (v, label) => {
@@ -18,7 +18,8 @@ const money = (v, label) => {
 };
 
 // _sync tells the Studio which socials can auto-sync (never the keys themselves).
-export const onRequestGet = adminRoute(async ({ env }) => json({ ...(await getSettings(env)), _sync: { youtube: Boolean(env.YOUTUBE_API_KEY) } }));
+// _who says who's signed in, so the Studio can greet them by name.
+export const onRequestGet = adminRoute(async ({ request, env }) => json({ ...(await getSettings(env)), _sync: { youtube: Boolean(env.YOUTUBE_API_KEY) }, _who: await adminWho(request, env) }));
 
 export const onRequestPut = adminRoute(async ({ request, env }) => {
   const b = await request.json();

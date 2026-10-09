@@ -324,7 +324,7 @@ async function api(path, { method = "GET", body, raw, type } = {}) {
   return data;
 }
 function lock(msg) {
-  token = ""; store.clear("vv-admin");
+  token = ""; store.clear("vv-admin"); store.clear("vv-who");
   $("#appView").hidden = true; $("#sheet").hidden = true; $("#loginView").hidden = false; $("#helpBtn").hidden = true;
   $("#loginErr").textContent = msg || "";
 }
@@ -349,7 +349,7 @@ function go(tab) {
   window.scrollTo(0, 0);
 }
 async function load(tab) {
-  try { state[tab] = await api(tab); render(); } catch (e) { fail(e); }
+  try { state[tab] = await api(tab); if (tab === "settings" && state.settings?._who) store.set("vv-who", state.settings._who, true); render(); } catch (e) { fail(e); }
 }
 function render() {
   const s = $("#screen");
@@ -831,7 +831,7 @@ const PILLARS = V_PILLARS, PLATFORMS = ["TikTok", "Instagram", "YouTube"], STAGE
 const planOf = kind => (state.plan || []).filter(x => x.kind === kind).sort((a, b) => a.sort - b.sort || a.id - b.id);
 function growView() {
   if (state.videos === null || state.coach === null) return `<div class="loading">Loading…</div>`;
-  const head = `<div class="top"><div><div class="mono">${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div><h1>${state.growView === "today" ? "What's good, RJ" : "Grow"}</h1></div></div>`;
+  const head = `<div class="top"><div><div class="mono">${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div><h1>${state.growView === "today" ? greeting() : "Grow"}</h1></div></div>`;
   const seg = `<div class="seg" style="grid-template-columns:repeat(5,1fr)" role="group" aria-label="Grow sections">${[["today", "Today"], ["videos", "Videos"], ["stats", "Stats"], ["ideas", "Ideas"], ["plan", "Plan"]].map(([k, l]) => `<button type="button" data-gv="${k}" aria-pressed="${state.growView === k}">${l}</button>`).join("")}</div>`;
   if (!state.plan.length && state.growView !== "videos" && state.growView !== "stats") return head + seg + `<div class="empty"><span>Your growth hub: what to film today, your video stats, a weekly coach, an idea bank and your playbook. Only you can see it.</span><button class="btn sea" type="button" data-act="plan-import">Set up my growth plan</button><button class="btn solid" type="button" data-act="create">🎬 Edit &amp; post a video</button></div>`;
   return head + seg + ({ today: todayView, videos: videosView, stats: statsView, ideas: ideasView, plan: planView })[state.growView]();
@@ -1886,11 +1886,14 @@ document.addEventListener("submit", async e => {
 $("#sheetClose").addEventListener("click", closeSheet);
 document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("#tipScrim").hidden) return hideTip(); if (!$("#sheet").hidden) closeSheet(); });
 
+// Who's signed in comes from the server (which passphrase was used); remembered so it shows instantly next time.
+const whoNow = () => state.settings?._who || store.get("vv-who") || "rj";
+const greeting = () => whoNow() === "cara" ? "Hi Cara" : "What's good, RJ";
 function start() {
   $("#loginView").hidden = true; $("#appView").hidden = false;
   const hash = location.hash.slice(1);
   go(["orders", "products", "posts", "build", "grow", "settings"].includes(hash) ? hash : "grow");
-  if (state.settings === null) api("settings").then(s => { state.settings = s; }).catch(() => {});
+  if (state.settings === null) api("settings").then(s => { state.settings = s; if (s._who) store.set("vv-who", s._who, true); render(); }).catch(() => {});
 }
 token ? start() : lock();
 </script>
