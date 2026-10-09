@@ -89,9 +89,11 @@ const body = post.body.replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, (m, text, url) =>
 
 // ---------- photos for the post ----------
 // Unsplash first (searched by the topic), then RJ's own photos. He swaps any of them before approving.
+// Unsplash's API rules call for a person in the loop, so stock photos are only used when the post waits for
+// RJ's approval; with "Post automatically" on, posts use his own photos.
 async function findPhotos(query) {
   const out = [];
-  if (env.UNSPLASH_ACCESS_KEY) {
+  if (env.UNSPLASH_ACCESS_KEY && settings.autoPublish === false) {
     try {
       const r = await fetch(`https://api.unsplash.com/search/photos?${new URLSearchParams({ query, per_page: "6", orientation: "landscape", content_filter: "high" })}`,
         { headers: { Authorization: `Client-ID ${env.UNSPLASH_ACCESS_KEY}`, "Accept-Version": "v1" } });
