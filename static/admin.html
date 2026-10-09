@@ -85,6 +85,12 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .archive .list{border-top:1px solid var(--rule)}
 .archive .prow:last-child{border-bottom:0}
 @media (min-width:1024px){.act-btn span{display:inline}.act-btn:hover{border-color:var(--ink)}.screen{padding-bottom:120px}}
+/* Extra product photos */
+.more-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.more-item{display:flex;flex-direction:column;gap:6px;min-width:0}
+.more-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.more-acts .act-btn{min-width:0;min-height:36px;padding:0}
+.more-acts .act-btn:disabled{opacity:.35}
 /* Socials */
 .soc-card{gap:12px}
 .soc{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--rule);padding-top:12px}
@@ -546,11 +552,37 @@ function photoField(prefix, url, alt, kind) {
     </div></div>
   <label class="field" for="${prefix}-alt"><span>Describe the photo</span><input id="${prefix}-alt" value="${esc(alt)}" placeholder="e.g. Black VolksVision tee with the Mk2 Jetta profile on the back"><small>Google reads this. Name what's in the picture.</small></label>`;
 }
+// Extra product photos (the main photo stays in the Photo field above them).
+let morePhotos = [];
+function renderMore() {
+  const box = $("#p-more"); if (!box) return;
+  box.innerHTML = `<div class="more-grid">${morePhotos.map((x, i) => `<div class="more-item">
+      <span class="thumb" style="width:100%;height:auto;aspect-ratio:4/5"><img src="${esc(x.url)}" alt=""></span>
+      <input data-more-alt="${i}" value="${esc(x.alt)}" placeholder="Describe it" aria-label="Describe photo ${i + 2}" style="font-size:14px;padding:8px">
+      <div class="more-acts"><button type="button" class="act-btn" data-more="left" data-i="${i}" aria-label="Move earlier"${i ? "" : " disabled"}>←</button><button type="button" class="act-btn" data-more="main" data-i="${i}" aria-label="Make this the main photo">★</button><button type="button" class="act-btn" data-more="right" data-i="${i}" aria-label="Move later"${i < morePhotos.length - 1 ? "" : " disabled"}>→</button><button type="button" class="act-btn del" data-more="del" data-i="${i}" aria-label="Remove photo">✕</button></div>
+    </div>`).join("")}</div>
+    ${morePhotos.length < 8 ? `<label class="btn" for="more-file" style="display:inline-flex;justify-content:center;margin-top:8px">+ Add photos</label><input id="more-file" type="file" accept="image/*" multiple hidden>` : `<small>That's the max of 8 extra photos.</small>`}
+    <small class="r-sub" style="white-space:normal;display:block;margin-top:6px">★ makes a photo the main one. On the site, shoppers swipe through them, and the second photo shows when someone hovers a shop card.</small>`;
+}
+const readMore = () => morePhotos.map((x, i) => ({ url: x.url, alt: ($(`[data-more-alt="${i}"]`)?.value ?? x.alt).trim() }));
+async function addMore(input) {
+  const files = [...input.files].slice(0, 8 - morePhotos.length); input.value = "";
+  morePhotos = readMore();
+  for (const [n, f] of files.entries()) {
+    const blob = await editPhoto(f, { aspect: 4 / 5, title: files.length > 1 ? `Photo ${n + 1} of ${files.length}` : "Product photo" });
+    if (!blob) continue;
+    toast(`Uploading ${n + 1} of ${files.length}…`);
+    try { const { url } = await api("upload?kind=products", { method: "POST", raw: blob, type: "image/jpeg" }); morePhotos.push({ url, alt: "" }); renderMore(); }
+    catch (e) { fail(e); break; }
+  }
+  toast("Added. Describe each photo, then tap Save.");
+}
 function openProduct(id) {
   const isNew = !id;
   const p = isNew ? { name: "", price: "", cat: "wear", sizes: ["S", "M", "L", "XL"], blurb: "", details: "", tag: "", exif: "", art: "tee", image: "", image_alt: "", stripe: "", active: true, sort: 100 } : state.products.find(x => x.id === id);
   sheet(isNew ? "New product" : "Edit product", `
     ${photoField("p", p.image, p.image_alt, "products")}
+    <div class="field"><span>More photos <small class="r-sub" style="display:inline">(back, close-ups, on someone · up to 8)</small></span><div id="p-more"></div></div>
     <label class="field" for="p-name"><span>Name</span><input id="p-name" value="${esc(p.name)}" required placeholder="VR6 Firing Order Hoodie"><small>Use words people search for, like "VR6", "VW" or "hoodie".</small></label>
     <div class="pair">
       <label class="field" for="p-price"><span>Price ($)</span><input id="p-price" inputmode="decimal" value="${esc(p.price)}" placeholder="28"></label>
@@ -575,12 +607,15 @@ function openProduct(id) {
         blurb: $("#p-blurb").value, details: $("#p-details").value, tag: $("#p-tag").value, exif: $("#p-exif").value,
         art: $("#p-art") ? $("#p-art").value : p.art, image: $("#p-image").value, image_alt: $("#p-alt").value,
         stripe: $("#p-stripe").value, sort: $("#p-sort").value, active: $("#p-active").checked, sold_out: $("#p-sold").checked };
+      body.images = readMore();
+      if (body.images.length && !body.image) { const [first, ...rest] = body.images; body.image = first.url; body.image_alt = first.alt; body.images = rest; }
       if (body.image && !body.image_alt.trim()) throw new Error("Describe the photo first. Google needs it to show the product in image search.");
       const { product, live } = await api("products", { method: "POST", body });
       state.products = isNew ? [...state.products, product] : state.products.map(x => x.id === p.id ? product : x);
       state.products.sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
       closeSheet(); render(); toast(savedMsg(live));
     }]]);
+  morePhotos = (p.images || []).map(x => ({ ...x })); renderMore();
 }
 
 // ---------- journal ----------
@@ -1602,6 +1637,19 @@ document.addEventListener("click", async e => {
   const of = t.closest("[data-of]"); if (of) { state.orderFilter = of.dataset.of; return render(); }
   const pf = t.closest("[data-pf]"); if (pf) { state.postFilter = pf.dataset.pf; return render(); }
   const ord = t.closest("[data-order]"); if (ord) return openOrder(+ord.dataset.order);
+  const mv = t.closest("[data-more]"); if (mv) {
+    morePhotos = readMore(); const i = +mv.dataset.i, a = mv.dataset.more;
+    if (a === "del") morePhotos.splice(i, 1);
+    if (a === "left" && i > 0) [morePhotos[i - 1], morePhotos[i]] = [morePhotos[i], morePhotos[i - 1]];
+    if (a === "right" && i < morePhotos.length - 1) [morePhotos[i + 1], morePhotos[i]] = [morePhotos[i], morePhotos[i + 1]];
+    if (a === "main") {                                         // swap with the main photo
+      const cur = { url: $("#p-image").value, alt: $("#p-alt").value }, pick = morePhotos[i];
+      if (cur.url) morePhotos[i] = cur; else morePhotos.splice(i, 1);
+      $("#p-image").value = pick.url; $("#p-alt").value = pick.alt; $("#p-photo").innerHTML = `<img src="${esc(pick.url)}" alt="">`;
+      toast("That's the main photo now. Tap Save.");
+    }
+    return renderMore();
+  }
   const prod = t.closest("[data-product]"); if (prod) return openProduct(prod.dataset.product);
   const post = t.closest("[data-post]"); if (post) return openPost(+post.dataset.post);
   const md = t.closest("[data-md]"); if (md) return formatMd(md.dataset.md);
@@ -1780,6 +1828,7 @@ document.addEventListener("input", e => {
 document.addEventListener("change", async e => {
   if (e.target.matches("[data-upload]")) upload(e.target);
   if (e.target.id === "gal-file") addGallery(e.target);
+  if (e.target.id === "more-file") addMore(e.target);
   if (e.target.id === "ed-file" && e.target.files[0]) loadClip(e.target.files[0]).catch(fail);
   if (e.target.id === "th-file" && e.target.files[0]) { const img = new Image(); img.onload = () => { cf.thumbImg = img; drawThumb(); }; img.src = URL.createObjectURL(e.target.files[0]); }
   if (["ed-start", "ed-end", "ed-mark"].includes(e.target.id)) { readEditor(); drawFrame(); }

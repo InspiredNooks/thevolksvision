@@ -76,6 +76,7 @@ create table if not exists public.vv_settings (
 insert into public.vv_settings (id, data) values (1, '{}') on conflict do nothing;
 
 alter table public.vv_products add column if not exists archived boolean not null default false;
+alter table public.vv_products add column if not exists images jsonb not null default '[]';   -- extra photos [{url, alt}] after the main one
 alter table public.vv_products enable row level security;
 alter table public.vv_posts    enable row level security;
 alter table public.vv_settings enable row level security;

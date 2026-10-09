@@ -85,3 +85,11 @@ document.addEventListener("submit", async e => {
     } catch { say("That didn't go through. Try again in a minute."); }
   });
 })();
+
+// Product gallery: thumbnails follow the swipe, and tapping a thumbnail slides to that photo.
+document.querySelectorAll("[data-pgal]").forEach(g => {
+  const track = g.querySelector(".pgal-track"), thumbs = [...g.querySelectorAll(".pgal-thumb")];
+  const mark = i => thumbs.forEach((t, j) => t.setAttribute("aria-current", String(i === j)));
+  track.addEventListener("scroll", () => mark(Math.round(track.scrollLeft / track.clientWidth)), { passive: true });
+  thumbs.forEach((t, i) => t.addEventListener("click", e => { e.preventDefault(); track.scrollTo({ left: i * track.clientWidth, behavior: "smooth" }); mark(i); }));
+});

@@ -20,6 +20,11 @@ function clean(b) {
     .map(s => str(s, 20)).filter(Boolean).slice(0, 12);
   const image = str(b.image, 500);
   if (image && !/^https:\/\//.test(image) && !image.startsWith("/")) throw new UserError("Photo link must start with https://");
+  const images = (Array.isArray(b.images) ? b.images : []).slice(0, 8).map((x, i) => {
+    const url = str(x?.url, 500);
+    if (!/^https:\/\//.test(url) && !url.startsWith("/")) return null;
+    return { url, alt: str(x.alt, 160) || `${name}, photo ${i + 2}` };
+  }).filter(Boolean);
   const stripe = str(b.stripe, 300);
   if (stripe && !/^https:\/\/(buy\.stripe\.com|checkout\.stripe\.com)\//.test(stripe)) throw new UserError("Stripe link should start with https://buy.stripe.com/");
   return {
@@ -32,6 +37,7 @@ function clean(b) {
     art: ART.includes(b.art) ? b.art : "tee",
     image: image || null,
     image_alt: str(b.image_alt, 160) || null,
+    images,
     stripe: stripe || null,
     active: b.active !== false,
     sold_out: b.sold_out === true,

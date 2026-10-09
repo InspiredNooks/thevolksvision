@@ -307,3 +307,15 @@ a.partner:hover{border-color:var(--accent)}
 
 .push-cta{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .push-cta .btn{border-color:currentColor}
+
+/* Product photo gallery */
+.pgal{display:flex;flex-direction:column;gap:10px;min-width:0}
+.pgal-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;gap:0;border:1px solid var(--line)}
+.pgal-track::-webkit-scrollbar{display:none}
+.pgal-slide{flex:0 0 100%;scroll-snap-align:start;margin:0;border:0}
+.pgal-thumbs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.pgal-thumb{flex:0 0 64px;aspect-ratio:4/5;border:1px solid var(--line);opacity:.6;display:block}
+.pgal-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pgal-thumb[aria-current="true"],.pgal-thumb:hover{opacity:1;border-color:var(--fg)}
+.shot.has-alt .alt-photo{position:absolute;inset:0;opacity:0;transition:opacity .35s ease}
+@media (hover:hover){.item:hover .shot.has-alt .alt-photo{opacity:1}}

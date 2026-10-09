@@ -82,6 +82,16 @@ const ART = {
 };
 const abs = u => !u ? "" : /^https?:/.test(u) ? u : SITE + u;
 const productImage = p => p.image ? abs(p.image) : `${SITE}/img/${ART[p.art] ? p.art : "tee"}.svg`;
+const allPhotos = p => p.image ? [{ url: p.image, alt: p.image_alt || p.name }, ...(p.images || [])] : [];   // main photo first
+// Product page gallery: swipe on phones, thumbnails on every screen. Works without JavaScript (it's a scroll row).
+const gallery = p => {
+  const ph = allPhotos(p);
+  if (ph.length < 2) return `<div class="shot">${visual(p, true)}${p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ""}</div>`;
+  return `<div class="pgal" data-pgal>
+    <div class="pgal-track" tabindex="0" aria-label="${esc(p.name)} photos">${ph.map((x, i) => `<figure class="shot pgal-slide" id="ph-${p.id}-${i}"><img src="${esc(x.url)}" alt="${esc(x.alt)}" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async" width="900" height="1125">${i === 0 && p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ""}<span class="mono frame-no">${i + 1}/${ph.length}</span></figure>`).join("")}</div>
+    <div class="pgal-thumbs">${ph.map((x, i) => `<a href="#ph-${p.id}-${i}" class="pgal-thumb" data-i="${i}" aria-label="Photo ${i + 1} of ${ph.length}"${i ? "" : ' aria-current="true"'}><img src="${esc(x.url)}" alt="" loading="lazy" decoding="async" width="120" height="150"></a>`).join("")}</div>
+  </div>`;
+};
 const visual = (p, eager = false) => p.image
   ? `<img src="${esc(p.image)}" alt="${esc(p.image_alt || p.name)}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" width="900" height="900">`
   : `<svg viewBox="0 0 120 120" role="img" aria-label="${esc(p.name)}">${ART[p.art] || ART.tee}</svg>`;
@@ -166,7 +176,7 @@ const buyRow = p => p.sold_out ? `<div class="buyrow"><span class="price">${mone
   ${p.sizes.length > 1 ? `<select id="sz-${p.id}" aria-label="Size for ${esc(p.name)}">${p.sizes.map(s => `<option>${esc(s)}</option>`).join("")}</select>` : ""}
   <button class="add" type="button" data-id="${p.id}">${p.stripe ? "Buy now" : "Add to bag"}</button></div>`;
 const productCard = (p, i) => `<article class="item" data-cat="${esc(p.cat)}" id="${p.id}">
-  <a class="shot" href="/shop/${p.id}/" aria-label="${esc(p.name)} details">${visual(p)}<span class="mono frame-no">${String(i + 1).padStart(2, "0")}A</span>${p.sold_out ? `<span class="tag out">Sold out</span>` : p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ""}</a>
+  <a class="shot${p.images?.length && p.image ? " has-alt" : ""}" href="/shop/${p.id}/" aria-label="${esc(p.name)} details">${visual(p)}${p.images?.length && p.image ? `<img class="alt-photo" src="${esc(p.images[0].url)}" alt="" loading="lazy" decoding="async" width="900" height="900">` : ""}<span class="mono frame-no">${String(i + 1).padStart(2, "0")}A</span>${p.sold_out ? `<span class="tag out">Sold out</span>` : p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ""}</a>
   <div class="exif"><span class="mono">${esc(p.cat)}</span><span class="mono">${esc(p.exif || "")}</span></div>
   <h3><a href="/shop/${p.id}/">${esc(p.name)}</a></h3>
   <p>${esc(p.blurb)}</p>
@@ -175,7 +185,7 @@ const productCard = (p, i) => `<article class="item" data-cat="${esc(p.cat)}" id
 const postRow = p => `<a class="post-row" href="/journal/${p.slug}/"><span class="mono">${fmtDate(p.date)} · ${p.minutes} min</span><div><h2>${esc(p.title)}</h2><p>${esc(p.description)}</p></div></a>`;
 const productLd = p => ({
   "@context": "https://schema.org", "@type": "Product", "@id": `${SITE}/shop/${p.id}/#product`, name: p.name,
-  description: p.blurb + (p.details ? " " + plainText(p.details) : ""), image: productImage(p), sku: p.id, url: `${SITE}/shop/${p.id}/`,
+  description: p.blurb + (p.details ? " " + plainText(p.details) : ""), image: p.image ? allPhotos(p).map(x => abs(x.url)) : productImage(p), sku: p.id, url: `${SITE}/shop/${p.id}/`,
   category: p.cat, brand: { "@type": "Brand", name: S.brand },
   offers: { "@type": "Offer", price: p.price.toFixed(2), priceCurrency: "USD", availability: p.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock", url: `${SITE}/shop/${p.id}/`, seller: { "@id": `${SITE}/#org` },
     hasMerchantReturnPolicy: { "@type": "MerchantReturnPolicy", applicableCountry: "US", returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow", merchantReturnDays: 14, returnMethod: "https://schema.org/ReturnByMail", returnFees: "https://schema.org/ReturnShippingFees", merchantReturnLink: `${SITE}/shipping-returns/` },
@@ -324,7 +334,7 @@ function productPage(p) {
   const main = `<main class="wrap article">
   <div class="crumbs"><a href="/#shop">Shop</a> · ${esc(p.cat)}</div>
   <div class="product">
-    <div class="shot">${visual(p, true)}${p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ""}</div>
+    ${gallery(p)}
     <div class="product-info">
       <h1>${esc(p.name)}</h1>
       <p class="dek">${esc(p.blurb)}</p>
@@ -567,7 +577,7 @@ const urls = [
   { loc: `${SITE}/next/` },
   { loc: `${SITE}/media-kit/` },
   { loc: `${SITE}/journal/`, lastmod: posts[0]?.date },
-  ...PRODUCTS.map(p => ({ loc: `${SITE}/shop/${p.id}/`, lastmod: (p.updated_at || "").slice(0, 10), images: [productImage(p)] })),
+  ...PRODUCTS.map(p => ({ loc: `${SITE}/shop/${p.id}/`, lastmod: (p.updated_at || "").slice(0, 10), images: p.image ? allPhotos(p).map(x => abs(x.url)) : [productImage(p)] })),
   ...posts.map(p => ({ loc: `${SITE}/journal/${p.slug}/`, lastmod: (p.updated_at || p.date).slice(0, 10), images: p.image ? [abs(p.image)] : [] }))
 ];
 write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
