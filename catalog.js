@@ -7,7 +7,7 @@ export const CONFIG = {
   siteUrl: "https://thevolksvision.com",          // final domain, no trailing slash
   tagline: "VW culture through the lens",
   city: "St. Petersburg, FL",
-  orderEmail: "thevolksvision@gmail.com",           // shown to buyers; switch to orders@thevolksvision.shop once that address receives mail
+  orderEmail: "thevolksvision@gmail.com",           // shown to buyers; switch to orders@thevolksvision.com once that address receives mail
   payWith: "Venmo, Cash App, or Zelle",          // RJ confirms each order with a payment request
   instagram: "https://www.instagram.com/thevolksvision/",
   tiktok: "https://www.tiktok.com/@thevolksvision",
