@@ -594,7 +594,7 @@ function nextPage() {
   ${PAST.length ? `<section class="wrap" style="padding-bottom:48px"><div class="mono" style="margin-bottom:12px">Been there</div><div class="events past">${PAST.map(e => eventCard(e, false)).join("")}</div></section>` : ""}
   ${dropAlerts("next")}
 </main>`;
-  return page(head({ title: `Where Is VolksVision Next? VW Meets & Events in Tampa Bay | ${S.brand}`, description: "Upcoming meets, car shows, shoots and merch drops with RJ Savell Keelin and the VolksVision Mk2 Jetta around St. Petersburg and Tampa Bay.", url,
+  return page(head({ title: `Car Meets & Events in Tampa Bay | Where Is VolksVision Next?`, description: "Upcoming meets, car shows, shoots and merch drops with RJ Savell Keelin and the VolksVision Mk2 Jetta around St. Petersburg and Tampa Bay.", url,
     jsonld: [...UPCOMING.slice(0, 10).map(eventLd), crumbs([["Home", SITE + "/"], ["Where is VolksVision next?", url]])] }), main);
 }
 
