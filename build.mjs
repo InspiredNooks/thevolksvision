@@ -112,7 +112,8 @@ function head({ title, description, url, type = "website", image, jsonld = [], n
 <meta property="og:url" content="${url}"><meta property="og:image" content="${esc(image && !/\.svg$/i.test(image) ? image : SITE + "/img/og.png")}"><meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="${esc(S.brand)} ${esc(JN)}" href="${SITE}/rss.xml">
-<link rel="icon" href="/img/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/img/icon-180.png">
+<link rel="icon" href="/img/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/img/site-icon-180.png"><link rel="manifest" href="/site.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="VolksVision"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0d0c">
 ${FONTS}
 ${jsonld.map(j => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("\n")}
@@ -193,6 +194,7 @@ const dropAlerts = (source) => `<section class="alerts" aria-labelledby="alertsT
     <div class="list-picks"><label><input type="checkbox" name="drops" checked> Drop alerts</label><label><input type="checkbox" name="glovebox" checked> New posts from ${esc(JN)}</label></div>
     <p class="form-msg" role="status"></p>
   </form>
+  <div class="push-cta" hidden><button class="btn" type="button" data-push-fan>🔔 Get drop alerts on this phone</button><p class="form-msg push-msg" role="status"></p></div>
 </div></section>`;
 const videoGrid = () => VIDEOS.length ? `<section class="wrap videos" aria-labelledby="vidTitle">
   <div class="sheet-head"><div><div class="mono">On the feed</div><h2 id="vidTitle">Latest from @thevolksvision</h2></div>${S.tiktok ? `<a class="btn" href="${esc(S.tiktok)}" rel="noopener" target="_blank">Follow on TikTok</a>` : ""}</div>

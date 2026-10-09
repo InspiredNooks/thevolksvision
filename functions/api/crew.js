@@ -1,6 +1,7 @@
 // POST /api/crew - followers submit their car for the Crew page (multipart form with one photo).
 // Everything lands as "pending"; nothing shows on the site until RJ approves it in the Studio.
 import { json, db, str, sendEmail } from "../../lib/server.js";
+import { sendPush } from "../../lib/push.js";
 import { supaAuth } from "../../lib/content.js";
 
 const TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
@@ -23,6 +24,7 @@ export async function onRequestPost({ request, env }) {
     row.photo = `${env.SUPABASE_URL}/storage/v1/object/public/vv-media/${path}`;
     await db(env, "vv_crew", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify(row) });
   } catch (err) { console.error(err); return json({ error: "Couldn't send that right now. Try again in a minute." }, 502); }
+  await sendPush(env, "admin", { title: "🚗 New Crew car", body: `${row.car} from ${row.handle || row.name}. Approve it in the Studio.`, url: "/admin", tag: "crew" });
   await sendEmail(env, { to: (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com"), subject: `New Crew car: ${row.car} from ${row.handle || row.name}`,
     text: `${row.name} ${row.handle || ""}\n${row.car}\n\n${row.story}\n\nApprove it in the Studio: More → Crew.` }).catch(() => {});
   return json({ ok: true });

@@ -54,3 +54,34 @@ document.addEventListener("submit", async e => {
     } catch (err) { msg.textContent = err.message; btn.disabled = false; }
   });
 })();
+
+// "Get drop alerts on this phone": push notifications for fans. On iPhone this works once the
+// site is on the Home Screen, so we explain that instead of failing.
+(() => {
+  const ctas = document.querySelectorAll(".push-cta"); if (!ctas.length) return;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const installed = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const can = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  if (!can && !ios) return;                                     // browser can't do it: keep the button hidden
+  let on = false; try { on = localStorage.getItem("vv-push") === "1"; } catch {}
+  const say = (t) => document.querySelectorAll(".push-msg").forEach(m => { m.textContent = t; });
+  const done = () => ctas.forEach(c => { const b = c.querySelector("button"); b.textContent = "🔔 Drop alerts are on"; b.disabled = true; });
+  ctas.forEach(c => { c.hidden = false; });
+  if (on && can && Notification.permission === "granted") done();
+  const key = s => { const p = "=".repeat((4 - s.length % 4) % 4), raw = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(raw, ch => ch.charCodeAt(0)); };
+  document.addEventListener("click", async e => {
+    if (!e.target.closest("[data-push-fan]")) return;
+    if (ios && !installed) return say("On iPhone: tap Share, then Add to Home Screen. Open VolksVision from your Home Screen and tap this again.");
+    if (!can) return say("This browser can't do alerts. Join the Pit Crew by email instead.");
+    try {
+      if (await Notification.requestPermission() !== "granted") return say("Alerts are blocked in your settings. You can still join by email above.");
+      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" }); await navigator.serviceWorker.ready;
+      const { publicKey } = await (await fetch("/api/push")).json();
+      const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(publicKey) });
+      const r = await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscription: sub.toJSON(), role: "fan" }) });
+      if (!r.ok) throw new Error();
+      try { localStorage.setItem("vv-push", "1"); } catch {}
+      done(); say("You're set. Drops hit this phone first.");
+    } catch { say("That didn't go through. Try again in a minute."); }
+  });
+})();

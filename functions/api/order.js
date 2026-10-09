@@ -5,6 +5,7 @@
 import { json, db, sendEmail } from "../../lib/server.js";
 import { getProducts, getSettings } from "../../lib/content.js";
 import { createCheckout } from "../../lib/stripe.js";
+import { sendPush } from "../../lib/push.js";
 
 const clean = (s, max) => String(s ?? "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max);
 const firstEmail = s => (String(s).match(/[^\s@,;<>()"']+@[^\s@,;<>()"']+\.[a-z]{2,}/i) || [""])[0].toLowerCase() || null;
@@ -62,6 +63,7 @@ export async function onRequestPost({ request, env }) {
 
   const lines = items.map(l => `${l.qty} x ${l.name} (${l.size})  $${(l.qty * l.price).toFixed(2)}`).join("\n");
   await Promise.allSettled([
+    sendPush(env, "admin", { title: `🛒 Order request: $${total.toFixed(2)}`, body: `${buyer.name}: send them a payment request.`, url: "/admin", tag: `order-${orderNumber}` }),
     sendEmail(env, { to: (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com"), subject: `New order request ${orderNumber}: $${total.toFixed(2)}`,
       text: `${buyer.name}\n${buyer.contact}\nShip to: ${buyer.ship}\n\n${lines}\n\nTotal $${total.toFixed(2)}\n\nOpen the Studio: ${CONFIG.siteUrl}/admin` }),
     email && sendEmail(env, { to: email, subject: `${CONFIG.brand} order ${orderNumber} received`,

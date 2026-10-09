@@ -8,6 +8,7 @@ import * as inquiry from "../../functions/api/inquiry.js";
 import * as crew from "../../functions/api/crew.js";
 import * as pullup from "../../functions/api/pullup.js";
 import * as stripeWebhook from "../../functions/api/stripe-webhook.js";
+import * as push from "../../functions/api/push.js";
 import * as aAsk from "../../functions/api/admin/ask.js";
 import * as aAudience from "../../functions/api/admin/audience.js";
 import * as aBroadcast from "../../functions/api/admin/broadcast.js";
@@ -27,7 +28,7 @@ import * as aVideos from "../../functions/api/admin/videos.js";
 import * as aYoutube from "../../functions/api/admin/youtube.js";
 
 const ROUTES = {
-  order, subscribe, unsubscribe, inquiry, crew, pullup, "stripe-webhook": stripeWebhook,
+  order, subscribe, unsubscribe, inquiry, crew, pullup, "stripe-webhook": stripeWebhook, push,
   "admin/ask": aAsk, "admin/audience": aAudience, "admin/broadcast": aBroadcast, "admin/captions": aCaptions, "admin/coach": aCoach,
   "admin/crew": aCrew, "admin/events": aEvents, "admin/money": aMoney, "admin/orders": aOrders, "admin/plan": aPlan,
   "admin/posts": aPosts, "admin/products": aProducts, "admin/publish": aPublish, "admin/settings": aSettings,

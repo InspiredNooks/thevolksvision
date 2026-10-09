@@ -261,3 +261,23 @@ grant all on all sequences in schema public to service_role;
 grant execute on function public.vv_pullup(bigint) to service_role;
 revoke all on all tables in schema public from anon, authenticated;
 revoke all on all sequences in schema public from anon, authenticated;
+
+-- Push notifications: phones that turned on alerts (RJ's Studio = admin, fans = fan).
+create table if not exists public.vv_push (
+  id          bigint generated always as identity primary key,
+  endpoint    text not null unique,
+  keys        jsonb not null,
+  role        text not null default 'fan' check (role in ('admin','fan')),
+  created_at  timestamptz not null default now()
+);
+create index if not exists vv_push_role_idx on public.vv_push (role);
+-- Server-only secrets the site generates for itself (the push signing keys).
+create table if not exists public.vv_secrets (
+  key   text primary key,
+  value text not null
+);
+alter table public.vv_push enable row level security;
+alter table public.vv_secrets enable row level security;
+grant all on public.vv_push, public.vv_secrets to service_role;
+grant all on all sequences in schema public to service_role;
+revoke all on public.vv_push, public.vv_secrets from anon, authenticated;

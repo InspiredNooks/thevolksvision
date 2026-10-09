@@ -4,6 +4,7 @@
 import { json, db, sendEmail } from "../../lib/server.js";
 import { getSettings } from "../../lib/content.js";
 import { verifyWebhook } from "../../lib/stripe.js";
+import { sendPush } from "../../lib/push.js";
 
 const addr = a => a ? [a.line1, a.line2, `${a.city || ""}, ${a.state || ""} ${a.postal_code || ""}`.trim(), a.country !== "US" ? a.country : ""].filter(Boolean).join(", ") : "";
 
@@ -42,6 +43,7 @@ export async function onRequestPost({ request, env }) {
   const lines = (order.items || []).map(l => `${l.qty} x ${l.name} (${l.size})  $${(l.qty * l.price).toFixed(2)}`).join("\n");
   const pickup = order.ship_to === "Local pickup";
   await Promise.allSettled([
+    sendPush(env, "admin", { title: `💸 New order: $${total.toFixed(2)}`, body: `${update.customer_name} · ${(order.items || []).map(l => `${l.qty}× ${l.name}`).join(", ").slice(0, 100)}${pickup ? " · pickup" : ""}`, url: "/admin", tag: `order-${orderNumber}` }),
     sendEmail(env, { to: env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com", subject: `💸 Paid order ${orderNumber}: $${total.toFixed(2)}`,
       text: `${update.customer_name}\n${update.customer_contact}\n${pickup ? "LOCAL PICKUP: email them to set a time" : `Ship to: ${update.ship_to || order.ship_to}`}\n\n${lines}\nShipping $${Number(order.shipping).toFixed(2)}${tax ? `\nSales tax $${tax.toFixed(2)}` : ""}\nTotal paid $${total.toFixed(2)}\n\nMark it Shipped in the Studio: ${S.siteUrl}/admin` }),
     cust.email && sendEmail(env, { to: cust.email, replyTo: S.orderEmail, subject: `${S.brand} order ${orderNumber}: you're in`,

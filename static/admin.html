@@ -1343,6 +1343,7 @@ function brandView() {
   return `<form id="settingsForm" style="display:flex;flex-direction:column;gap:16px">
     <div class="pair"><label class="field" for="s-owner"><span>Your name</span><input id="s-owner" value="${esc(s.ownerName)}"></label>
     <label class="field" for="s-title"><span>Your title</span><input id="s-title" value="${esc(s.ownerTitle)}"></label></div>
+    ${notifyCard()}
     ${socialsCard(s)}
     <label class="field" for="s-legal"><span>Legal business name (optional)</span><input id="s-legal" value="${esc(s.legalName)}" placeholder="BayWay Media Co."><small>Only fill this in once the LLC is active on Sunbiz. Then the site footer says "VolksVision is a brand of …".</small></label>
     <label class="field" for="s-tagline"><span>Tagline</span><input id="s-tagline" value="${esc(s.tagline)}"></label>
@@ -1383,6 +1384,7 @@ function audienceView() {
       <label class="field" for="bc-list"><span>Send to</span><select id="bc-list"><option value="drops">Drop alerts list (${on("drops")})</option><option value="glovebox">${esc(state.settings?.journalName || "Blog")} readers (${on("glovebox")})</option></select></label>
       <label class="field" for="bc-subject"><span>Subject</span><input id="bc-subject" placeholder="Drop 02 is live. 50 made."></label>
       <label class="field" for="bc-body"><span>Message</span><textarea id="bc-body" rows="6" placeholder="What it is, how many, link to the shop."></textarea><small>An unsubscribe link is added automatically.</small></label>
+      <label class="switch" for="bc-push"><span>Also send a phone notification<br><small class="r-sub" style="white-space:normal">To fans who turned on alerts on the site. Keep it short: the subject is the headline.</small></span><input id="bc-push" type="checkbox" checked></label>
       <button class="btn sea" type="button" data-act="broadcast">Send</button></div>
     ${active.length ? `<button class="btn" type="button" data-act="export-subs">Download email list (CSV)</button>` : ""}
     <div class="mono" style="margin-top:8px">Brand inquiries</div>
@@ -1431,6 +1433,43 @@ async function shrink(file) {
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.85));
+}
+// ---------- phone notifications (RJ / Cara) ----------
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+const installed = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const pushReady = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+let pushOn = null;                                   // null = still checking
+async function checkPush() {
+  if (!pushReady()) { pushOn = false; return; }
+  const reg = await navigator.serviceWorker.getRegistration("/"); const sub = reg && await reg.pushManager.getSubscription();
+  const was = pushOn; pushOn = Boolean(sub && Notification.permission === "granted");
+  if (was !== pushOn && state.tab === "settings") render();
+}
+const b64key = s => { const p = "=".repeat((4 - s.length % 4) % 4), raw = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(raw, c => c.charCodeAt(0)); };
+async function turnOnPush() {
+  if (isIOS && !installed()) return toast("First add VV Studio to your Home Screen (Share → Add to Home Screen), then open it from there and tap this again.", true);
+  if (!pushReady()) return toast("This browser can't do notifications. Try Safari on iPhone or Chrome.", true);
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return toast("Notifications are blocked. Turn them on in your phone's Settings for VV Studio.", true);
+  const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" }); await navigator.serviceWorker.ready;
+  const { publicKey } = await (await fetch("/api/push")).json();
+  const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64key(publicKey) });
+  const r = await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ subscription: sub.toJSON(), role: "admin", test: true }) });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "Couldn't turn alerts on.");
+  pushOn = true; render(); toast("Alerts are on. A test notification is on its way.");
+}
+async function turnOffPush() {
+  const reg = await navigator.serviceWorker.getRegistration("/"); const sub = reg && await reg.pushManager.getSubscription();
+  if (sub) { await fetch("/api/push", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }); await sub.unsubscribe(); }
+  pushOn = false; render(); toast("Alerts are off on this phone.");
+}
+function notifyCard() {
+  if (pushOn === null) checkPush();
+  const why = "New orders, brand inquiries and Crew cars, the second they come in.";
+  const body = pushOn ? `<span class="r-sub" style="white-space:normal">✅ On for this ${isIOS ? "phone" : "device"}. ${why}</span><div class="photo-actions"><button class="btn" type="button" data-act="push-test">Send a test</button><button class="link" type="button" data-act="push-off">Turn off</button></div>`
+    : isIOS && !installed() ? `<span class="r-sub" style="white-space:normal">${why} On iPhone, add VV Studio to your Home Screen first (Share → Add to Home Screen), open it from there, then tap Turn on.</span><button class="btn sea" type="button" data-act="push-on">Turn on alerts</button>`
+    : `<span class="r-sub" style="white-space:normal">${why}</span><button class="btn sea" type="button" data-act="push-on">Turn on alerts</button>`;
+  return `<div class="card"><strong>Phone notifications</strong>${body}</div>`;
 }
 // ---------- socials ----------
 // RJ types @handle (or pastes a link); the site stores the full profile link.
@@ -1655,11 +1694,15 @@ document.addEventListener("click", async e => {
       const key = t.dataset.kind === "deal" ? "deals" : "income"; state.money[key] = state.money[key].filter(x => x.id !== +t.dataset.id); closeSheet(); render(); toast("Deleted.");
     }
     if (act === "create") openCreate();
+    if (act === "push-on") { t.disabled = true; try { await turnOnPush(); } catch (err) { fail(err); } finally { t.disabled = false; } }
+    if (act === "push-off") { try { await turnOffPush(); } catch (err) { fail(err); } }
+    if (act === "push-test") { try { const reg = await navigator.serviceWorker.getRegistration("/"); const sub = await reg.pushManager.getSubscription();
+      await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ subscription: sub.toJSON(), role: "admin", test: true }) }); toast("Test sent. It should pop up in a few seconds."); } catch (err) { fail(err); } }
     if (act === "thumb") { saveCaps(); openThumb(); }
     if (act === "broadcast") {
-      const body = { list: $("#bc-list").value, subject: $("#bc-subject").value, body: $("#bc-body").value };
+      const body = { list: $("#bc-list").value, subject: $("#bc-subject").value, body: $("#bc-body").value, push: $("#bc-push").checked };
       if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to send to everyone on this list"; return; }
-      t.disabled = true; try { const r = await api("broadcast", { method: "POST", body }); toast(`Sent to ${r.sent} ${r.sent === 1 ? "person" : "people"}.`); $("#bc-subject").value = ""; $("#bc-body").value = ""; } finally { t.disabled = false; t.dataset.confirm = ""; t.textContent = "Send"; }
+      t.disabled = true; try { const r = await api("broadcast", { method: "POST", body }); toast(`Emailed ${r.sent} ${r.sent === 1 ? "person" : "people"}${body.push ? `, notified ${r.pushed} ${r.pushed === 1 ? "phone" : "phones"}` : ""}.`); $("#bc-subject").value = ""; $("#bc-body").value = ""; } finally { t.disabled = false; t.dataset.confirm = ""; t.textContent = "Send"; }
     }
     if (act === "video-delete") {
       if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete"; return; }
