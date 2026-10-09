@@ -69,6 +69,15 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .empty{color:var(--muted);padding:28px 2px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
 .fab{position:fixed;right:16px;bottom:calc(var(--tabbar) + env(safe-area-inset-bottom,0px) + 16px);z-index:4;border-radius:999px;padding:14px 20px;box-shadow:0 6px 20px rgb(0 0 0 / .18)}
 
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;border-bottom:1px solid var(--rule)}
+.prow .row{border-bottom:0}
+.row-acts{display:flex;gap:6px}
+.act-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;padding:0 10px;border:1px solid var(--rule);border-radius:10px;background:var(--frame);color:var(--ink);cursor:pointer;font-size:14px;font-weight:600}
+.act-btn span{display:none}
+.act-btn.del{color:var(--bad)}
+.act-btn.armed{background:var(--bad);border-color:var(--bad);color:#fff}
+.act-btn.armed span{display:inline}
+@media (min-width:1024px){.act-btn span{display:inline}.act-btn:hover{border-color:var(--ink)}.screen{padding-bottom:120px}}
 /* Sheets (editors) */
 .sheet{position:fixed;inset:0;z-index:10;background:var(--paper);display:flex;flex-direction:column}
 .sheet-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;border-bottom:1px solid var(--rule);background:var(--frame)}
@@ -468,12 +477,15 @@ function openOrder(id) {
 // ---------- products ----------
 const ARTSVG = { tee: '<path d="M38 18l-22 12 8 18 10-5v59h52V43l10 5 8-18-22-12q-10 8-22 8T38 18z" fill="none" stroke="currentColor" stroke-width="4"/>', hoodie: '<path d="M42 20q18-10 36 0l24 14-8 20-8-4v56H34V50l-8 4-8-20z" fill="none" stroke="currentColor" stroke-width="4"/>', cap: '<path d="M24 74q0-40 36-40t36 40zM24 74q30 6 72 0q10 2 16 10-40 6-88-10z" fill="none" stroke="currentColor" stroke-width="4"/>', sticker: '<circle cx="55" cy="60" r="32" fill="none" stroke="currentColor" stroke-width="4"/>', key: '<rect x="45" y="40" width="30" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="4"/>', print: '<rect x="18" y="22" width="84" height="76" fill="none" stroke="currentColor" stroke-width="4"/>' };
 const thumb = p => `<span class="thumb">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : `<svg viewBox="0 0 120 120" aria-hidden="true">${ARTSVG[p.art] || ARTSVG.tee}</svg>`}</span>`;
+const ICON_EDIT = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>`;
+const ICON_DEL = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`;
 function productsView() {
   const list = state.products;
   return `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Shop</h1></div><a class="btn" href="/#shop" target="_blank" rel="noopener">View shop</a></div>
-  <div class="list">${list.map(p => `<button class="row" type="button" data-product="${esc(p.id)}">${thumb(p)}
+  <div class="list">${list.map(p => `<div class="prow"><button class="row" type="button" data-product="${esc(p.id)}">${thumb(p)}
     <span class="r-main"><strong>${esc(p.name)}</strong><span class="r-sub">${esc(p.cat)} · ${p.sizes.length} size(s)${p.image ? "" : " · needs a photo"}</span></span>
-    <span class="r-end">${money(p.price)}<span class="pill ${!p.active ? "p-hidden" : p.sold_out ? "p-draft" : "p-live"}">${!p.active ? "Hidden" : p.sold_out ? "Sold out" : "Live"}</span></span></button>`).join("")
+    <span class="r-end">${money(p.price)}<span class="pill ${!p.active ? "p-hidden" : p.sold_out ? "p-draft" : "p-live"}">${!p.active ? "Hidden" : p.sold_out ? "Sold out" : "Live"}</span></span></button>
+    <span class="row-acts"><button class="act-btn" type="button" data-product="${esc(p.id)}" aria-label="Edit ${esc(p.name)}">${ICON_EDIT}<span>Edit</span></button><button class="act-btn del" type="button" data-act="delete-product" data-short="1" data-id="${esc(p.id)}" aria-label="Delete ${esc(p.name)}">${ICON_DEL}<span>Delete</span></button></span></div>`).join("")
     || `<div class="empty"><span>No products yet. Start with the six starter designs, then edit them, or add your own.</span><button class="btn sea" type="button" data-act="import">Add the starter products</button></div>`}</div>
   <button class="btn solid fab" type="button" data-act="new-product">+ New product</button>`;
 }
@@ -1426,9 +1438,10 @@ document.addEventListener("click", async e => {
     if (act === "new-post") { if (state.products === null) api("products").then(d => { state.products = d; }).catch(() => {}); openPost(null); }
     if (act === "import") { const r = await api("products", { method: "POST", body: { import: true } }); state.products = await api("products"); render(); toast(`Added ${r.imported} products. Live in about a minute.`); }
     if (act === "delete-product") {
-      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete for good"; return; }
-      const { live } = await api(`products?id=${encodeURIComponent(t.dataset.id)}`, { method: "DELETE" });
-      state.products = state.products.filter(p => p.id !== t.dataset.id); closeSheet(); render(); toast(live ? "Deleted. Gone from the site in about a minute." : "Deleted.");
+      const b = t.closest("[data-act]");
+      if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; if (b.dataset.short) { b.classList.add("armed"); b.querySelector("span").textContent = "Sure?"; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ""; b.classList.remove("armed"); b.querySelector("span").textContent = "Delete"; } }, 4000); } else b.textContent = "Tap again to delete for good"; return; }
+      const { live } = await api(`products?id=${encodeURIComponent(b.dataset.id)}`, { method: "DELETE" });
+      state.products = state.products.filter(p => p.id !== b.dataset.id); closeSheet(); render(); toast(live ? "Deleted. Gone from the site in about a minute." : "Deleted.");
     }
     if (act === "delete-post") {
       if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete for good"; return; }
