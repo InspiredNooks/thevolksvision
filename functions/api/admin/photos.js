@@ -1,3 +1,6 @@
+// Credit line in Unsplash's required form: Photo by <photographer, linked> on <Unsplash, linked>.
+const UNSPLASH_HOME = "https://unsplash.com/?utm_source=volksvision&utm_medium=referral";
+const creditFor = (by, byUrl, source) => `Photo by [${by.replace(/[\[\]]/g, "")}](${byUrl}) on [${source}](${source === "Unsplash" ? UNSPLASH_HOME : "https://www.pexels.com"})`;
 // GET /api/admin/photos?q=mk2 jetta&page=1 - free photo search for the mockup maker (Unsplash, plus Pexels if keyed).
 // POST {download_location} - tells Unsplash a photo was used (their API rules require it).
 // Env: UNSPLASH_ACCESS_KEY (free at unsplash.com/developers), optional PEXELS_API_KEY.
@@ -13,11 +16,12 @@ export const onRequestGet = adminRoute(async ({ request, env }) => {
       { headers: { Authorization: `Client-ID ${env.UNSPLASH_ACCESS_KEY}`, "Accept-Version": "v1" } });
     if (r.ok) for (const p of (await r.json()).results || []) out.push({ source: "Unsplash", id: p.id, thumb: p.urls.small, full: p.urls.regular,
       w: p.width, h: p.height, alt: p.alt_description || "", by: p.user?.name || "", byUrl: `${p.user?.links?.html || "https://unsplash.com"}?utm_source=volksvision&utm_medium=referral`, download: p.links?.download_location || "" });
+    out.forEach(x => { x.credit ||= creditFor(x.by, x.byUrl, x.source); });
   }
   if (env.PEXELS_API_KEY) {
     const r = await fetch(`https://api.pexels.com/v1/search?${new URLSearchParams({ query: q, page, per_page: "18" })}`, { headers: { Authorization: env.PEXELS_API_KEY } });
     if (r.ok) for (const p of (await r.json()).photos || []) out.push({ source: "Pexels", id: String(p.id), thumb: p.src.medium, full: p.src.large2x,
-      w: p.width, h: p.height, alt: p.alt || "", by: p.photographer || "", byUrl: p.photographer_url || "https://pexels.com", download: "" });
+      w: p.width, h: p.height, alt: p.alt || "", by: p.photographer || "", byUrl: p.photographer_url || "https://pexels.com", download: "", credit: creditFor(p.photographer || "Pexels", p.photographer_url || "https://www.pexels.com", "Pexels") });
   }
   return json({ photos: out });
 });

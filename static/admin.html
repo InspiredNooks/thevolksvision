@@ -1714,7 +1714,7 @@ async function chooserAction(a, i) {
 async function stockSearch(q) {
   chooserOverlay("Free photos", `<form class="ask-row" id="stockForm"><input name="q" value="${esc(q)}" placeholder="car meet, mk2 jetta, detailing…" style="padding:11px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper)"><button class="btn sea" type="submit">Search</button></form><div id="stockOut" style="margin-top:10px"><p class="r-sub">Searching…</p></div>`);
   try { const r = await api(`photos?q=${encodeURIComponent(q)}`);
-    $("#stockOut").innerHTML = r.off ? `<p class="r-sub" style="white-space:normal">Free photo search needs the Unsplash key in Netlify (UNSPLASH_ACCESS_KEY). Ask Cara.</p>` : chooserGrid(r.photos.map(p => ({ url: p.full, thumb: p.thumb, label: p.by, credit: `Photo: ${p.by} / ${p.source}`, dl: p.download }))); }
+    $("#stockOut").innerHTML = r.off ? `<p class="r-sub" style="white-space:normal">Free photo search needs the Unsplash key in Netlify (UNSPLASH_ACCESS_KEY). Ask Cara.</p>` : chooserGrid(r.photos.map(p => ({ url: p.full, thumb: p.thumb, label: p.by, credit: p.credit || `Photo by ${p.by} on ${p.source}`, dl: p.download }))); }
   catch (e) { $("#stockOut").innerHTML = `<p class="r-sub">${esc(e.message)}</p>`; }
 }
 document.addEventListener("submit", e => { if (e.target.id === "stockForm") { e.preventDefault(); stockSearch(new FormData(e.target).get("q") || "volkswagen"); } });
