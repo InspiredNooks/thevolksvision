@@ -8,6 +8,7 @@ export const CONFIG = {
   tagline: "VW culture through the lens",
   city: "St. Petersburg, FL",
   orderEmail: "shop@thevolksvision.com",            // shown to buyers; forwards to RJ's Gmail (set up in DreamHost Mail)
+  contactEmail: "garage@thevolksvision.com",        // brands, collabs, press, event invites; also forwards to RJ's Gmail
   payWith: "Venmo, Cash App, or Zelle",          // RJ confirms each order with a payment request
   instagram: "https://www.instagram.com/thevolksvision/",
   tiktok: "https://www.tiktok.com/@thevolksvision",

@@ -96,6 +96,7 @@ const ORG = {
   logo: `${SITE}/img/icon-512.png`, slogan: S.tagline, description: plainText(S.about), ...(S.legalName ? { legalName: S.legalName } : {}),
   founder: { "@type": "Person", "@id": `${SITE}/about/#rj`, name: S.ownerName, alternateName: "RJ" },
   sameAs: SOCIAL.map(([, u]) => u),
+  contactPoint: [S.contactEmail && { "@type": "ContactPoint", contactType: "partnerships", email: S.contactEmail }, S.orderEmail && { "@type": "ContactPoint", contactType: "customer service", email: S.orderEmail }].filter(Boolean),
   sponsor: (S.sponsors || []).filter(x => x.show !== false && x.name).map(x => ({ "@type": "Organization", name: x.name, ...(x.url ? { url: x.url } : {}) })),
   address: { "@type": "PostalAddress", addressLocality: "St. Petersburg", addressRegion: "FL", addressCountry: "US" }
 };
@@ -125,7 +126,7 @@ const header = () => `<header class="site"><div class="wrap bar">
 const footer = () => `<footer><div class="wrap foot">
   <div><div class="mark" style="margin-bottom:10px">VOLKSVISION</div>
   <p>${esc(S.brand)} is an independent creator brand from ${esc(S.city)}, run by ${esc(S.ownerName)}${S.legalName ? `. VolksVision is a brand of ${esc(S.legalName)}` : ""}. It is not affiliated with, sponsored by, or endorsed by Volkswagen AG. All vehicle photography is original work by RJ.</p></div>
-  <div class="links">${SOCIAL.map(([t, u]) => `<a href="${esc(u)}" rel="me noopener" target="_blank">${t}</a>`).join("")}<a href="/build/">The Mk2</a><a href="/next/">Where's VolksVision next</a><a href="/journal/">${esc(JN)}</a><a href="/crew/">The Crew</a><a href="/media-kit/">Media kit</a><a href="/about/">About</a><a href="/work-with-me/">Work with me</a><a href="/rss.xml">RSS</a><span class="mono" style="user-select:all">${esc(S.orderEmail)}</span></div>
+  <div class="links">${SOCIAL.map(([t, u]) => `<a href="${esc(u)}" rel="me noopener" target="_blank">${t}</a>`).join("")}<a href="/build/">The Mk2</a><a href="/next/">Where's VolksVision next</a><a href="/journal/">${esc(JN)}</a><a href="/crew/">The Crew</a><a href="/media-kit/">Media kit</a><a href="/about/">About</a><a href="/work-with-me/">Work with me</a><a href="/rss.xml">RSS</a>${S.contactEmail ? `<a class="mono" style="text-transform:none" href="mailto:${esc(S.contactEmail)}">${esc(S.contactEmail)}</a>` : ""}<a class="mono" style="text-transform:none" href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a></div>
 </div></footer>`;
 const drawer = () => `<div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Shopping bag">
@@ -386,6 +387,7 @@ function workPage() {
       <li><strong>Photo and video shoots:</strong> rollers, walkarounds and meet coverage around Tampa Bay.</li>
       <li><strong>Merch collabs:</strong> co-branded drops with shops and clubs.</li></ul>
       <p><a href="/media-kit/">See the media kit</a> for audience and numbers.</p>
+      ${S.contactEmail ? `<p>Rather email? <a href="mailto:${esc(S.contactEmail)}">${esc(S.contactEmail)}</a></p>` : ""}
       <p>Follow along first: ${SOCIAL.map(([t, u]) => `<a href="${esc(u)}" rel="noopener" target="_blank">${t}</a>`).join(" · ")}</p>
     </div>
     <form class="stack-form" data-form="inquiry">
@@ -461,7 +463,7 @@ function mediaKitPage() {
     ${(() => { const names = [...new Set([...SPONSORS.map(x => x.name), ...(mk.partners || [])])]; return names.length ? `<h2>Partners</h2><p>${names.map(esc).join(" · ")}</p>` : ""; })()}
     <h2>Follow along</h2><ul>${SOCIAL.map(([t, u]) => `<li><a href="${esc(u)}" rel="noopener" target="_blank">${t}</a></li>`).join("")}</ul>
   </div>
-  <aside class="shop-cta"><p><strong>Got a project in mind?</strong> Send a quick note. RJ replies to every brand.</p><a class="btn solid" href="/work-with-me/">Work with me</a></aside>
+  <aside class="shop-cta"><p><strong>Got a project in mind?</strong> Send a quick note. RJ replies to every brand.${S.contactEmail ? ` Or email <a href="mailto:${esc(S.contactEmail)}">${esc(S.contactEmail)}</a>.` : ""}</p><a class="btn solid" href="/work-with-me/">Work with me</a></aside>
 </article></main>`;
   return page(head({ title: `Media Kit: ${S.ownerName}, VolksVision | Car Creator Partnerships`, description: `Partner with ${S.ownerName} and VolksVision: Gen Z car audience, Mk2 Jetta build series, Tampa Bay meets. Services, audience and numbers.`, url,
     jsonld: [crumbs([["Home", SITE + "/"], ["Media kit", url]])] }), main);

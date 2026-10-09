@@ -25,6 +25,7 @@ export const onRequestPut = adminRoute(async ({ request, env }) => {
     tagline: str(b.tagline, 120),
     about: str(b.about, 3000),
     orderEmail: str(b.orderEmail, 160),
+    contactEmail: str(b.contactEmail, 160),
     payWith: str(b.payWith, 160),
     instagram: url(b.instagram, "Instagram link"),
     tiktok: url(b.tiktok, "TikTok link"),
