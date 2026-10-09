@@ -1,7 +1,7 @@
 # VolksVision
 
 RJ's site: his Mk2 Jetta build, merch shop, weekly Journal and fan list, with a phone app ("Studio") to run all of it.
-Same stack as Tampa Bay Home Maintenance: **Cloudflare Pages + Supabase + Resend**, plus the Claude API for weekly posts.
+Runs on **Netlify + Supabase + Resend**, plus the Claude API for weekly posts, the coach and captions. (Cloudflare Pages also works: `functions/` is the Pages version of the same API.)
 
 ## What RJ does from his phone: the Studio
 
@@ -37,13 +37,13 @@ Every Sunday (and on demand) the coach reads RJ's numbers and writes what worked
 
 ## One-time setup (about 45 minutes)
 
-1. **Domains.** `thevolksvision.com` is the main address; `thevolksvision.shop` redirects to it. Point both at Cloudflare (change the nameservers at DreamHost to the ones Cloudflare gives you), then add **both** as custom domains on the Pages project, plus `www.thevolksvision.com`. `functions/_middleware.js` sends .shop and www to the .com with a permanent redirect, so Google sees one site.
+1. **Domains.** `thevolksvision.com` is the main address; `thevolksvision.shop` redirects to it. Both stay registered at DreamHost on DreamHost nameservers (so email forwarding keeps working). In each domain's DreamHost DNS add an **A** record (host blank) → `75.2.60.5` and a **CNAME** `www` → `thevolksvision.netlify.app`; never touch the MX records. In Netlify → Domain management add `thevolksvision.com` as primary and `thevolksvision.shop` as an alias. `netlify.toml` sends .shop and www to the .com with a permanent redirect, so Google sees one site.
 2. **Supabase.** New project → SQL Editor → run `supabase/schema.sql`. Copy the project URL and the **service role** key.
-3. **Cloudflare Pages.** Create a project from this repo:
+3. **Netlify.** Link the project to this repo (branch `main`, base directory blank):
    - Netlify reads netlify.toml at the repo root (build command and publish directory are set there).
    - Environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_TOKEN` (RJ's passphrase, long), `ANTHROPIC_API_KEY` (coach and captions), `RESEND_API_KEY`, `ORDER_NOTIFY_EMAIL` (`thevolksvision@gmail.com`, the default), `ORDER_FROM_EMAIL` (`VolksVision <orders@thevolksvision.shop>`; verify thevolksvision.shop in Resend), `INDEXNOW_KEY` (any random 32-character string), `LIST_SECRET` (random string for unsubscribe links), optional `YOUTUBE_API_KEY` (YouTube Data API v3).
-   - Settings → Builds → **Deploy hooks** → create one, then add its URL as `DEPLOY_HOOK_URL`. This is what makes phone edits go live.
-4. **Load the starter content** (products, posts, settings, post ideas and RJ's growth plan): `cd volksvision && SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed.mjs`
+   - Project configuration → Build & deploy → **Build hooks** → create one, then add its URL as `DEPLOY_HOOK_URL`. This is what makes phone edits go live.
+4. **Load the starter content** (products, posts, settings, post ideas and RJ's growth plan): `SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed.mjs`
 5. **Weekly posts and Sunday coaching.** GitHub → Settings → Secrets → Actions: `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DEPLOY_HOOK_URL`, and optionally `RESEND_API_KEY`, `ORDER_NOTIFY_EMAIL`, `ORDER_FROM_EMAIL`. Run "VolksVision auto-blog" and "VolksVision weekly coach" once by hand to confirm.
 6. **Google.** Add the domain to Search Console and submit `/sitemap.xml`. Create a Google Business Profile for VolksVision (St. Petersburg) linking to the site.
 
