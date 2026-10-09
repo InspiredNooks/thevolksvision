@@ -1,0 +1,29 @@
+# Sunday coaching for RJ: reads the week's numbers, writes a report into the Studio
+# (Grow → Stats) and emails RJ the headline. Same secrets as the auto-blog workflow.
+name: VolksVision weekly coach
+
+on:
+  schedule:
+    - cron: "43 21 * * 0"   # Sundays 21:43 UTC (5:43 p.m. Eastern in summer)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  coach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: node scripts/coach.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ORDER_NOTIFY_EMAIL: ${{ secrets.ORDER_NOTIFY_EMAIL }}
+          ORDER_FROM_EMAIL: ${{ secrets.ORDER_FROM_EMAIL }}

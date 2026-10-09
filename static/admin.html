@@ -1,0 +1,1543 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VolksVision Studio</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="/admin.webmanifest">
+<link rel="icon" href="/img/mark.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/img/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VV Studio">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0d0c">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a phone app. One screen per tab, tab bar pinned to the bottom (thumb reach),
+   editors open as full-screen sheets with the Save button pinned above the keyboard area. */
+:root{--paper:#0b0d0c;--ink:#eef0ec;--muted:#99a29d;--rule:#262c29;--sea:#f2a93b;--signal:#f2a93b;--frame:#131715;
+  --ok:#7fd1a0;--warn:#f2c46b;--bad:#ff8a7a;
+  --body:"Archivo","Helvetica Neue",Arial,system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --tabbar:64px;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.45 var(--body);-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{font-size:16px} /* 16px+ stops iOS from zooming into fields */
+:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+h1{font-size:28px;margin:0;line-height:1;font-stretch:125%;text-transform:uppercase;font-weight:800}
+h2{font-size:19px;margin:0}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.btn{border:1.5px solid var(--ink);background:transparent;border-radius:999px;padding:11px 18px;cursor:pointer;min-height:44px;font-weight:500}
+.btn.solid{background:var(--ink);color:var(--paper)}
+a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:center}
+.btn.sea{background:var(--sea);border-color:var(--sea);color:#0b0d0c}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.btn:disabled{opacity:.5}
+.link{background:none;border:0;padding:8px 0;color:var(--sea);text-decoration:underline;cursor:pointer;min-height:44px}
+
+/* Screens */
+.screen{max-width:760px;margin:0 auto;padding-inline:16px;padding-top:calc(env(safe-area-inset-top,0px) + 18px);padding-bottom:calc(var(--tabbar) + env(safe-area-inset-bottom,0px) + 24px)}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--frame);border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar button{background:none;border:0;height:var(--tabbar);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer}
+.tabbar svg{width:24px;height:24px}
+.tabbar button[aria-current="page"]{color:var(--ink)}
+.tabbar button[aria-current="page"] svg{color:var(--sea)}
+.badge{font-family:var(--mono);font-size:10px;background:var(--signal);color:#16201d;border-radius:999px;padding:0 6px;margin-left:2px}
+
+/* Lists */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--frame);border:1px solid var(--rule);padding:12px}
+.stat b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.chip{flex:none;border:1px solid var(--rule);background:transparent;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:15px;min-height:38px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.list{display:flex;flex-direction:column;border-top:1px solid var(--rule)}
+.row{all:unset;max-width:100%;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--rule);min-height:64px;width:100%}
+.row:focus-visible{outline:2px solid var(--sea)}
+.thumb{width:52px;height:52px;background:var(--frame);border:1px solid var(--rule);display:grid;place-items:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb svg{width:70%;height:70%}
+.r-main{min-width:0}
+.r-main strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-sub{display:block;color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-end{text-align:right;font-family:var(--mono);font-size:14px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.pill{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.p-new,.p-live{color:var(--sea)}.p-awaiting_payment,.p-draft{color:var(--warn)}.p-paid{color:var(--ok)}.p-shipped,.p-delivered,.p-hidden{color:var(--muted)}.p-cancelled{color:var(--bad)}
+.empty{color:var(--muted);padding:28px 2px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.fab{position:fixed;right:16px;bottom:calc(var(--tabbar) + env(safe-area-inset-bottom,0px) + 16px);z-index:4;border-radius:999px;padding:14px 20px;box-shadow:0 6px 20px rgb(0 0 0 / .18)}
+
+/* Sheets (editors) */
+.sheet{position:fixed;inset:0;z-index:10;background:var(--paper);display:flex;flex-direction:column}
+.sheet-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;border-bottom:1px solid var(--rule);background:var(--frame)}
+.sheet-bar h2{font-size:17px;text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet-body{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.sheet-inner{max-width:760px;margin:0 auto;padding:16px 16px 32px;display:flex;flex-direction:column;gap:16px}
+.sheet-foot{border-top:1px solid var(--rule);background:var(--frame);padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:10px}
+.sheet-foot .btn{flex:1}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>span{font-size:14px;font-weight:500}
+.field small{color:var(--muted);font-size:13px}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--frame)}
+.field textarea{min-height:120px;resize:vertical;line-height:1.5}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--frame);cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--sea)}
+.photo{border:1.5px dashed var(--rule);border-radius:10px;background:var(--frame);display:grid;place-items:center;aspect-ratio:4/3;overflow:hidden;position:relative;max-width:100%}
+.photo img{width:100%;height:100%;object-fit:cover}
+.photo .ph{color:var(--muted);text-align:center;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.photo-actions{display:flex;gap:10px;flex-wrap:wrap}
+.toolbar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.toolbar button{flex:none;min-width:44px;min-height:40px;border:1px solid var(--rule);background:var(--frame);border-radius:8px;cursor:pointer;font-weight:500}
+.body-edit{min-height:42vh!important;font-size:16px}
+.preview{background:var(--frame);border:1px solid var(--rule);border-radius:8px;padding:16px;min-height:42vh}
+.preview h2{font-size:22px;margin:1em 0 .3em}.preview h3{font-size:18px}
+.preview p,.preview ul,.preview ol{margin:0 0 1em}.preview a{color:var(--sea)}
+.preview blockquote{margin:1em 0;padding-left:14px;border-left:3px solid var(--signal);color:var(--muted)}
+.checks{display:flex;flex-direction:column;gap:6px;background:var(--frame);border:1px solid var(--rule);border-radius:8px;padding:12px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--warn)}
+.dot.ok{background:var(--ok)}
+.score{font-family:var(--mono);font-size:13px}
+.topic{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:10px;border:1px solid var(--rule);border-radius:8px;background:var(--frame)}
+.order-items{width:100%;border-collapse:collapse;font-size:15px}
+.order-items td{padding:6px 0;border-bottom:1px solid var(--rule)}
+.order-items td:last-child{text-align:right;font-family:var(--mono)}
+.copyable{user-select:all;word-break:break-word}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabbar) + env(safe-area-inset-bottom,0px) + 16px);z-index:20;background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;max-width:min(92vw,520px);font-size:15px;box-shadow:0 6px 20px rgb(0 0 0 / .2)}
+.toast.err{background:var(--bad);color:#fff}
+.login{max-width:400px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12vh) 16px 32px;display:flex;flex-direction:column;gap:14px}
+.login input[type=password]{padding:14px;border:1px solid var(--rule);border-radius:8px;background:var(--frame)}
+.err{color:var(--bad);font-size:15px;margin:0;min-height:1.3em}
+.loading{color:var(--muted);padding:24px 2px}
+.help-btn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:6;width:40px;height:40px;border-radius:50%;border:1.5px solid var(--rule);background:var(--frame);color:var(--ink);font:800 18px var(--body);cursor:pointer}
+.tip-scrim{position:fixed;inset:0;z-index:30;background:rgb(0 0 0 / .55);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(var(--tabbar) + env(safe-area-inset-bottom,0px) + 16px)}
+.tip{width:min(100%,520px);background:var(--frame);border:1.5px solid var(--signal);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 40px rgb(0 0 0 / .4);animation:tipIn .2s ease-out}
+@keyframes tipIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.tip{animation:none}}
+.tip h2{font-size:20px;text-transform:uppercase;font-stretch:118%}
+.tip ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.tip-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:4px}
+.top{padding-right:48px}
+.stage{position:sticky;top:0;z-index:2;width:min(100%,300px,calc(42vh * 9 / 16));aspect-ratio:9/16;margin:0 auto;background:#000;border-radius:12px;overflow:hidden}
+.stage canvas{width:100%;height:100%;display:block}
+.range-pair{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-family:var(--mono);font-size:12px}
+.range-pair input{width:100%;accent-color:var(--signal)}
+.steps{display:flex;gap:6px;margin-bottom:4px}.steps span{flex:1;height:4px;border-radius:4px;background:var(--rule)}.steps span.on{background:var(--signal)}
+.post-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--rule);border-radius:10px;background:var(--frame)}
+.post-row.done{border-color:var(--ok)}
+.big-cta{width:100%;font-size:18px;min-height:56px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.seg button{background:none;border:0;padding:10px 4px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted);min-height:44px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.card{background:var(--frame);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.md h2{font-size:18px;margin:.8em 0 .2em}.md p,.md ul,.md ol{margin:0 0 .7em}.md blockquote{margin:.6em 0;padding-left:12px;border-left:3px solid var(--signal);color:var(--muted)}
+.progress{height:8px;background:var(--rule);border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:var(--signal)}
+.task{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--rule)}
+.task input{width:24px;height:24px;accent-color:var(--signal)}
+.task.done .t-text{text-decoration:line-through;color:var(--muted)}
+.t-text{background:none;border:0;text-align:left;padding:4px 0;cursor:pointer;color:inherit;min-height:40px}
+.week-h{margin:18px 0 4px}
+.delta{font-family:var(--mono);font-size:12px}.delta.up{color:var(--ok)}.delta.down{color:var(--bad)}
+.ntable{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.ntable th,.ntable td{padding:8px 4px;border-bottom:1px solid var(--rule);text-align:right}
+.ntable th:first-child,.ntable td:first-child{text-align:left}
+.ntable th{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+</style>
+</head><body>
+
+<section id="loginView" class="login" hidden>
+  <svg viewBox="0 0 40 40" width="48" height="48" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="20" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="20" r="3" fill="#e5a03a"/></svg>
+  <div><div class="mono">VolksVision</div><h1>Studio</h1></div>
+  <form id="loginForm" style="display:flex;flex-direction:column;gap:12px">
+    <label class="field" for="token"><span>Passphrase</span><input id="token" type="password" autocomplete="current-password" required></label>
+    <label class="switch" for="remember"><span>Keep me signed in on this phone</span><input id="remember" type="checkbox" checked></label>
+    <button class="btn solid" type="submit">Open Studio</button>
+    <p class="err" id="loginErr" role="alert"></p>
+  </form>
+  <p class="mono" style="text-transform:none;letter-spacing:0">Tip: in Safari tap Share, then "Add to Home Screen" to open the Studio like an app.</p>
+</section>
+
+<div id="appView" hidden>
+  <main class="screen" id="screen"></main>
+  <nav class="tabbar" aria-label="Studio sections">
+    <button type="button" data-tab="grow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/></svg><span>Grow</span></button>
+    <button type="button" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v18"/><path d="M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/></svg><span>Money <span class="badge" id="newBadge" hidden></span></span></button>
+    <button type="button" data-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3q-2 2-4 2T8 3z"/></svg><span>Shop</span></button>
+    <button type="button" data-tab="posts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Journal</span></button>
+    <button type="button" data-tab="build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 15v-3l2-1 3-4h8l3 4 2 1v3z"/><circle cx="7.5" cy="16" r="2"/><circle cx="16.5" cy="16" r="2"/></svg><span>Mk2</span></button>
+    <button type="button" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>More</span></button>
+  </nav>
+</div>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-bar"><button class="link" type="button" id="sheetClose">Cancel</button><h2 id="sheetTitle"></h2><span style="width:56px"></span></div>
+  <div class="sheet-body"><div class="sheet-inner" id="sheetBody"></div></div>
+  <div class="sheet-foot" id="sheetFoot"></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<button class="help-btn" id="helpBtn" type="button" aria-label="How to use this screen" hidden>?</button>
+<div class="tip-scrim" id="tipScrim" hidden><div class="tip" role="dialog" aria-modal="true" aria-labelledby="tipTitle"><div class="mono">How this works</div><h2 id="tipTitle"></h2><ol id="tipBody"></ol>
+  <div class="tip-actions"><button class="link" type="button" id="tipOff">Turn off tips</button><button class="btn solid" type="button" id="tipOk">Got it</button></div></div></div>
+
+<script type="module">
+import { markdown, wordCount, plainText } from "/js/markdown.js";
+import { analyze, score, PILLARS as V_PILLARS, HOOKS } from "/js/analytics.js";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = n => "$" + Number(n || 0).toFixed(2);
+const today = () => new Date().toISOString().slice(0, 10);
+const ORDER_STATUSES = [["new", "New"], ["awaiting_payment", "Awaiting payment"], ["paid", "Paid, to ship"], ["shipped", "Shipped"], ["delivered", "Delivered"], ["cancelled", "Cancelled"]];
+const ART = ["tee", "hoodie", "cap", "sticker", "key", "print"];
+const statusLabel = s => (ORDER_STATUSES.find(x => x[0] === s) || [s, s])[1];
+
+// ---------- session ----------
+const store = { get(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v, keep) { try { (keep ? localStorage : sessionStorage).setItem(k, v); } catch (e) {} },
+  clear(k) { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} } };
+let token = store.get("vv-admin") || "";
+const state = { events: null, money: null, moneyView: "overview", tab: "grow", orders: null, products: null, posts: null, settings: null, audience: null, plan: null, videos: null, coach: null, crew: null, orderFilter: "open", postFilter: "all", growView: "today", planView: "playbook", ideaStage: "idea" };
+const dataKey = tab => tab === "build" ? "settings" : tab === "grow" ? "plan" : tab;
+
+async function api(path, { method = "GET", body, raw, type } = {}) {
+  const res = await fetch("/api/admin/" + path, { method,
+    headers: { Authorization: "Bearer " + token, ...(raw ? { "Content-Type": type } : body ? { "Content-Type": "application/json" } : {}) },
+    body: raw || (body ? JSON.stringify(body) : undefined) });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { lock("That passphrase didn't work."); throw new Error("locked"); }
+  if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
+  return data;
+}
+function lock(msg) {
+  token = ""; store.clear("vv-admin");
+  $("#appView").hidden = true; $("#sheet").hidden = true; $("#loginView").hidden = false; $("#helpBtn").hidden = true;
+  $("#loginErr").textContent = msg || "";
+}
+let toastTimer;
+function toast(msg, err = false) {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast" + (err ? " err" : ""); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, err ? 5000 : 3200);
+}
+const savedMsg = live => live ? "Saved. Live on the site in about a minute." : "Saved. It'll show on the site after the next refresh.";
+const fail = e => { if (e.message !== "locked") toast(e.message, true); };
+
+// ---------- tabs ----------
+function go(tab) {
+  state.tab = tab;
+  document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === tab ? "page" : "false"));
+  render();
+  if (state[dataKey(tab)] === null) load(dataKey(tab));
+  if (tab === "build" && state.events === null) load("events");
+  if (tab === "orders") ["money", "settings", "audience"].forEach(k => { if (state[k] === null) load(k); });
+  if (tab === "grow") ["videos", "coach", "audience", "crew", "settings", "events"].forEach(k => { if (state[k] === null) load(k); });
+  if (tab === "settings") ["audience", "crew"].forEach(k => { if (state[k] === null) load(k); });
+  window.scrollTo(0, 0);
+}
+async function load(tab) {
+  try { state[tab] = await api(tab); render(); } catch (e) { fail(e); }
+}
+function render() {
+  const s = $("#screen");
+  const data = state[dataKey(state.tab)];
+  if (data === null) { s.innerHTML = `<div class="loading">Loading…</div>`; return; }
+  if (state.tab === "grow" && (state.videos === null || state.coach === null)) { s.innerHTML = `<div class="loading">Loading…</div>`; return; }
+  s.innerHTML = ({ orders: moneyView, products: productsView, posts: postsView, build: buildView, grow: growView, settings: settingsView })[state.tab]();
+  $("#helpBtn").hidden = false;
+  if (!s.querySelector(".loading")) setTimeout(() => { if ($("#sheet").hidden) showTip(tipKey()); }, 250);
+  const n = (state.orders || []).filter(o => o.status === "new").length;
+  $("#newBadge").hidden = !n; $("#newBadge").textContent = n;
+}
+
+// ---------- orders ----------
+const isOpen = o => ["new", "awaiting_payment", "paid"].includes(o.status);
+// ---------- Money ----------
+const DEAL_STAGES = [["pitched", "Pitched"], ["negotiating", "Talking"], ["signed", "Signed"], ["delivered", "Delivered"], ["paid", "Paid"], ["lost", "Lost"]];
+const SOURCES = [["sponsor", "Sponsor"], ["creator", "Creator payout"], ["affiliate", "Affiliate"], ["merch", "Merch (outside the site)"], ["other", "Other"]];
+const ym = d => String(d || "").slice(0, 7);
+const usd = n => "$" + Math.round(Number(n) || 0).toLocaleString();
+function moneyByMonth(month) {
+  const o = (state.orders || []).filter(x => ["paid", "shipped", "delivered"].includes(x.status) && ym(x.created_at) === month).reduce((a, x) => a + Number(x.total), 0);
+  const inc = (state.money?.income || []).filter(x => ym(x.received_on) === month);
+  const by = k => inc.filter(x => x.source === k).reduce((a, x) => a + Number(x.amount), 0);
+  const deals = (state.money?.deals || []).filter(d => d.status === "paid" && ym(d.paid_on) === month).reduce((a, d) => a + Number(d.value), 0);
+  const rows = { Merch: o + by("merch"), Sponsors: deals + by("sponsor"), "Creator payouts": by("creator"), Affiliate: by("affiliate"), Other: by("other") };
+  return { rows, total: Object.values(rows).reduce((a, b) => a + b, 0) };
+}
+function moneyView() {
+  if (state.money === null || state.settings === null) return `<div class="loading">Loading…</div>`;
+  const mv = state.moneyView;
+  const head = `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Money</h1></div></div>`;
+  const nav = `<div class="seg" style="grid-template-columns:repeat(5,1fr)" role="group" aria-label="Money sections">${[["overview", "Overview"], ["orders", "Orders"], ["deals", "Deals"], ["income", "Income"], ["kit", "Media kit"]].map(([k, l]) => `<button type="button" data-moneyv="${k}" aria-pressed="${mv === k}">${l}</button>`).join("")}</div>`;
+  return head + nav + ({ overview: overviewView, orders: ordersView, deals: dealsView, income: incomeView, kit: kitView })[mv]();
+}
+function overviewView() {
+  const now = new Date(), month = now.toISOString().slice(0, 7), last = new Date(now.getFullYear(), now.getMonth() - 1, 15).toISOString().slice(0, 7);
+  const m = moneyByMonth(month), l = moneyByMonth(last), goal = Number(state.settings.incomeGoal) || 0;
+  const open = (state.money.deals || []).filter(d => ["signed", "delivered"].includes(d.status)), pipe = (state.money.deals || []).filter(d => ["pitched", "negotiating"].includes(d.status));
+  const due = open.filter(d => d.due_on).sort((a, b) => a.due_on.localeCompare(b.due_on)).slice(0, 4);
+  const months = [...Array(6)].map((_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 15); const k = d.toISOString().slice(0, 7); return { key: d.toLocaleDateString("en-US", { month: "short" }), v: moneyByMonth(k).total, count: 0 }; });
+  const max = Math.max(goal, ...months.map(x => x.v), 1);
+  return `<div class="card" style="border-color:var(--signal)"><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="mono">${now.toLocaleDateString("en-US", { month: "long" })} so far</div><b style="font-size:34px">${usd(m.total)}</b></div>
+      <div style="text-align:right"><div class="mono">Goal</div><b style="font-size:20px">${usd(goal)}</b></div></div>
+    ${goal ? `<div class="progress" role="img" aria-label="${Math.round(m.total / goal * 100)}% of monthly goal"><span style="width:${Math.min(100, m.total / goal * 100)}%"></span></div>` : ""}
+    <span class="r-sub">Last month: ${usd(l.total)}</span></div>
+  <div class="card" style="margin-top:12px"><strong>Where it came from this month</strong>${bars(Object.entries(m.rows).map(([key, v]) => ({ key, v, count: "" })), "v", usd)}</div>
+  <div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between"><strong>Last 6 months</strong><span class="mono">dashed = goal</span></div>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:120px;border-bottom:1px solid var(--rule);position:relative" role="img" aria-label="Income per month">
+      ${goal ? `<span style="position:absolute;left:0;right:0;bottom:${goal / max * 100}%;border-top:1px dashed var(--muted)"></span>` : ""}
+      ${months.map(x => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px"><span class="mono" style="font-size:10px;color:var(--ink)">${x.v ? usd(x.v) : ""}</span><span style="width:100%;max-width:34px;height:${x.v / max * 85}%;background:var(--signal);border-radius:4px 4px 0 0"></span></div>`).join("")}
+    </div><div style="display:flex;gap:8px">${months.map(x => `<span class="mono" style="flex:1;text-align:center;font-size:10px">${x.key}</span>`).join("")}</div></div>
+  <div class="stats" style="margin-top:12px"><div class="stat"><span class="mono">Signed, not paid</span><b>${usd(open.reduce((a, d) => a + Number(d.value), 0))}</b><span class="r-sub" style="font-size:12px">${open.length} deal${open.length === 1 ? "" : "s"}</span></div>
+    <div class="stat"><span class="mono">In talks</span><b>${usd(pipe.reduce((a, d) => a + Number(d.value), 0))}</b><span class="r-sub" style="font-size:12px">${pipe.length} pitch${pipe.length === 1 ? "" : "es"}</span></div></div>
+  ${due.length ? `<div class="card" style="margin-top:12px"><strong>Owed to brands</strong>${due.map(d => `<button class="row" type="button" data-deal="${d.id}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong>${esc(d.brand)}</strong><span class="r-sub">${esc(d.deliverables || "Deliverables not set")}</span></span><span class="r-end">${esc(d.due_on)}</span></button>`).join("")}</div>` : ""}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><button class="btn" type="button" data-act="new-deal">+ Deal</button><button class="btn" type="button" data-act="new-income">+ Income</button></div>`;
+}
+function dealsView() {
+  const d = state.money.deals;
+  return `<div class="list">${DEAL_STAGES.map(([k, l]) => { const xs = d.filter(x => x.status === k); return xs.length ? `<div class="mono week-h">${l} · ${usd(xs.reduce((a, x) => a + Number(x.value), 0))}</div>` + xs.map(x => `<button class="row" type="button" data-deal="${x.id}" style="grid-template-columns:minmax(0,1fr) auto">
+      <span class="r-main"><strong>${esc(x.brand)}</strong><span class="r-sub">${esc(x.deliverables || x.product || "")}</span></span><span class="r-end">${usd(x.value)}${x.due_on && !["paid", "lost"].includes(k) ? `<span class="mono" style="font-size:11px">due ${esc(x.due_on)}</span>` : ""}</span></button>`).join("") : ""; }).join("")
+    || `<div class="empty">No deals yet. Brand inquiries from the site show up in More → Pit Crew, where one tap turns them into a deal. Or add a deal you pitched yourself.</div>`}</div>
+  <button class="btn solid fab" type="button" data-act="new-deal">+ Deal</button>`;
+}
+function editDeal(x, prefill) {
+  const isNew = !x; x = x || { brand: "", contact: "", email: "", status: "pitched", value: "", product: "", deliverables: "", due_on: "", notes: "", ...(prefill || {}) };
+  sheet(isNew ? "New deal" : x.brand, `
+    <label class="field" for="dl-brand"><span>Brand</span><input id="dl-brand" value="${esc(x.brand)}"></label>
+    <div class="field"><span>Stage</span><div class="chips" style="flex-wrap:wrap">${DEAL_STAGES.map(([k, l]) => `<button class="chip" type="button" data-pick="dstage" data-val="${k}" aria-pressed="${k === x.status}">${l}</button>`).join("")}</div></div>
+    <div class="pair"><label class="field" for="dl-value"><span>Cash value ($)</span><input id="dl-value" inputmode="decimal" value="${esc(x.value)}"></label>
+    <label class="field" for="dl-due"><span>Content due</span><input id="dl-due" type="date" value="${esc(x.due_on || "")}"></label></div>
+    <label class="field" for="dl-product"><span>Gifted product (if any)</span><input id="dl-product" value="${esc(x.product)}"></label>
+    <label class="field" for="dl-deliv"><span>What you owe them</span><textarea id="dl-deliv" rows="3" placeholder="1 TikTok + 1 Reel, tag @brand, link in bio for 7 days">${esc(x.deliverables)}</textarea><small>Remember #ad on every sponsored post.</small></label>
+    <div class="pair"><label class="field" for="dl-contact"><span>Contact</span><input id="dl-contact" value="${esc(x.contact)}"></label>
+    <label class="field" for="dl-email"><span>Email</span><input id="dl-email" type="email" value="${esc(x.email)}" autocapitalize="none"></label></div>
+    <label class="field" for="dl-notes"><span>Notes</span><textarea id="dl-notes" rows="3">${esc(x.notes)}</textarea></label>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="money-delete" data-kind="deal" data-id="${x.id}">Delete deal</button>`}`,
+    [["Save", "solid", async () => {
+      const status = document.querySelector('[data-pick="dstage"][aria-pressed="true"]')?.dataset.val || x.status;
+      const saved = await api("money", { method: "POST", body: { kind: "deal", id: x.id, inquiry_id: x.inquiry_id, brand: $("#dl-brand").value, status, value: $("#dl-value").value || 0, due_on: $("#dl-due").value, product: $("#dl-product").value, deliverables: $("#dl-deliv").value, contact: $("#dl-contact").value, email: $("#dl-email").value, notes: $("#dl-notes").value, paid_on: x.paid_on } });
+      state.money.deals = x.id ? state.money.deals.map(d => d.id === x.id ? saved : d) : [saved, ...state.money.deals];
+      closeSheet(); render(); toast(status === "paid" ? `Paid: ${usd(saved.value)}. Nice.` : "Deal saved.");
+    }]]);
+}
+function incomeView() {
+  const inc = state.money.income;
+  return `<p class="r-sub" style="white-space:normal;margin:0 0 12px">Merch sold on the site and paid deals count automatically. Log everything else here: TikTok or YouTube payouts, affiliate checks, merch sold at meets.</p>
+  <div class="list">${inc.map(x => `<button class="row" type="button" data-income="${x.id}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong>${esc((SOURCES.find(s => s[0] === x.source) || [0, x.source])[1])}${x.platform ? ` · ${esc(x.platform)}` : ""}</strong><span class="r-sub">${esc(x.received_on)}${x.note ? ` · ${esc(x.note)}` : ""}</span></span><span class="r-end">${usd(x.amount)}</span></button>`).join("") || `<div class="empty">Nothing logged yet.</div>`}</div>
+  <button class="btn solid fab" type="button" data-act="new-income">+ Income</button>`;
+}
+function editIncome(x) {
+  const isNew = !x; x = x || { source: "creator", platform: "", amount: "", received_on: today(), note: "" };
+  sheet(isNew ? "Log income" : "Income", `
+    <div class="field"><span>Where from</span><div class="chips" style="flex-wrap:wrap">${SOURCES.map(([k, l]) => `<button class="chip" type="button" data-pick="isrc" data-val="${k}" aria-pressed="${k === x.source}">${l}</button>`).join("")}</div></div>
+    <div class="pair"><label class="field" for="in-amount"><span>Amount ($)</span><input id="in-amount" inputmode="decimal" value="${esc(x.amount)}"></label>
+    <label class="field" for="in-date"><span>Date</span><input id="in-date" type="date" value="${esc(x.received_on)}"></label></div>
+    <label class="field" for="in-platform"><span>Platform or company (optional)</span><input id="in-platform" value="${esc(x.platform || "")}" placeholder="TikTok, YouTube, Amazon…"></label>
+    <label class="field" for="in-note"><span>Note</span><input id="in-note" value="${esc(x.note)}"></label>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="money-delete" data-kind="income" data-id="${x.id}">Delete</button>`}`,
+    [["Save", "solid", async () => {
+      const source = document.querySelector('[data-pick="isrc"][aria-pressed="true"]')?.dataset.val || x.source;
+      const saved = await api("money", { method: "POST", body: { kind: "income", id: x.id, source, amount: $("#in-amount").value, received_on: $("#in-date").value, platform: $("#in-platform").value, note: $("#in-note").value } });
+      state.money.income = x.id ? state.money.income.map(i => i.id === x.id ? saved : i) : [saved, ...state.money.income];
+      state.money.income.sort((a, b) => b.received_on.localeCompare(a.received_on));
+      closeSheet(); render(); toast(`Logged ${usd(saved.amount)}.`);
+    }]]);
+}
+function kitView() {
+  const k = state.settings.mediaKit || {};
+  return `<form id="kitForm" style="display:flex;flex-direction:column;gap:16px">
+    <p class="r-sub" style="white-space:normal;margin:0">Your public media kit at thevolksvision.com/media-kit. Send the link to brands. Numbers come from your Sunday log and your logged videos.</p>
+    <a class="btn" href="/media-kit/" target="_blank" rel="noopener">View my media kit</a>
+    <label class="switch" for="mk-show"><span>Show my numbers on the kit</span><input id="mk-show" type="checkbox"${k.showNumbers !== false ? " checked" : ""}></label>
+    <label class="field" for="mk-pitch"><span>Your pitch</span><textarea id="mk-pitch" rows="4">${esc(k.pitch)}</textarea></label>
+    <label class="field" for="mk-aud"><span>Your audience</span><textarea id="mk-aud" rows="3">${esc(k.audience)}</textarea></label>
+    <label class="field" for="mk-svc"><span>What you offer (one per line)</span><textarea id="mk-svc" rows="5">${esc((k.services || []).join("\n"))}</textarea></label>
+    <label class="field" for="mk-partners"><span>Brands you've worked with (one per line)</span><textarea id="mk-partners" rows="3">${esc((k.partners || []).join("\n"))}</textarea></label>
+    <div class="field"><span>Build partners (sponsors on your site)</span><small>Shown on the homepage, the Mk2 page and the media kit with a sponsored link. Add any disclosure a sponsor requires (for a mortgage company that's usually the NMLS number and Equal Housing Opportunity).</small>
+      <div id="sponsors" style="display:flex;flex-direction:column;gap:10px">${(state.settings.sponsors || []).map((x, i) => `<div class="card" data-sp="${i}">
+        <div class="pair"><input data-sp-name value="${esc(x.name)}" placeholder="Sponsor name" aria-label="Sponsor name"><input data-sp-url value="${esc(x.url)}" placeholder="https://their-site.com" inputmode="url" autocapitalize="none" aria-label="Sponsor link"></div>
+        <input data-sp-tag value="${esc(x.tagline)}" placeholder="Short line, e.g. Tampa Bay real estate" aria-label="Sponsor tagline">
+        <input data-sp-disc value="${esc(x.disclosure)}" placeholder="Required disclosure (optional)" aria-label="Sponsor disclosure">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="thumb" id="sp${i}-photo">${x.logo ? `<img src="${esc(x.logo)}" alt="">` : `<span class="mono" style="font-size:10px">LOGO</span>`}</span><input type="hidden" id="sp${i}-image" value="${esc(x.logo)}">
+          <label class="btn" for="sp${i}-file">Logo</label><input id="sp${i}-file" type="file" accept="image/*" hidden data-upload="sp${i}" data-kind="products">
+          <label class="check-line" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-sp-show${x.show !== false ? " checked" : ""}> Show on site</label>
+          <button class="link" type="button" data-delsp="${i}">Remove</button></div></div>`).join("")}</div>
+      <button class="btn" type="button" data-act="add-sponsor">Add a sponsor</button></div>
+    <label class="field" for="mk-goal"><span>Monthly income goal ($)</span><input id="mk-goal" inputmode="numeric" value="${esc(state.settings.incomeGoal)}"></label>
+    <button class="btn solid" type="submit">Save media kit</button></form>`;
+}
+
+function readSponsors() {
+  return [...document.querySelectorAll("[data-sp]")].map(el => { const i = el.dataset.sp; return { name: el.querySelector("[data-sp-name]").value, url: el.querySelector("[data-sp-url]").value, tagline: el.querySelector("[data-sp-tag]").value, disclosure: el.querySelector("[data-sp-disc]").value, logo: $(`#sp${i}-image`).value, show: el.querySelector("[data-sp-show]").checked }; });
+}
+function ordersView() {
+  const o = state.orders;
+  const earned = o.filter(x => ["paid", "shipped", "delivered"].includes(x.status)).reduce((a, x) => a + Number(x.total), 0);
+  const shown = o.filter(x => state.orderFilter === "all" ? true : state.orderFilter === "open" ? isOpen(x) : x.status === state.orderFilter);
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn" type="button" data-act="reload-orders">Refresh</button></div>
+  <div class="stats">
+    <div class="stat"><span class="mono">Open</span><b>${o.filter(isOpen).length}</b></div>
+    <div class="stat"><span class="mono">To ship</span><b>${o.filter(x => x.status === "paid").length}</b></div>
+    <div class="stat"><span class="mono">Collected</span><b>${money(earned)}</b></div>
+    <div class="stat"><span class="mono">Customers</span><b>${new Set(o.map(x => (x.customer_email || x.customer_contact).toLowerCase())).size}</b></div>
+  </div>
+  <div class="chips" role="group" aria-label="Filter orders">${[["open", "Open"], ["all", "All"], ...ORDER_STATUSES].map(([k, l]) => `<button class="chip" type="button" data-of="${k}" aria-pressed="${k === state.orderFilter}">${l}</button>`).join("")}</div>
+  <div class="list">${shown.map(x => `<button class="row" type="button" data-order="${x.id}">
+    <span class="thumb mono" style="font-size:10px">${esc(x.order_number.replace("VV-", ""))}</span>
+    <span class="r-main"><strong>${esc(x.customer_name)}</strong><span class="r-sub">${new Date(x.created_at).toLocaleDateString()} · ${x.items.reduce((a, i) => a + i.qty, 0)} item(s)</span></span>
+    <span class="r-end">${money(x.total)}<span class="pill p-${x.status}">${statusLabel(x.status)}</span></span></button>`).join("")
+    || `<div class="empty">No orders here yet. New orders from the shop show up at the top, and you'll get an email for each one.</div>`}</div>
+  ${state.orders.length ? `<p style="margin-top:16px"><button class="link" type="button" data-act="export">Download all orders (CSV)</button></p>` : ""}`;
+}
+function openOrder(id) {
+  const o = state.orders.find(x => x.id === id);
+  const history = state.orders.filter(x => (x.customer_email || x.customer_contact).toLowerCase() === (o.customer_email || o.customer_contact).toLowerCase());
+  sheet(`Order ${o.order_number}`, `
+    <div><div class="mono">Customer</div><p style="margin:6px 0 0"><strong>${esc(o.customer_name)}</strong><br><span class="copyable">${esc(o.customer_contact)}</span><br><span class="copyable">${esc(o.ship_to)}</span></p>
+    <p class="mono" style="margin-top:6px">${history.length} order(s) · ${money(history.filter(x => x.status !== "cancelled").reduce((a, x) => a + Number(x.total), 0))} lifetime</p></div>
+    <table class="order-items">${o.items.map(i => `<tr><td>${i.qty} × ${esc(i.name)} (${esc(i.size)})</td><td>${money(i.qty * i.price)}</td></tr>`).join("")}
+      <tr><td>Shipping</td><td>${money(o.shipping)}</td></tr><tr><td><strong>Total</strong></td><td><strong>${money(o.total)}</strong></td></tr></table>
+    <label class="field" for="o-status"><span>Status</span><select id="o-status">${ORDER_STATUSES.map(([k, l]) => `<option value="${k}"${k === o.status ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+    <label class="field" for="o-tracking"><span>Tracking number</span><input id="o-tracking" value="${esc(o.tracking)}" autocomplete="off"></label>
+    <label class="field" for="o-notes"><span>Notes</span><textarea id="o-notes" rows="3">${esc(o.notes)}</textarea></label>`,
+    [["Save", "solid", async () => {
+      const row = await api("orders", { method: "PATCH", body: { id, status: $("#o-status").value, tracking: $("#o-tracking").value, notes: $("#o-notes").value } });
+      state.orders = state.orders.map(x => x.id === id ? row : x); closeSheet(); render(); toast("Order updated.");
+    }]]);
+}
+
+// ---------- products ----------
+const ARTSVG = { tee: '<path d="M38 18l-22 12 8 18 10-5v59h52V43l10 5 8-18-22-12q-10 8-22 8T38 18z" fill="none" stroke="currentColor" stroke-width="4"/>', hoodie: '<path d="M42 20q18-10 36 0l24 14-8 20-8-4v56H34V50l-8 4-8-20z" fill="none" stroke="currentColor" stroke-width="4"/>', cap: '<path d="M24 74q0-40 36-40t36 40zM24 74q30 6 72 0q10 2 16 10-40 6-88-10z" fill="none" stroke="currentColor" stroke-width="4"/>', sticker: '<circle cx="55" cy="60" r="32" fill="none" stroke="currentColor" stroke-width="4"/>', key: '<rect x="45" y="40" width="30" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="4"/>', print: '<rect x="18" y="22" width="84" height="76" fill="none" stroke="currentColor" stroke-width="4"/>' };
+const thumb = p => `<span class="thumb">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : `<svg viewBox="0 0 120 120" aria-hidden="true">${ARTSVG[p.art] || ARTSVG.tee}</svg>`}</span>`;
+function productsView() {
+  const list = state.products;
+  return `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Shop</h1></div><a class="btn" href="/#shop" target="_blank" rel="noopener">View shop</a></div>
+  <div class="list">${list.map(p => `<button class="row" type="button" data-product="${esc(p.id)}">${thumb(p)}
+    <span class="r-main"><strong>${esc(p.name)}</strong><span class="r-sub">${esc(p.cat)} · ${p.sizes.length} size(s)${p.image ? "" : " · needs a photo"}</span></span>
+    <span class="r-end">${money(p.price)}<span class="pill ${!p.active ? "p-hidden" : p.sold_out ? "p-draft" : "p-live"}">${!p.active ? "Hidden" : p.sold_out ? "Sold out" : "Live"}</span></span></button>`).join("")
+    || `<div class="empty"><span>No products yet. Start with the six starter designs, then edit them, or add your own.</span><button class="btn sea" type="button" data-act="import">Add the starter products</button></div>`}</div>
+  <button class="btn solid fab" type="button" data-act="new-product">+ New product</button>`;
+}
+function photoField(prefix, url, alt, kind) {
+  return `<div class="field"><span>Photo</span>
+    <div class="photo" id="${prefix}-photo">${url ? `<img src="${esc(url)}" alt="">` : `<div class="ph"><span>Add a photo from your camera or library.</span></div>`}</div>
+    <input type="hidden" id="${prefix}-image" value="${esc(url)}">
+    <div class="photo-actions">
+      <label class="btn" for="${prefix}-file" style="display:inline-flex;align-items:center">${url ? "Change photo" : "Take or choose photo"}</label>
+      <input id="${prefix}-file" type="file" accept="image/*" hidden data-upload="${prefix}" data-kind="${kind}">
+      ${url ? `<button class="btn danger" type="button" data-clearphoto="${prefix}">Remove</button>` : ""}
+    </div></div>
+  <label class="field" for="${prefix}-alt"><span>Describe the photo</span><input id="${prefix}-alt" value="${esc(alt)}" placeholder="e.g. Black VolksVision tee with the Mk2 Jetta profile on the back"><small>Google reads this. Name what's in the picture.</small></label>`;
+}
+function openProduct(id) {
+  const isNew = !id;
+  const p = isNew ? { name: "", price: "", cat: "wear", sizes: ["S", "M", "L", "XL"], blurb: "", details: "", tag: "", exif: "", art: "tee", image: "", image_alt: "", stripe: "", active: true, sort: 100 } : state.products.find(x => x.id === id);
+  sheet(isNew ? "New product" : "Edit product", `
+    ${photoField("p", p.image, p.image_alt, "products")}
+    <label class="field" for="p-name"><span>Name</span><input id="p-name" value="${esc(p.name)}" required placeholder="VR6 Firing Order Hoodie"><small>Use words people search for, like "VR6", "VW" or "hoodie".</small></label>
+    <div class="pair">
+      <label class="field" for="p-price"><span>Price ($)</span><input id="p-price" inputmode="decimal" value="${esc(p.price)}" placeholder="28"></label>
+      <label class="field" for="p-cat"><span>Category</span><input id="p-cat" value="${esc(p.cat)}" list="cats" autocapitalize="none"></label>
+    </div>
+    <datalist id="cats"><option value="wear"><option value="garage"><option value="prints"></datalist>
+    <label class="field" for="p-sizes"><span>Sizes</span><input id="p-sizes" value="${esc(p.sizes.join(", "))}" autocapitalize="characters"><small>Separate with commas. Use "One size" if there's only one.</small></label>
+    <label class="field" for="p-blurb"><span>Short description</span><textarea id="p-blurb" rows="2" maxlength="300">${esc(p.blurb)}</textarea><small>One or two sentences. Shows on the shop grid.</small></label>
+    <label class="field" for="p-details"><span>Full description (product page)</span><textarea id="p-details" rows="5">${esc(p.details)}</textarea><small>Fit, material, print method, care. More detail helps it rank.</small></label>
+    <div class="pair">
+      <label class="field" for="p-tag"><span>Label (optional)</span><input id="p-tag" value="${esc(p.tag)}" placeholder="Limited"></label>
+      <label class="field" for="p-exif"><span>Frame caption</span><input id="p-exif" value="${esc(p.exif)}" placeholder="1/250 · f/8"></label>
+    </div>
+    ${p.image ? "" : `<label class="field" for="p-art"><span>Drawing to show until there's a photo</span><select id="p-art">${ART.map(a => `<option${a === p.art ? " selected" : ""}>${a}</option>`).join("")}</select></label>`}
+    <label class="field" for="p-stripe"><span>Stripe payment link (optional)</span><input id="p-stripe" value="${esc(p.stripe)}" inputmode="url" autocapitalize="none" placeholder="https://buy.stripe.com/..."><small>Adds instant card checkout for this item.</small></label>
+    <label class="field" for="p-sort"><span>Position in shop</span><input id="p-sort" inputmode="numeric" value="${esc(p.sort)}"><small>Lower numbers show first.</small></label>
+    <label class="switch" for="p-active"><span>Show in the shop</span><input id="p-active" type="checkbox"${p.active ? " checked" : ""}></label>
+    <label class="switch" for="p-sold"><span>Sold out<br><small class="r-sub">Stays on the site marked "Sold out". That shows demand.</small></span><input id="p-sold" type="checkbox"${p.sold_out ? " checked" : ""}></label>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="delete-product" data-id="${esc(p.id)}">Delete product</button>`}`,
+    [["Save", "solid", async () => {
+      const body = { id: p.id, name: $("#p-name").value, price: $("#p-price").value, cat: $("#p-cat").value, sizes: $("#p-sizes").value,
+        blurb: $("#p-blurb").value, details: $("#p-details").value, tag: $("#p-tag").value, exif: $("#p-exif").value,
+        art: $("#p-art") ? $("#p-art").value : p.art, image: $("#p-image").value, image_alt: $("#p-alt").value,
+        stripe: $("#p-stripe").value, sort: $("#p-sort").value, active: $("#p-active").checked, sold_out: $("#p-sold").checked };
+      if (body.image && !body.image_alt.trim()) throw new Error("Describe the photo first. Google needs it to show the product in image search.");
+      const { product, live } = await api("products", { method: "POST", body });
+      state.products = isNew ? [...state.products, product] : state.products.map(x => x.id === p.id ? product : x);
+      state.products.sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
+      closeSheet(); render(); toast(savedMsg(live));
+    }]]);
+}
+
+// ---------- journal ----------
+function postsView() {
+  const all = state.posts;
+  const shown = all.filter(p => state.postFilter === "all" || p.status === state.postFilter);
+  return `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Journal</h1></div><a class="btn" href="/journal/" target="_blank" rel="noopener">View</a></div>
+  <p class="r-sub" style="white-space:normal;margin:0 0 12px">A new post is written and published automatically every week${state.settings && state.settings.autoPublish === false ? " (as a draft, per Settings)" : ""}. Edit anything here.</p>
+  <div class="chips" role="group" aria-label="Filter posts">${[["all", "All"], ["published", "Live"], ["draft", "Drafts"]].map(([k, l]) => `<button class="chip" type="button" data-pf="${k}" aria-pressed="${k === state.postFilter}">${l}</button>`).join("")}</div>
+  <div class="list">${shown.map(p => `<button class="row" type="button" data-post="${p.id}">${p.image ? `<span class="thumb"><img src="${esc(p.image)}" alt="" loading="lazy"></span>` : `<span class="thumb mono" style="font-size:10px">${p.date.slice(5)}</span>`}
+    <span class="r-main"><strong>${esc(p.title)}</strong><span class="r-sub">${p.date} · ${wordCount(p.body)} words${p.source === "auto" ? " · auto-written" : ""}</span></span>
+    <span class="r-end"><span class="pill ${p.status === "published" ? (p.date > today() ? "p-draft" : "p-live") : "p-draft"}">${p.status === "draft" ? "Draft" : p.date > today() ? "Scheduled" : "Live"}</span></span></button>`).join("")
+    || `<div class="empty">No posts here yet. Tap "+ New post" to write one, or wait for this week's automatic post.</div>`}</div>
+  <button class="btn solid fab" type="button" data-act="new-post">+ New post</button>`;
+}
+function seoChecks(f) {
+  const words = wordCount(f.body), t = f.title.trim(), d = f.description.trim();
+  const internal = /\]\(\/(shop|journal|#shop)/.test(f.body);
+  return [
+    [t.length >= 25 && t.length <= 65, `Title is ${t.length} characters (aim for 25 to 65)`],
+    [d.length >= 110 && d.length <= 160 || (!d && words > 60), d ? `Search description is ${d.length} characters (aim for 110 to 160)` : "Search description will be written from your first lines"],
+    [words >= 600, `${words} words (posts over 600 words rank better)`],
+    [/^##\s/m.test(f.body), "Has at least one ## heading"],
+    [internal, "Links to a product or another post (use the 🔗 Shop button)"],
+    [!!f.image && !!f.alt.trim(), f.image ? (f.alt.trim() ? "Cover photo has a description" : "Describe the cover photo") : "Add a cover photo (helps clicks from Google and social)"]
+  ];
+}
+function openPost(id) {
+  const isNew = !id;
+  const p = isNew ? { title: "", description: "", body: "", tags: "", image: "", image_alt: "", status: "published", date: today() } : state.posts.find(x => x.id === id);
+  sheet(isNew ? "New post" : "Edit post", `
+    <label class="field" for="b-title"><span>Title</span><input id="b-title" value="${esc(p.title)}" placeholder="How I Film VR6 Sound Clips"><small>Write it the way someone would search for it.</small></label>
+    ${photoField("b", p.image, p.image_alt, "posts")}
+    <div class="field"><span>Post</span>
+      <div class="toolbar" role="toolbar" aria-label="Formatting">
+        <button type="button" data-md="h2" aria-label="Heading">H</button><button type="button" data-md="bold" aria-label="Bold"><b>B</b></button>
+        <button type="button" data-md="list" aria-label="List">• List</button><button type="button" data-md="link" aria-label="Link">Link</button>
+        <button type="button" data-md="shop" aria-label="Link a product">🔗 Shop</button><button type="button" data-md="quote" aria-label="Quote">“ ”</button>
+        <button type="button" data-md="preview" id="previewBtn">Preview</button>
+      </div>
+      <textarea id="b-body" class="body-edit" placeholder="Start writing. Use the buttons above for headings and lists.">${esc(p.body)}</textarea>
+      <div class="preview" id="b-preview" hidden></div>
+    </div>
+    <label class="field" for="b-desc"><span>Search description (optional)</span><textarea id="b-desc" rows="2" maxlength="200">${esc(p.description)}</textarea><small>What Google shows under the title. Leave blank to use your first lines.</small></label>
+    <label class="field" for="b-tags"><span>Tags</span><input id="b-tags" value="${esc(p.tags)}" autocapitalize="none" placeholder="vr6, mk4, car meets"><small>Comma separated. Links related posts together.</small></label>
+    <label class="field" for="b-date"><span>Publish date</span><input id="b-date" type="date" value="${esc(p.date)}"><small>Pick a future date to schedule it.</small></label>
+    <div class="field"><span>Ranking checklist</span><div class="checks" id="b-checks"></div></div>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="delete-post" data-id="${p.id}">Delete post</button>`}`,
+    [["Save draft", "", () => savePost(p, "draft")], [p.status === "published" && !isNew ? "Update" : "Publish", "sea", () => savePost(p, "published")]]);
+  const update = () => {
+    const f = { title: $("#b-title").value, description: $("#b-desc").value, body: $("#b-body").value, image: $("#b-image").value, alt: $("#b-alt").value };
+    const checks = seoChecks(f);
+    $("#b-checks").innerHTML = `<div class="score">${checks.filter(c => c[0]).length} of ${checks.length} done</div>` + checks.map(([ok, label]) => `<div class="check"><span class="dot${ok ? " ok" : ""}"></span><span>${esc(label)}</span></div>`).join("");
+  };
+  $("#sheetBody").addEventListener("input", update); update();
+}
+async function savePost(p, status) {
+  const body = { id: p.id, title: $("#b-title").value, description: $("#b-desc").value, body: $("#b-body").value, tags: $("#b-tags").value,
+    date: $("#b-date").value, image: $("#b-image").value, image_alt: $("#b-alt").value, status };
+  if (body.image && !body.image_alt.trim()) throw new Error("Describe the cover photo first.");
+  const { post, live } = await api("posts", { method: "POST", body });
+  state.posts = p.id ? state.posts.map(x => x.id === p.id ? post : x) : [post, ...state.posts];
+  state.posts.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  closeSheet(); render(); toast(status === "draft" ? "Draft saved." : savedMsg(live));
+}
+function formatMd(kind) {
+  const ta = $("#b-body");
+  if (kind === "preview") {
+    const pv = $("#b-preview"), showing = !pv.hidden;
+    pv.hidden = showing; ta.hidden = !showing; $("#previewBtn").textContent = showing ? "Preview" : "Edit";
+    if (!showing) pv.innerHTML = markdown(ta.value) || `<p class="r-sub">Nothing to preview yet.</p>`;
+    return;
+  }
+  if (kind === "shop") { pickProductLink(); return; }
+  const [a, b] = [ta.selectionStart, ta.selectionEnd], sel = ta.value.slice(a, b);
+  const lineStart = ta.value.lastIndexOf("\n", a - 1) + 1;
+  const ops = {
+    h2: () => ({ at: lineStart, to: lineStart, text: "## " }),
+    quote: () => ({ at: lineStart, to: lineStart, text: "> " }),
+    list: () => ({ at: lineStart, to: lineStart, text: "- " }),
+    bold: () => ({ at: a, to: b, text: `**${sel || "bold text"}**` }),
+    link: () => ({ at: a, to: b, text: `[${sel || "link text"}](https://)` })
+  };
+  const op = ops[kind](); ta.focus();
+  ta.setRangeText(op.text, op.at, op.to, "end"); ta.dispatchEvent(new Event("input", { bubbles: true }));
+}
+async function pickProductLink() {
+  if (state.products === null) { try { state.products = await api("products"); } catch (e) { return fail(e); } }
+  const ta = $("#b-body"), pos = [ta.selectionStart, ta.selectionEnd];
+  const box = document.createElement("div");
+  box.className = "checks"; box.innerHTML = `<div class="score">Tap a product to link it</div>` + state.products.filter(p => p.active).map(p => `<button type="button" class="link" style="text-align:left" data-linkp="${esc(p.id)}">${esc(p.name)}</button>`).join("");
+  ta.parentElement.insertBefore(box, ta);
+  box.addEventListener("click", e => {
+    const b = e.target.closest("[data-linkp]"); if (!b) return;
+    const p = state.products.find(x => x.id === b.dataset.linkp), sel = ta.value.slice(pos[0], pos[1]);
+    ta.setRangeText(`[${sel || p.name}](/shop/${p.id}/)`, pos[0], pos[1], "end"); box.remove(); ta.focus();
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
+// ---------- Mk2 build, hero and videos ----------
+function buildView() {
+  if ((state.buildView || "build") === "stops") return buildNav() + stopsView();
+  return buildNav() + buildEditView();
+}
+const buildNav = () => `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>The Mk2</h1></div></div><div class="seg" style="grid-template-columns:1fr 1fr" role="group" aria-label="Mk2 sections">${[["build", "Build"], ["stops", "Next stops"]].map(([k, l]) => `<button type="button" data-bv="${k}" aria-pressed="${(state.buildView || "build") === k}">${l}</button>`).join("")}</div>`;
+function stopsView() {
+  const ev = state.events;
+  if (ev === null) return `<div class="loading">Loading…</div>`;
+  const now = new Date().toISOString(), up = ev.filter(e => (e.ends_at || e.starts_at) >= now).sort((a, b) => a.starts_at.localeCompare(b.starts_at)), past = ev.filter(e => (e.ends_at || e.starts_at) < now);
+  const row = e => `<button class="row" type="button" data-stop="${e.id}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong>${esc(e.title)}</strong><span class="r-sub">${new Date(e.starts_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${esc(e.venue || e.city)}</span></span><span class="r-end">${e.pullups} pulling up${e.published ? "" : `<span class="pill p-hidden">Hidden</span>`}</span></button>`;
+  return `<p class="r-sub" style="white-space:normal;margin:0 0 12px">Shows on the site as "Where is VolksVision next?" with an "I'll pull up" button. The next one also shows on the homepage.</p>
+    <div class="mono week-h">Coming up</div><div class="list">${up.map(row).join("") || `<div class="empty">Nothing scheduled. Add the next meet, show, shoot or drop.</div>`}</div>
+    ${past.length ? `<div class="mono week-h">Been there</div><div class="list">${past.slice(0, 10).map(row).join("")}</div>` : ""}
+    <button class="btn solid fab" type="button" data-act="new-stop">+ Stop</button>`;
+}
+function editStop(e) {
+  const isNew = !e;
+  const local = iso => { if (!iso) return ""; const d = new Date(iso); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); };
+  e = e || { title: "", kind: "meet", starts_at: "", ends_at: "", venue: "", address: "", city: "St. Petersburg, FL", link: "", details: "", published: true };
+  const kinds = [["meet", "Meet"], ["show", "Show"], ["shoot", "Shoot"], ["drop", "Drop"], ["reveal", "Reveal"], ["other", "Other"]];
+  sheet(isNew ? "New stop" : e.title, `
+    <label class="field" for="ev-title"><span>What is it</span><input id="ev-title" value="${esc(e.title)}" placeholder="Sunday VW meet at the pier"></label>
+    <div class="field"><span>Type</span><div class="chips" style="flex-wrap:wrap">${kinds.map(([k, l]) => `<button class="chip" type="button" data-pick="evkind" data-val="${k}" aria-pressed="${k === e.kind}">${l}</button>`).join("")}</div></div>
+    <div class="pair"><label class="field" for="ev-start"><span>Starts</span><input id="ev-start" type="datetime-local" value="${local(e.starts_at)}"></label>
+    <label class="field" for="ev-end"><span>Ends (optional)</span><input id="ev-end" type="datetime-local" value="${local(e.ends_at)}"></label></div>
+    <label class="field" for="ev-venue"><span>Where</span><input id="ev-venue" value="${esc(e.venue)}" placeholder="Spot name"></label>
+    <div class="pair"><label class="field" for="ev-address"><span>Address (optional)</span><input id="ev-address" value="${esc(e.address)}"></label>
+    <label class="field" for="ev-city"><span>City</span><input id="ev-city" value="${esc(e.city)}"></label></div>
+    <label class="field" for="ev-link"><span>Event link (optional)</span><input id="ev-link" value="${esc(e.link)}" inputmode="url" autocapitalize="none"></label>
+    <label class="field" for="ev-details"><span>Details</span><textarea id="ev-details" rows="3" placeholder="Bring your car. Shirts will be there.">${esc(e.details)}</textarea></label>
+    <label class="switch" for="ev-pub"><span>Show on the site</span><input id="ev-pub" type="checkbox"${e.published ? " checked" : ""}></label>
+    ${isNew ? "" : `<p class="r-sub">${e.pullups} people tapped "I'll pull up".</p><button class="btn danger" type="button" data-act="stop-delete" data-id="${e.id}">Delete stop</button>`}`,
+    [["Save", "solid", async () => {
+      const kind = document.querySelector('[data-pick="evkind"][aria-pressed="true"]')?.dataset.val || e.kind;
+      const start = $("#ev-start").value, end = $("#ev-end").value;
+      if (!start) throw new Error("Pick when it starts.");
+      const { event, live } = await api("events", { method: "POST", body: { id: e.id, title: $("#ev-title").value, kind, starts_at: new Date(start).toISOString(), ends_at: end ? new Date(end).toISOString() : null, venue: $("#ev-venue").value, address: $("#ev-address").value, city: $("#ev-city").value, link: $("#ev-link").value, details: $("#ev-details").value, published: $("#ev-pub").checked } });
+      state.events = e.id ? state.events.map(x => x.id === e.id ? event : x) : [event, ...state.events];
+      closeSheet(); render(); toast(savedMsg(live));
+    }]]);
+}
+function buildEditView() {
+  const s = state.settings, b = s.build || {};
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><a class="btn" href="/build/" target="_blank" rel="noopener">View build page</a></div>
+  <p class="r-sub" style="white-space:normal;margin:0 0 16px">Your car leads the homepage and has its own page. Keep the spec list current. Every mod you add is something people search for.</p>
+  <form id="buildForm" style="display:flex;flex-direction:column;gap:16px">
+    <div class="mono">Homepage</div>
+    ${photoField("h", s.heroImage, s.heroAlt, "products")}
+    <label class="field" for="h-headline"><span>Big headline over the photo</span><input id="h-headline" value="${esc(s.heroHeadline)}" placeholder="Built slow. Shot right."><small>Two short sentences work best. The second one turns amber.</small></label>
+    <div class="pair">
+      <label class="field" for="d-name"><span>Current drop name</span><input id="d-name" value="${esc(s.dropName)}" placeholder="Drop 01"></label>
+      <label class="field" for="d-note"><span>Drop note</span><input id="d-note" value="${esc(s.dropNote)}" placeholder="Limited run · ends Nov 1"></label>
+    </div>
+
+    <div class="mono" style="margin-top:8px">Road to running</div>
+    <label class="field" for="c-status"><span>Status right now</span><input id="c-status" value="${esc(b.status)}" list="statuses"><small>Change it to "Running" or "Road legal" when it gets there. The coach and captions follow this.</small></label>
+    <datalist id="statuses"><option value="In the build"><option value="Engine out"><option value="Waiting on parts"><option value="First start!"><option value="Running"><option value="Road legal"></datalist>
+    <div class="field"><span>Build stages</span><small>Tick them off as you go. Fans see the progress bar on the site.</small>
+      <div style="display:flex;flex-direction:column;gap:6px">${(b.stages || []).map((x, i) => `<div class="pair" style="grid-template-columns:auto 1fr auto;align-items:center"><input type="checkbox" data-stage-done="${i}" aria-label="Done"${x.done ? " checked" : ""} style="width:24px;height:24px;accent-color:var(--signal)"><input data-stage-name="${i}" value="${esc(x.name)}" aria-label="Stage name"><button class="link" type="button" data-delstage="${i}" aria-label="Remove stage">✕</button></div>`).join("")}</div>
+      <button class="btn" type="button" data-act="add-stage">Add a stage</button></div>
+
+    <div class="mono" style="margin-top:8px">The car</div>
+    <label class="field" for="c-car"><span>Car</span><input id="c-car" value="${esc(b.car)}" placeholder="1989 Volkswagen Jetta (Mk2)"><small>Year, make, model. This is the page title on Google.</small></label>
+    <label class="field" for="c-headline"><span>One-line summary</span><input id="c-headline" value="${esc(b.headline)}" placeholder="Daily-driven Mk2 on a budget, built in St. Pete"></label>
+    <div class="field"><span>Spec sheet</span><small>One part per line. Lines with the same group (Engine, Suspension, Wheels & Tires…) are grouped together on the site.</small>
+      <div id="specs" style="display:flex;flex-direction:column;gap:8px">${(b.specs || []).map((x, i) => `<div class="pair" style="grid-template-columns:1fr 1.6fr auto;align-items:center"><input data-spec-l="${i}" value="${esc(x.label)}" aria-label="Part type" list="spec-groups" placeholder="Engine"><input data-spec-v="${i}" value="${esc(x.value)}" aria-label="Part"><button class="link" type="button" data-delspec="${i}" aria-label="Remove">✕</button></div><input data-spec-link="${i}" value="${esc(x.link || "")}" placeholder="Part link (affiliate OK, optional)" inputmode="url" autocapitalize="none" aria-label="Part link" style="font-size:14px;padding:8px;margin-bottom:6px">`).join("")}</div>
+      <datalist id="spec-groups"><option value="Engine"><option value="Drivetrain"><option value="Suspension"><option value="Wheels & Tires"><option value="Brakes"><option value="Exterior"><option value="Interior"><option value="Electrical"></datalist>
+      <button class="btn" type="button" data-act="add-spec">Add a line</button>
+    </div>
+    <label class="field" for="c-story"><span>The story</span><textarea id="c-story" rows="8" placeholder="How you got it, what it needed, what's next.">${esc(b.story)}</textarea><small>Use ## for section headings. Longer, real stories rank better.</small></label>
+    <div class="field"><span>Gallery</span>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${(b.gallery || []).map((g, i) => `<div style="display:flex;flex-direction:column;gap:4px"><span class="thumb" style="width:100%;height:auto;aspect-ratio:1"><img src="${esc(g.url)}" alt=""></span><input data-gal-alt="${i}" value="${esc(g.alt)}" placeholder="Describe it" aria-label="Describe photo ${i + 1}" style="font-size:14px;padding:8px"><button class="link" type="button" data-delgal="${i}">Remove</button></div>`).join("")}</div>
+      <label class="btn" for="gal-file" style="display:inline-flex;justify-content:center">Add photos</label>
+      <input id="gal-file" type="file" accept="image/*" multiple hidden>
+    </div>
+
+    <div class="mono" style="margin-top:8px">Latest videos</div>
+    <div class="field"><small>Paste TikTok, YouTube or Instagram links. The newest goes first and they show on the homepage.</small>
+      <div id="videos" style="display:flex;flex-direction:column;gap:8px">${(s.videos || []).map((v, i) => `<div class="topic"><div class="r-sub" style="white-space:normal;word-break:break-all">${esc(v)}</div><button class="link" type="button" data-delvid="${i}">Remove</button></div>`).join("")}</div>
+      <input id="v-url" inputmode="url" autocapitalize="none" placeholder="https://www.tiktok.com/@thevolksvision/video/...">
+      <button class="btn" type="button" data-act="add-video">Add video</button>
+    </div>
+    <button class="btn solid" type="submit">Save</button>
+  </form>`;
+}
+function buildBody() {
+  const s = state.settings, specs = [], gallery = [];
+  document.querySelectorAll("[data-spec-l]").forEach(el => { const i = el.dataset.specL; specs.push({ label: el.value, value: document.querySelector(`[data-spec-v="${i}"]`).value, link: document.querySelector(`[data-spec-link="${i}"]`)?.value || "" }); });
+  const stages = [...document.querySelectorAll("[data-stage-name]")].map(el => ({ name: el.value, done: document.querySelector(`[data-stage-done="${el.dataset.stageName}"]`).checked }));
+  (s.build.gallery || []).forEach((g, i) => gallery.push({ url: g.url, alt: (document.querySelector(`[data-gal-alt="${i}"]`) || {}).value ?? g.alt }));
+  return { ...s, heroImage: $("#h-image").value, heroAlt: $("#h-alt").value, heroHeadline: $("#h-headline").value, dropName: $("#d-name").value, dropNote: $("#d-note").value,
+    build: { ...s.build, car: $("#c-car").value, headline: $("#c-headline").value, story: $("#c-story").value, specs, gallery, status: $("#c-status").value, stages } };
+}
+async function addGallery(input) {
+  const files = [...input.files]; input.value = "";
+  state.settings = buildBody();
+  for (const [n, f] of files.entries()) {
+    toast(`Uploading ${n + 1} of ${files.length}…`);
+    try {
+      const blob = await shrink(f);
+      const { url } = await api("upload?kind=products", { method: "POST", raw: blob, type: blob.type || "image/jpeg" });
+      state.settings.build.gallery = [...(state.settings.build.gallery || []), { url, alt: "" }];
+    } catch (e) { fail(e); break; }
+  }
+  render(); toast("Photos added. Describe each one, then tap Save.");
+}
+
+// ---------- Grow: RJ's private growth plan ----------
+const PL = () => state.settings?.pillars?.length ? state.settings.pillars : V_PILLARS, HK = () => state.settings?.hooks?.length ? state.settings.hooks : HOOKS;
+const PILLARS = V_PILLARS, PLATFORMS = ["TikTok", "Instagram", "YouTube"], STAGES = [["idea", "Ideas"], ["filmed", "Filmed"], ["posted", "Posted"]];
+const planOf = kind => (state.plan || []).filter(x => x.kind === kind).sort((a, b) => a.sort - b.sort || a.id - b.id);
+function growView() {
+  if (state.videos === null || state.coach === null) return `<div class="loading">Loading…</div>`;
+  const head = `<div class="top"><div><div class="mono">${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div><h1>${state.growView === "today" ? "What's good, RJ" : "Grow"}</h1></div></div>`;
+  const seg = `<div class="seg" style="grid-template-columns:repeat(5,1fr)" role="group" aria-label="Grow sections">${[["today", "Today"], ["videos", "Videos"], ["stats", "Stats"], ["ideas", "Ideas"], ["plan", "Plan"]].map(([k, l]) => `<button type="button" data-gv="${k}" aria-pressed="${state.growView === k}">${l}</button>`).join("")}</div>`;
+  if (!state.plan.length && state.growView !== "videos" && state.growView !== "stats") return head + seg + `<div class="empty"><span>Your growth hub: what to film today, your video stats, a weekly coach, an idea bank and your playbook. Only you can see it.</span><button class="btn sea" type="button" data-act="plan-import">Set up my growth plan</button><button class="btn solid" type="button" data-act="create">🎬 Edit &amp; post a video</button></div>`;
+  return head + seg + ({ today: todayView, videos: videosView, stats: statsView, ideas: ideasView, plan: planView })[state.growView]();
+}
+
+// ---------- Today ----------
+const goal = () => Number(state.settings?.weeklyGoal) || 5;
+const wkStart = d => { const x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() - x.getUTCDay()); return x.toISOString().slice(0, 10); };
+function streak() {
+  const per = new Map(); (state.videos || []).forEach(v => { const w = wkStart(v.posted_on); per.set(w, (per.get(w) || 0) + 1); });
+  let n = 0; const d = new Date(wkStart(today()) + "T12:00:00Z");
+  if ((per.get(d.toISOString().slice(0, 10)) || 0) >= goal()) n++;
+  for (;;) { d.setUTCDate(d.getUTCDate() - 7); if ((per.get(d.toISOString().slice(0, 10)) || 0) >= goal()) n++; else break; }
+  return { weeks: n, thisWeek: per.get(wkStart(today())) || 0 };
+}
+function milestones() {
+  const v = state.videos || [], subs = state.audience?.subscribers?.length || 0, sold = (state.orders || []).filter(o => o.status !== "cancelled").length;
+  const best = Math.max(0, ...v.map(x => x.views || 0)), bestFollows = Math.max(0, ...v.map(x => x.follows || 0));
+  return [
+    ["First video logged", v.length >= 1], ["10 videos logged", v.length >= 10], ["50 videos logged", v.length >= 50],
+    ["1K views on one video", best >= 1000], ["10K views on one video", best >= 10000], ["100K views on one video", best >= 100000],
+    ["100 follows from one video", bestFollows >= 100], ["3-week streak", streak().weeks >= 3], ["10-week streak", streak().weeks >= 10],
+    ["25 on the drop list", subs >= 25], ["100 on the drop list", subs >= 100], ["First merch sale", sold >= 1], ["10 merch sales", sold >= 10],
+    ["First Crew car featured", (state.crew || []).some(c => c.featured || c.status === "approved")]
+  ];
+}
+function filmToday() {
+  const day = new Date().toLocaleDateString("en-US", { weekday: "short" });
+  const plan = state.coach?.[0]?.report?.next_week?.find(x => x.day === day);
+  if (plan) return { title: plan.idea, sub: `${plan.pillar} · open with: ${plan.hook}`, from: "From your coach" };
+  const idea = planOf("idea").find(i => (i.data.stage || "idea") === "idea");
+  return idea ? { title: idea.title, sub: `${idea.data.pillar} · ${idea.data.platform}`, from: "Next in your idea bank", id: idea.id } : null;
+}
+function todayView() {
+  const st = streak(), f = filmToday(), ms = milestones(), got = ms.filter(m => m[1]), next = ms.find(m => !m[1]);
+  const c = state.coach?.[0]?.report;
+  const nudges = [];
+  const newOrders = (state.orders || []).filter(o => o.status === "new").length; if (newOrders) nudges.push([`${newOrders} new order${newOrders > 1 ? "s" : ""} to confirm`, "orders"]);
+  const pend = (state.crew || []).filter(x => x.status === "pending").length; if (pend) nudges.push([`${pend} Crew car${pend > 1 ? "s" : ""} waiting for you`, "settings"]);
+  const stale = (state.videos || []).filter(v => { const age = (Date.now() - new Date(v.posted_on + "T12:00:00Z")) / 864e5; return age >= 2 && age <= 10 && new Date(v.updated_at) < new Date(Date.now() - 2 * 864e5); }).length;
+  if (stale) nudges.push([`Update numbers on ${stale} recent video${stale > 1 ? "s" : ""}`, "videos"]);
+  if (new Date().getDay() === 0) nudges.push(["It's Sunday: log your follower counts", "numbers"]);
+  return `
+  <div class="card" style="gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="mono">This week</div><b style="font-size:28px">${st.thisWeek} / ${goal()} videos</b></div>
+      <div style="text-align:right"><div class="mono">Streak</div><b style="font-size:28px">${st.weeks} wk${st.weeks === 1 ? "" : "s"} ${st.weeks >= 2 ? "🔥" : ""}</b></div></div>
+    <div class="progress" role="img" aria-label="${st.thisWeek} of ${goal()} videos this week"><span style="width:${Math.min(100, st.thisWeek / goal() * 100)}%"></span></div>
+  </div>
+  ${(() => { const b = state.settings?.build, st = b?.stages || [], done = st.filter(x => x.done).length, nx = st.find(x => !x.done);
+    const ev = (state.events || []).filter(e => e.published && (e.ends_at || e.starts_at) >= new Date().toISOString()).sort((a, c) => a.starts_at.localeCompare(c.starts_at))[0];
+    return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <button class="card" type="button" data-goto="build" style="text-align:left;cursor:pointer;color:inherit;font:inherit"><span class="mono">The Mk2 · ${esc(b?.status || "In the build")}</span><b style="font-size:22px">${done}/${st.length} stages</b><span class="r-sub" style="white-space:normal">${nx ? `Next: ${esc(nx.name)}` : "All done 🔥"}</span></button>
+      <button class="card" type="button" data-goto="stops" style="text-align:left;cursor:pointer;color:inherit;font:inherit"><span class="mono">Next stop</span>${ev ? `<b style="font-size:16px;line-height:1.2">${esc(ev.title)}</b><span class="r-sub" style="white-space:normal">${new Date(ev.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · ${ev.pullups} pulling up</span>` : `<b style="font-size:16px">Nothing set</b><span class="r-sub" style="white-space:normal">Add your next meet or shoot</span>`}</button>
+    </div>`; })()}
+  ${f ? `<div class="card" style="margin-top:12px;border-color:var(--signal)"><div class="mono">${f.from} · film today</div><strong style="font-size:20px;line-height:1.2">${esc(f.title)}</strong><span class="r-sub" style="white-space:normal">${esc(f.sub)}</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${f.id ? `<button class="btn sea" type="button" data-advance="${f.id}">Filmed it ✓</button>` : ""}<button class="btn solid" type="button" data-act="new-video">Posted it: log it</button></div></div>` : ""}
+  <button class="btn solid big-cta" type="button" data-act="create" style="margin-top:12px">🎬 Edit &amp; post everywhere</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+    <button class="btn" type="button" data-act="new-video">+ Log a video</button><button class="btn" type="button" data-act="new-idea">+ Idea</button>
+  </div>
+  ${nudges.length ? `<div class="list" style="margin-top:16px">${nudges.map(([t, go]) => `<button class="row" type="button" data-nudge="${go}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong style="white-space:normal">${esc(t)}</strong></span><span class="r-end">›</span></button>`).join("")}</div>` : ""}
+  <div class="card" style="margin-top:16px"><div class="mono">Your coach</div>
+    ${c ? `<strong style="font-size:18px">${esc(c.headline)}</strong><span class="r-sub" style="white-space:normal">Crew move: ${esc(c.crew_move)}</span><button class="btn" type="button" data-gv="stats">See the full breakdown</button>`
+        : `<span class="r-sub" style="white-space:normal">Log a few videos, then get coaching built on what top car creators do, tuned to your numbers.</span><button class="btn" type="button" data-gv="stats">Go to Stats</button>`}</div>
+  <div class="card" style="margin-top:16px"><div style="display:flex;justify-content:space-between"><div class="mono">Milestones</div><span class="mono">${got.length}/${ms.length}</span></div>
+    ${next ? `<span>Next up: <strong>${esc(next[0])}</strong></span>` : `<strong>All unlocked. Legend.</strong>`}
+    <div style="display:flex;flex-wrap:wrap;gap:6px">${ms.map(([t, ok]) => `<span class="pill ${ok ? "p-paid" : "p-hidden"}" style="opacity:${ok ? 1 : .55}">${ok ? "✓ " : ""}${esc(t)}</span>`).join("")}</div></div>`;
+}
+
+// ---------- Videos ----------
+const fmtN = x => { x = Number(x) || 0; return x >= 1e6 ? (x / 1e6).toFixed(1).replace(/\.0$/, "") + "M" : x >= 1e4 ? Math.round(x / 1e3) + "K" : x >= 1e3 ? (x / 1e3).toFixed(1).replace(/\.0$/, "") + "K" : String(x); };
+function videosView() {
+  const v = state.videos;
+  return `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="btn solid" type="button" data-act="create">🎬 Edit &amp; post</button>${state.settings?.youtube ? `<button class="btn" type="button" data-act="yt-sync">Sync YouTube</button>` : ""}</div>
+  <div class="list">${v.map(x => { const s = score(x); return `<button class="row" type="button" data-video="${x.id}">
+    <span class="thumb mono" style="font-size:10px">${esc(x.platform.slice(0, 2).toUpperCase())}</span>
+    <span class="r-main"><strong>${esc(x.title || x.url || "Untitled video")}</strong><span class="r-sub">${x.posted_on} · ${esc(x.pillar || "no pillar")}</span></span>
+    <span class="r-end">${fmtN(x.views)} views<span class="mono" style="font-size:11px">${s.follows1k.toFixed(1)} follows/1K</span></span></button>`; }).join("")
+    || `<div class="empty">Log every video you post: link, pillar, hook and the numbers from the app's analytics. Update the numbers after 2 days and again after a week. That's how the coach learns what works for you.</div>`}</div>
+  <button class="btn solid fab" type="button" data-act="new-video">+ Log video</button>`;
+}
+function editVideo(x) {
+  const isNew = !x;
+  x = x || { platform: "TikTok", url: "", title: "", posted_on: today(), pillar: "", hook: "", length_sec: "", views: "", likes: "", comments: "", shares: "", saves: "", follows: "", notes: "" };
+  const chips = (name, list, cur) => `<div class="chips" role="radiogroup" aria-label="${name}" style="flex-wrap:wrap">${list.map(v => `<button class="chip" type="button" role="radio" data-pick="${name}" data-val="${esc(v)}" aria-pressed="${v === cur}">${esc(v)}</button>`).join("")}</div>`;
+  const num = (id, label, val) => `<label class="field" for="v-${id}"><span>${label}</span><input id="v-${id}" inputmode="decimal" value="${esc(val === 0 && isNew ? "" : val ?? "")}" placeholder="0"></label>`;
+  sheet(isNew ? "Log a video" : "Video", `
+    <div class="field"><span>Platform</span>${chips("platform", ["TikTok", "Instagram", "YouTube", "Facebook"], x.platform)}</div>
+    <label class="field" for="v-url"><span>Link</span><input id="v-url" value="${esc(x.url)}" inputmode="url" autocapitalize="none" placeholder="Paste from Share → Copy link"></label>
+    <label class="field" for="v-title"><span>What's it about?</span><input id="v-title" value="${esc(x.title)}" placeholder="Mk2 cold start, Ep. 4"></label>
+    <div class="pair"><label class="field" for="v-date"><span>Posted</span><input id="v-date" type="date" value="${esc(x.posted_on)}"></label>
+    <label class="field" for="v-len"><span>Length (sec)</span><input id="v-len" inputmode="numeric" value="${esc(x.length_sec ?? "")}" placeholder="22"></label></div>
+    <div class="field"><span>Pillar</span>${chips("pillar", PL(), x.pillar)}</div>
+    <div class="field"><span>How did it open?</span>${chips("hook", HK(), x.hook)}</div>
+    <div class="mono" style="margin-top:4px">Numbers from the app's analytics · "12.5k" works</div>
+    <div class="pair">${num("views", "Views", x.views)}${num("likes", "Likes", x.likes)}</div>
+    <div class="pair">${num("comments", "Comments", x.comments)}${num("shares", "Shares", x.shares)}</div>
+    <div class="pair">${num("saves", "Saves", x.saves)}${num("follows", "New followers", x.follows)}</div>
+    <label class="field" for="v-notes"><span>Notes</span><textarea id="v-notes" rows="3" placeholder="What people said, what you'd change">${esc(x.notes)}</textarea></label>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="video-delete" data-id="${x.id}">Delete</button>`}`,
+    [["Save", "solid", async () => {
+      const pick = name => document.querySelector(`[data-pick="${name}"][aria-pressed="true"]`)?.dataset.val || "";
+      const body = { id: x.id, platform: pick("platform") || "TikTok", url: $("#v-url").value, title: $("#v-title").value, posted_on: $("#v-date").value, length_sec: $("#v-len").value,
+        pillar: pick("pillar"), hook: pick("hook"), notes: $("#v-notes").value,
+        ...Object.fromEntries(["views", "likes", "comments", "shares", "saves", "follows"].map(k => [k, $("#v-" + k).value])) };
+      const saved = await api("videos", { method: "POST", body });
+      state.videos = x.id ? state.videos.map(v => v.id === x.id ? saved : v) : [saved, ...state.videos];
+      state.videos.sort((a, b) => b.posted_on.localeCompare(a.posted_on) || b.id - a.id);
+      closeSheet(); render();
+      const st = streak(); toast(isNew ? (st.thisWeek >= goal() ? `Logged. Weekly goal hit: ${st.thisWeek}/${goal()} 🔥` : `Logged. ${st.thisWeek}/${goal()} this week.`) : "Updated.");
+    }]]);
+}
+
+// ---------- Stats + coach ----------
+function bars(rows, metric, fmt) {
+  const max = Math.max(...rows.map(r => r[metric]), 0.0001);
+  return `<div style="display:flex;flex-direction:column;gap:8px">${rows.map(r => `<div style="display:grid;grid-template-columns:minmax(0,7.5em) minmax(0,1fr) auto;gap:8px;align-items:center;font-size:14px">
+    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.key)}</span>
+    <span style="height:12px;background:var(--rule);border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${r[metric] > 0 ? Math.max(2, r[metric] / max * 100) : 0}%;background:var(--signal);border-radius:0 4px 4px 0"></span></span>
+    <span class="mono" style="font-size:12px;color:var(--ink)">${fmt(r[metric])}${r.count !== "" && r.count != null ? ` <span style="color:var(--muted)">(${r.count})</span>` : ""}</span></div>`).join("")}</div>`;
+}
+function statsView() {
+  const a = analyze(state.videos, { targetPerWeek: goal() });
+  const c = state.coach?.[0]?.report;
+  const f1 = x => x.toFixed(1), fv = x => fmtN(Math.round(x));
+  const tile = (label, val, sub) => `<div class="stat"><span class="mono">${label}</span><b>${val}</b>${sub ? `<span class="r-sub" style="font-size:12px;white-space:normal">${sub}</span>` : ""}</div>`;
+  const ch = a.recent.prevCount >= 3 ? Math.round((a.recent.views / Math.max(1, a.recent.prevViews) - 1) * 100) : null;
+  const breakdown = (title, rows) => rows.length ? `<div class="card"><div style="display:flex;justify-content:space-between"><strong>${title}</strong><span class="mono">follows / 1K views</span></div>${bars(rows, "follows1k", f1)}</div>` : "";
+  const weeks = a.weekly.length ? `<div class="card"><div style="display:flex;justify-content:space-between"><strong>Videos per week</strong><span class="mono">goal ${goal()}</span></div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:110px;border-bottom:1px solid var(--rule);position:relative" role="img" aria-label="Videos posted per week">
+      <span style="position:absolute;left:0;right:0;bottom:${Math.min(100, goal() / Math.max(goal(), ...a.weekly.map(w => w.posts)) * 100)}%;border-top:1px dashed var(--muted)"></span>
+      ${a.weekly.map(w => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end"><span class="mono" style="font-size:11px;color:var(--ink)">${w.posts}</span><span style="width:100%;max-width:28px;height:${w.posts / Math.max(goal(), ...a.weekly.map(x => x.posts)) * 80}%;background:${w.posts >= goal() ? "var(--signal)" : "var(--muted)"};border-radius:4px 4px 0 0"></span></div>`).join("")}
+    </div><div style="display:flex;gap:6px">${a.weekly.map(w => `<span class="mono" style="flex:1;text-align:center;font-size:10px">${w.week.slice(5).replace("-", "/")}</span>`).join("")}</div></div>` : "";
+  return `
+  <div class="card" style="border-color:var(--signal)"><div style="display:flex;justify-content:space-between;align-items:center"><div class="mono">Weekly coach</div>${c ? `<span class="pill">${esc(c.verdict)}</span>` : ""}</div>
+    ${c ? coachReport(state.coach[0]) : `<span class="r-sub" style="white-space:normal">Your coach studies your numbers against what the top car creators do and tells you exactly what to change next week. It runs every Sunday on its own.</span>`}
+    <button class="btn ${c ? "" : "sea"}" type="button" data-act="coach">${c ? "Get fresh coaching" : "Get my first coaching"}</button></div>
+  <div class="stats" style="margin-top:16px">
+    ${tile("Views, 90 days", fmtN(a.totals.views), `${a.measured} videos with numbers`)}
+    ${tile("New followers", fmtN(a.totals.follows), "from logged videos")}
+    ${tile("Avg views, 4 wks", fv(a.recent.views), ch == null ? "" : `${ch >= 0 ? "+" : ""}${ch}% vs 4 wks before`)}
+    ${tile("Follows / 1K", f1(a.recent.follows1k), "how fast viewers become crew")}
+  </div>
+  ${a.moves.length ? `<div class="card"><strong>Adjust this week</strong>${a.moves.map(m => `<div class="check"><span class="dot"></span><span>${esc(m.text)}</span></div>`).join("")}</div>` : ""}
+  ${weeks}
+  ${breakdown("By pillar", a.byPillar)}
+  ${breakdown("By opening", a.byHook)}
+  ${breakdown("By length", a.byLength)}
+  ${breakdown("By day posted", a.byDay)}
+  ${breakdown("By platform", a.byPlatform)}
+  ${a.top.length ? `<div class="card"><strong>Your crew-builders</strong><span class="r-sub" style="white-space:normal">Ranked by follows, comments, shares and saves per view, not just views.</span>
+    ${a.top.map((v, i) => `<button class="row" type="button" data-video="${v.id}" style="grid-template-columns:auto minmax(0,1fr) auto"><span class="mono">#${i + 1}</span><span class="r-main"><strong>${esc(v.title || v.url || "Untitled")}</strong><span class="r-sub">${esc(v.platform)} · ${esc(v.pillar || "no pillar")}</span></span><span class="r-end">${fmtN(v.views)}<span class="mono" style="font-size:11px">${v.s.follows1k.toFixed(1)} f/1K</span></span></button>`).join("")}</div>` : ""}
+  <div style="margin-top:20px"><div class="mono" style="margin-bottom:8px">Account numbers</div>${numbersView()}</div>`;
+}
+function coachReport(entry) {
+  const r = entry.report, mix = Object.entries(r.mix || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  return `<span class="mono">${new Date(entry.created_at).toLocaleDateString()}</span><strong style="font-size:20px;line-height:1.2">${esc(r.headline)}</strong>
+    <div><div class="mono" style="color:var(--ok)">What worked</div>${r.wins.map(x => `<div class="check"><span class="dot ok"></span><span>${esc(x)}</span></div>`).join("")}</div>
+    <div><div class="mono" style="color:var(--signal)">Change next week</div>${r.fixes.map(x => `<div class="check"><span class="dot"></span><span>${esc(x)}</span></div>`).join("")}</div>
+    <div><div class="mono">Crew move</div><span>${esc(r.crew_move)}</span></div>
+    <div><div class="mono">Next week</div>${r.next_week.map(x => `<div class="check"><span class="mono" style="min-width:2.6em;color:var(--ink)">${x.day}</span><span><strong>${esc(x.idea)}</strong><br><span class="r-sub" style="white-space:normal">${esc(x.pillar)} · open with: ${esc(x.hook)}</span></span></div>`).join("")}</div>
+    ${mix.length ? `<div><div class="mono">Suggested mix</div>${bars(mix.map(([key, v]) => ({ key, v, count: Math.round(v / 100 * goal()) })), "v", x => x + "%")}</div>` : ""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" data-act="coach-ideas" data-id="${entry.id}">Add ${r.new_ideas.length + r.next_week.length} ideas to my bank</button><button class="btn" type="button" data-act="coach-tasks" data-id="${entry.id}">Add next week to my checklist</button></div>`;
+}
+
+// ---------- Plan (playbook + 90 days) ----------
+function planView() {
+  return `<div class="chips" role="group" aria-label="Plan">${[["playbook", "Playbook"], ["tasks", "Checklist"], ["numbers", "Numbers"]].map(([k, l]) => `<button class="chip" type="button" data-pv="${k}" aria-pressed="${state.planView === k}">${l}</button>`).join("")}</div>` +
+    ({ playbook: playbookView, tasks: tasksView, numbers: numbersView })[state.planView]();
+}
+
+function playbookView() {
+  return `<div style="display:flex;flex-direction:column;gap:10px">${planOf("section").map(x => `<button class="row" type="button" data-sec="${x.id}" style="grid-template-columns:minmax(0,1fr) auto">
+    <span class="r-main"><strong>${esc(x.title)}</strong><span class="r-sub">${esc(plainText(x.body).slice(0, 90))}</span></span><span class="r-end">›</span></button>`).join("")}</div>
+  <button class="btn solid fab" type="button" data-act="new-sec">+ Section</button>`;
+}
+function openSection(id) {
+  const x = planOf("section").find(s => s.id === id);
+  sheet(x.title, `<div class="card md">${markdown(x.body)}</div>`, [["Edit", "", () => editSection(x)]]);
+}
+function editSection(x) {
+  const isNew = !x;
+  x = x || { kind: "section", title: "", body: "", sort: (planOf("section").at(-1)?.sort || 0) + 10 };
+  sheet(isNew ? "New section" : "Edit section", `
+    <label class="field" for="g-title"><span>Title</span><input id="g-title" value="${esc(x.title)}"></label>
+    <label class="field" for="g-body"><span>Text</span><textarea id="g-body" class="body-edit">${esc(x.body)}</textarea><small>Use ## for headings, - for lists, **bold**.</small></label>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="plan-delete" data-id="${x.id}">Delete section</button>`}`,
+    [["Save", "solid", async () => { await savePlan({ ...x, title: $("#g-title").value, body: $("#g-body").value }); }]]);
+}
+function tasksView() {
+  const tasks = planOf("task"), done = tasks.filter(t => t.done).length;
+  const weeks = [...new Set(tasks.map(t => t.data.week))].sort((a, b) => a - b);
+  return `<div class="card"><div style="display:flex;justify-content:space-between"><strong>${done} of ${tasks.length} done</strong><span class="mono">${tasks.length ? Math.round(done / tasks.length * 100) : 0}%</span></div><div class="progress"><span style="width:${tasks.length ? done / tasks.length * 100 : 0}%"></span></div></div>
+  ${weeks.map(w => `<div class="mono week-h">Week ${w}</div>${tasks.filter(t => t.data.week === w).map(t => `<div class="task${t.done ? " done" : ""}">
+    <input type="checkbox" data-tick="${t.id}" aria-label="Done"${t.done ? " checked" : ""}><button class="t-text" type="button" data-task="${t.id}">${esc(t.title)}</button><span></span></div>`).join("")}`).join("")}
+  <button class="btn solid fab" type="button" data-act="new-task">+ Task</button>`;
+}
+function editTask(t) {
+  const isNew = !t;
+  t = t || { kind: "task", title: "", data: { week: 1 }, sort: (planOf("task").at(-1)?.sort || 0) + 1 };
+  sheet(isNew ? "New task" : "Edit task", `
+    <label class="field" for="g-title"><span>Task</span><input id="g-title" value="${esc(t.title)}"></label>
+    <label class="field" for="g-week"><span>Week</span><input id="g-week" type="number" inputmode="numeric" min="1" max="52" value="${esc(t.data.week)}"></label>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="plan-delete" data-id="${t.id}">Delete task</button>`}`,
+    [["Save", "solid", async () => { await savePlan({ ...t, title: $("#g-title").value, data: { week: $("#g-week").value } }); }]]);
+}
+function ideasView() {
+  const ideas = planOf("idea"), shown = ideas.filter(i => (i.data.stage || "idea") === state.ideaStage);
+  const next = { idea: "filmed", filmed: "posted" };
+  return `<div class="chips" role="group" aria-label="Idea stage">${STAGES.map(([k, l]) => `<button class="chip" type="button" data-stage="${k}" aria-pressed="${k === state.ideaStage}">${l} (${ideas.filter(i => (i.data.stage || "idea") === k).length})</button>`).join("")}</div>
+  <div class="list">${shown.map(i => `<div class="row" style="grid-template-columns:minmax(0,1fr) auto;cursor:default">
+    <button class="t-text r-main" type="button" data-idea="${i.id}"><strong style="white-space:normal">${esc(i.title)}</strong><span class="r-sub">${esc(i.data.pillar)} · ${esc(i.data.platform)}</span></button>
+    ${next[i.data.stage || "idea"] ? `<button class="btn" type="button" data-advance="${i.id}" style="padding:8px 12px;min-height:40px">${i.data.stage === "filmed" ? "Posted" : "Filmed"} ✓</button>` : i.data.link ? `<a class="link" href="${esc(i.data.link)}" target="_blank" rel="noopener">Open</a>` : ""}</div>`).join("")
+    || `<div class="empty">Nothing here yet.</div>`}</div>
+  <button class="btn solid fab" type="button" data-act="new-idea">+ Idea</button>`;
+}
+function editIdea(i) {
+  const isNew = !i;
+  i = i || { kind: "idea", title: "", body: "", data: { pillar: PL()[0], platform: PLATFORMS[0], stage: "idea", link: "" }, sort: (planOf("idea").at(-1)?.sort || 0) + 1 };
+  const opts = (list, cur) => list.map(v => `<option${v === cur ? " selected" : ""}>${v}</option>`).join("");
+  sheet(isNew ? "New idea" : "Edit idea", `
+    <label class="field" for="g-title"><span>Video idea</span><input id="g-title" value="${esc(i.title)}" placeholder="Rate this Mk2 from 1 to 10"></label>
+    <div class="pair"><label class="field" for="g-pillar"><span>Pillar</span><select id="g-pillar">${opts([...new Set([...PL(), i.data.pillar].filter(Boolean))], i.data.pillar)}</select></label>
+    <label class="field" for="g-platform"><span>Post first on</span><select id="g-platform">${opts(PLATFORMS, i.data.platform)}</select></label></div>
+    <label class="field" for="g-stage"><span>Stage</span><select id="g-stage">${STAGES.map(([k, l]) => `<option value="${k}"${k === (i.data.stage || "idea") ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+    <label class="field" for="g-link"><span>Link once posted</span><input id="g-link" value="${esc(i.data.link)}" inputmode="url" autocapitalize="none" placeholder="https://www.tiktok.com/@thevolksvision/video/..."></label>
+    <label class="field" for="g-body"><span>Notes, hook, shot list</span><textarea id="g-body" rows="5">${esc(i.body)}</textarea></label>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-act="plan-delete" data-id="${i.id}">Delete idea</button>`}`,
+    [["Save", "solid", async () => { await savePlan({ ...i, title: $("#g-title").value, body: $("#g-body").value, data: { pillar: $("#g-pillar").value, platform: $("#g-platform").value, stage: $("#g-stage").value, link: $("#g-link").value } }); }]]);
+}
+function numbersView() {
+  const rows = planOf("metric").sort((a, b) => b.data.date.localeCompare(a.data.date));
+  const first = rows.at(-1), last = rows[0];
+  const change = k => first && last && first !== last && last.data[k] != null && first.data[k] != null ? last.data[k] - first.data[k] : null;
+  const fmt = n => n == null ? "–" : Number(n).toLocaleString();
+  const tile = (label, k) => { const c = change(k); return `<div class="stat"><span class="mono">${label}</span><b>${fmt(last?.data[k])}</b>${c != null ? `<span class="delta ${c >= 0 ? "up" : "down"}">${c >= 0 ? "+" : ""}${c.toLocaleString()} since ${first.data.date}</span>` : ""}</div>`; };
+  return `${rows.length ? `<div class="stats">${tile("TikTok", "tiktok")}${tile("Instagram", "instagram")}${tile("YouTube", "youtube")}<div class="stat"><span class="mono">Drop list</span><b>${state.audience ? state.audience.subscribers.length : "–"}</b><span class="r-sub" style="font-size:12px">live from the site</span></div></div>` : ""}
+  <div class="card"><strong>Log this week</strong><small class="r-sub" style="white-space:normal">Every Sunday. Followers from each app, videos posted, merch sold.</small>
+    <form id="numForm" style="display:flex;flex-direction:column;gap:10px">
+      <label class="field" for="n-date"><span>Date</span><input id="n-date" type="date" value="${today()}"></label>
+      <div class="pair"><label class="field" for="n-tt"><span>TikTok followers</span><input id="n-tt" inputmode="numeric" value="${esc(last?.data.tiktok ?? "")}"></label>
+      <label class="field" for="n-ig"><span>Instagram followers</span><input id="n-ig" inputmode="numeric" value="${esc(last?.data.instagram ?? "")}"></label></div>
+      <div class="pair"><label class="field" for="n-yt"><span>YouTube subscribers</span><input id="n-yt" inputmode="numeric" value="${esc(last?.data.youtube ?? "")}"></label>
+      <label class="field" for="n-posts"><span>Videos posted</span><input id="n-posts" inputmode="numeric"></label></div>
+      <label class="field" for="n-sales"><span>Merch sold this week</span><input id="n-sales" inputmode="numeric"></label>
+      <button class="btn solid" type="submit">Save numbers</button>
+    </form></div>
+  ${rows.length ? `<div style="overflow-x:auto;margin-top:16px"><table class="ntable"><thead><tr><th>Week of</th><th>TikTok</th><th>IG</th><th>YT</th><th>Posts</th><th>Sold</th><th></th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r.data.date)}</td><td>${fmt(r.data.tiktok)}</td><td>${fmt(r.data.instagram)}</td><td>${fmt(r.data.youtube)}</td><td>${fmt(r.data.posts)}</td><td>${fmt(r.data.sales)}</td><td><button class="link" type="button" data-act="plan-delete" data-id="${r.id}" aria-label="Delete ${esc(r.data.date)}">✕</button></td></tr>`).join("")}
+  </tbody></table></div>` : `<p class="r-sub" style="margin-top:12px">Log your starting numbers today so you can see the growth.</p>`}`;
+}
+async function savePlan(item, { quiet = false } = {}) {
+  const saved = await api("plan", { method: "POST", body: item });
+  state.plan = item.id ? state.plan.map(x => x.id === item.id ? saved : x) : [...state.plan, saved];
+  if (!$("#sheet").hidden) closeSheet();
+  render(); if (!quiet) toast("Saved.");
+}
+
+// ---------- Create: Quick Edit + Post Everywhere ----------
+const FORMATS = { "9:16": [720, 1280, "Vertical 9:16 (TikTok, Reels, Shorts)"], "16:9": [1280, 720, "Wide 16:9 (YouTube)"], "1:1": [1080, 1080, "Square 1:1"] };
+const cf = { step: 1 };
+function resetCreate() { cf.video?.remove(); if (cf.url) URL.revokeObjectURL(cf.url); if (cf.outUrl) URL.revokeObjectURL(cf.outUrl); Object.keys(cf).forEach(k => delete cf[k]); cf.step = 1; cf.fit = "fill"; cf.mark = true; cf.hookSecs = 3; cf.posted = {}; cf.format = "9:16"; }
+function openCreate() { resetCreate(); renderCreate(); showTip("create"); }
+function renderCreate() {
+  const steps = `<div class="steps" aria-hidden="true">${[1, 2, 3, 4].map(n => `<span class="${n <= cf.step ? "on" : ""}"></span>`).join("")}</div>`;
+  const PL_ = PL(), HK_ = HK();
+  const chip = (name, list, cur) => `<div class="chips" style="flex-wrap:wrap">${list.map(v => `<button class="chip" type="button" data-cpick="${name}" data-val="${esc(v)}" aria-pressed="${v === cur}">${esc(v)}</button>`).join("")}</div>`;
+  let body = "", actions = [];
+  if (cf.step === 1) {
+    body = `${steps}<div class="mono">Step 1 · Your clip</div>
+      ${cf.file ? `<div class="chips" role="group" aria-label="Format">${Object.entries(FORMATS).map(([k, f]) => `<button class="chip" type="button" data-format="${k}" aria-pressed="${cf.format === k}">${k}</button>`).join("")}</div>
+        <div class="stage" style="aspect-ratio:${cf.format.replace(":", "/")};width:${cf.format === "9:16" ? "min(100%,300px,calc(42vh * 9 / 16))" : "100%"}"><canvas id="ed-canvas" width="${FORMATS[cf.format][0]}" height="${FORMATS[cf.format][1]}"></canvas></div>
+        <div class="range-pair"><span>Start</span><input id="ed-start" type="range" min="0" max="${cf.dur.toFixed(1)}" step="0.1" value="${cf.start}" aria-label="Start"><span id="ed-start-l">${cf.start.toFixed(1)}s</span></div>
+        <div class="range-pair"><span>End</span><input id="ed-end" type="range" min="0" max="${cf.dur.toFixed(1)}" step="0.1" value="${cf.end}" aria-label="End"><span id="ed-end-l">${cf.end.toFixed(1)}s</span></div>
+        <div class="chips"><button class="chip" type="button" data-fit="fill" aria-pressed="${cf.fit === "fill"}">Fill frame</button><button class="chip" type="button" data-fit="fit" aria-pressed="${cf.fit === "fit"}">Fit (no crop)</button></div>
+        <label class="field" for="ed-hook"><span>On-screen hook (first ${cf.hookSecs} sec)</span><input id="ed-hook" value="${esc(cf.hook || "")}" maxlength="60" placeholder="My Mk2 broke AGAIN"></label>
+        <label class="field" for="ed-badge"><span>Episode badge (optional)</span><input id="ed-badge" value="${esc(cf.badge || "")}" maxlength="24" placeholder="MK2 BUILD · EP. 4"></label>
+        <label class="switch" for="ed-mark"><span>VolksVision watermark + @thevolksvision</span><input id="ed-mark" type="checkbox"${cf.mark ? " checked" : ""}></label>
+        <p class="r-sub" style="white-space:normal;margin:0">Export plays the clip once to record it (a 20-second clip takes about 20 seconds). Keep the app open.</p>
+        <p class="mono" id="ed-progress" role="status"></p>`
+      : `<p class="r-sub" style="white-space:normal">Pick a clip you shot or edited in CapCut. Quick Edit trims it, makes it vertical and stamps your hook and watermark. Already finished? Skip straight to posting.</p>`}
+      <label class="btn ${cf.file ? "" : "solid big-cta"}" for="ed-file" style="display:flex">${cf.file ? "Pick a different clip" : "Choose a video"}</label>
+      <input id="ed-file" type="file" accept="video/*" hidden>`;
+    actions = cf.file ? [["Use as is", "", () => { cf.final = cf.file; cf.step = 2; renderCreate(); }], ["Export edit", "solid", exportEdit]] : [];
+  } else if (cf.step === 2) {
+    body = `${steps}<div class="mono">Step 2 · What's it about</div>
+      <label class="field" for="cf-about"><span>Describe the video in a sentence</span><textarea id="cf-about" rows="3" placeholder="Swapped the Mk2's tired shocks, it rides like a new car now">${esc(cf.about || "")}</textarea></label>
+      <div class="field"><span>Pillar</span>${chip("pillar", PL_, cf.pillar)}</div>
+      <div class="field"><span>How it opens</span>${chip("hook", HK_, cf.hookType)}</div>
+      <label class="switch" for="cf-ad"><span>Sponsored or gifted product (adds #ad)</span><input id="cf-ad" type="checkbox"${cf.sponsored ? " checked" : ""}></label>
+      ${(state.settings?.sponsors || []).length ? `<label class="field" for="cf-sponsor"><span>Sponsor (optional)</span><select id="cf-sponsor"><option value="">None</option>${state.settings.sponsors.map(x => `<option${x.name === cf.sponsor ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</select><small>Adds #ad, a shout-out and their disclosure line to every caption.</small></label>` : ""}
+      <label class="switch" for="cf-long"><span>Long-form YouTube video<br><small class="r-sub" style="white-space:normal">Gets title options, chapters, tags, thumbnail text and a teaser caption.</small></span><input id="cf-long" type="checkbox"${cf.long || cf.format === "16:9" ? " checked" : ""}></label>`;
+    actions = [["Back", "", () => { cf.step = 1; renderCreate(); }], ["Write my captions", "solid", writeCaptions]];
+  } else if (cf.step === 3 && cf.long) {
+    const c = cf.caps;
+    body = `${steps}<div class="mono">Step 3 · Long-form kit (edit anything)</div>
+      <div class="field"><span>Pick a title</span>${c.titles.map((t, i) => `<label class="switch" for="lt-${i}"><span style="white-space:normal">${esc(t)}</span><input type="radio" name="lt" id="lt-${i}" value="${i}"${t === c.title ? " checked" : ""}></label>`).join("")}</div>
+      <label class="field" for="cap-description"><span>Description (fix the chapter times after you export)</span><textarea id="cap-description" rows="10">${esc(c.description)}</textarea></label>
+      <label class="field" for="cap-tags"><span>Tags</span><textarea id="cap-tags" rows="3">${esc(c.tags.join(", "))}</textarea></label>
+      <label class="field" for="cap-short_teaser"><span>Teaser caption (TikTok/Reels clip pointing to YouTube)</span><textarea id="cap-short_teaser" rows="3">${esc(c.short_teaser)}</textarea></label>
+      <label class="field" for="cap-pinned_comment"><span>Comment to pin</span><textarea id="cap-pinned_comment" rows="2">${esc(c.pinned_comment)}</textarea></label>
+      <div class="field"><span>Thumbnail text</span><div class="chips" style="flex-wrap:wrap">${c.thumbnail_text.map(t => `<button class="chip" type="button" data-thumbtext="${esc(t)}" aria-pressed="${t === cf.thumbText}">${esc(t)}</button>`).join("")}</div></div>
+      <button class="btn" type="button" data-act="thumb">🖼 Make the thumbnail</button>`;
+    actions = [["Back", "", () => { saveCaps(); cf.step = 2; renderCreate(); }], ["Next: post", "solid", () => { saveCaps(); cf.step = 4; renderCreate(); }]];
+  } else if (cf.step === 3) {
+    const c = cf.caps;
+    const ta = (k, label, rows) => `<label class="field" for="cap-${k}"><span>${label}</span><textarea id="cap-${k}" rows="${rows}">${esc(c[k])}</textarea></label>`;
+    body = `${steps}<div class="mono">Step 3 · Captions (edit anything)</div>
+      ${ta("tiktok", "TikTok", 4)}${ta("instagram", "Instagram Reels", 6)}${ta("youtube_title", "YouTube Shorts title", 2)}${ta("youtube_description", "YouTube description", 3)}${ta("facebook", "Facebook", 4)}
+      ${ta("pinned_comment", "Comment to pin", 2)}<p class="r-sub" style="white-space:normal">On-screen hook idea: <strong>${esc(c.on_screen_hook)}</strong></p>`;
+    actions = [["Back", "", () => { saveCaps(); cf.step = 2; renderCreate(); }], ["Next: post", "solid", () => { saveCaps(); cf.step = 4; renderCreate(); }]];
+  } else {
+    const canShare = !!(navigator.canShare && cf.final && navigator.canShare({ files: [cf.final] }));
+    const rows = cf.long ? [["YouTube", "title"], ["TikTok", "short_teaser"], ["Instagram", "short_teaser"]] : [["TikTok", "tiktok"], ["Instagram", "instagram"], ["YouTube", "youtube_title"], ["Facebook", "facebook"]];
+    body = `${steps}<div class="mono">Step 4 · Post everywhere</div>
+      <p class="r-sub" style="white-space:normal;margin:0">${canShare ? "Tap a platform: your caption is copied, then pick that app in the share sheet and paste the caption." : "This browser can't hand videos to apps. Save the video below, then copy each caption."}</p>
+      ${rows.map(([name, key]) => `<div class="post-row${cf.posted[name] ? " done" : ""}"><div><strong>${name}</strong><div class="r-sub">${cf.posted[name] ? "Posted and logged ✓" : esc((cf.caps[key] || "").slice(0, 60))}</div></div>
+        <div style="display:flex;gap:6px">${canShare ? `<button class="btn ${cf.posted[name] ? "" : "solid"}" type="button" data-post-to="${name}">${cf.posted[name] ? "Again" : "Post"}</button>` : `<button class="btn" type="button" data-copy-cap="${name}">Copy</button><button class="btn" type="button" data-mark-posted="${name}">Done</button>`}</div></div>`).join("")}
+      ${cf.outUrl ? `<a class="btn" href="${cf.outUrl}" download="volksvision-${today()}.${cf.final.name.split(".").pop()}">Save edited video</a>` : ""}
+      <button class="btn" type="button" data-copy-cap="pinned">Copy comment to pin</button>
+      ${cf.long ? `<button class="btn" type="button" data-act="thumb">🖼 Make the thumbnail</button>` : ""}`;
+    actions = [["Done", "solid", () => { closeSheet(); resetCreate(); if (state.tab === "grow") render(); }]];
+  }
+  sheet("Create", body, actions);
+  if (cf.step === 1 && cf.file) drawFrame();
+}
+function saveCaps() {
+  if (cf.long) { const pick = document.querySelector('input[name="lt"]:checked'); if (pick) cf.caps.title = cf.caps.titles[+pick.value];
+    ["description", "short_teaser", "pinned_comment"].forEach(k => { const el = $("#cap-" + k); if (el) cf.caps[k] = el.value; });
+    const tg = $("#cap-tags"); if (tg) cf.caps.tags = tg.value.split(",").map(x => x.trim()).filter(Boolean); return; } ["tiktok", "instagram", "youtube_title", "youtube_description", "facebook", "pinned_comment"].forEach(k => { const el = $("#cap-" + k); if (el) cf.caps[k] = el.value; }); }
+const captionFor = name => cf.long ? ({ YouTube: `${cf.caps.title}\n\n${cf.caps.description}\n\nTags: ${cf.caps.tags.join(", ")}`, TikTok: cf.caps.short_teaser, Instagram: cf.caps.short_teaser, Facebook: cf.caps.short_teaser, pinned: cf.caps.pinned_comment })[name] : ({ TikTok: cf.caps.tiktok, Instagram: cf.caps.instagram, YouTube: `${cf.caps.youtube_title}\n\n${cf.caps.youtube_description}`, Facebook: cf.caps.facebook, pinned: cf.caps.pinned_comment })[name];
+async function loadClip(file) {
+  resetCreate(); cf.file = file; cf.url = URL.createObjectURL(file);
+  const v = document.createElement("video"); v.src = cf.url; v.muted = true; v.playsInline = true; v.setAttribute("playsinline", ""); v.preload = "auto"; cf.video = v;
+  v.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none"; document.body.appendChild(v);   // iOS plays attached videos more reliably
+  await new Promise((ok, bad) => { v.onloadeddata = ok; v.onerror = () => bad(new Error("That video couldn't be opened. Try a different clip.")); });
+  if (!Number.isFinite(v.duration)) {   // some recorded clips don't store their length; seeking far forces the browser to work it out
+    v.currentTime = 1e7; await new Promise(r => { v.ondurationchange = r; v.onseeked = r; setTimeout(r, 1500); });
+    v.currentTime = 0; await new Promise(r => { v.onseeked = r; setTimeout(r, 800); });
+  }
+  cf.dur = Number.isFinite(v.duration) ? v.duration : 60; cf.start = 0; cf.end = cf.dur; renderCreate();
+}
+function paint(ctx, v, W, H, t) {
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+  const vw = v.videoWidth || 9, vh = v.videoHeight || 16, sc = cf.fit === "fill" ? Math.max(W / vw, H / vh) : Math.min(W / vw, H / vh);
+  const dw = vw * sc, dh = vh * sc; ctx.drawImage(v, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  const u = Math.min(W, H) / 720;
+  if (cf.hook && t < cf.hookSecs) {
+    ctx.font = `800 ${46 * u}px Archivo, Arial, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const words = cf.hook.toUpperCase().split(" "), lines = []; let line = "";
+    for (const w of words) { const test = line ? line + " " + w : w; if (ctx.measureText(test).width > W - 100 * u && line) { lines.push(line); line = w; } else line = test; }
+    lines.push(line);
+    const lh = 58 * u, top = (H > W ? H * 0.2 : H * 0.18) - (lines.length * lh) / 2;
+    lines.forEach((l, i) => { const w = ctx.measureText(l).width + 36 * u; ctx.fillStyle = "#f2a93b"; ctx.fillRect((W - w) / 2, top + i * lh - lh / 2 + 4 * u, w, lh - 8 * u); ctx.fillStyle = "#0b0d0c"; ctx.fillText(l, W / 2, top + i * lh + 2 * u); });
+  }
+  if (cf.badge) { ctx.font = `700 ${22 * u}px "IBM Plex Mono", monospace`; ctx.textAlign = "left"; ctx.textBaseline = "top"; const w = ctx.measureText(cf.badge.toUpperCase()).width + 24 * u; ctx.fillStyle = "rgba(11,13,12,.75)"; ctx.fillRect(28 * u, 60 * u, w, 40 * u); ctx.fillStyle = "#f2a93b"; ctx.fillText(cf.badge.toUpperCase(), 40 * u, 69 * u); }
+  if (cf.mark) {
+    const y = H - 150 * u; ctx.globalAlpha = .9; ctx.strokeStyle = "#eef0ec"; ctx.lineWidth = 3 * u;
+    ctx.beginPath(); ctx.arc(52 * u, y, 18 * u, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(52 * u, y, 9 * u, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "#f2a93b"; ctx.beginPath(); ctx.arc(52 * u, y, 3.5 * u, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#eef0ec"; ctx.font = `800 ${24 * u}px Archivo, Arial, sans-serif`; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("@thevolksvision", 82 * u, y); ctx.globalAlpha = 1;
+  }
+}
+function readEditor() { const g = id => $(id); if (!g("#ed-start")) return; cf.start = +g("#ed-start").value; cf.end = Math.max(cf.start + 0.5, +g("#ed-end").value); cf.hook = g("#ed-hook").value.trim(); cf.badge = g("#ed-badge").value.trim(); cf.mark = g("#ed-mark").checked; }
+let drawTimer;
+function drawFrame() {
+  const c = $("#ed-canvas"); if (!c || !cf.video) return;
+  clearTimeout(drawTimer);
+  drawTimer = setTimeout(() => { cf.video.currentTime = Math.min(cf.start + 0.05, cf.dur); cf.video.onseeked = () => paint(c.getContext("2d"), cf.video, c.width, c.height, 0); }, 60);
+}
+async function exportEdit() {
+  readEditor();
+  const c = $("#ed-canvas"), ctx = c.getContext("2d"), v = cf.video, prog = $("#ed-progress");
+  if (!c.captureStream || !window.MediaRecorder) throw new Error("This phone's browser can't export edits. Use 'Use as is' and edit in CapCut.");
+  const type = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"].find(t => MediaRecorder.isTypeSupported(t));
+  const stream = c.captureStream(30);
+  try { const ac = new (window.AudioContext || window.webkitAudioContext)(); const src = cf.audioSrc || (cf.audioSrc = ac.createMediaElementSource(v)); const dest = ac.createMediaStreamDestination(); src.connect(dest); dest.stream.getAudioTracks().forEach(t => stream.addTrack(t)); v.muted = false; } catch { /* no audio track: export video only */ }
+  const rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 6e6 } : undefined), chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  const done = new Promise(r => rec.onstop = r);
+  v.currentTime = cf.start; await new Promise(r => v.onseeked = r);
+  rec.start(250); await v.play();
+  await new Promise(resolve => {
+    const tick = () => {
+      const t = v.currentTime - cf.start; paint(ctx, v, c.width, c.height, t);
+      if (prog) prog.textContent = `Exporting… ${Math.min(100, Math.round(t / (cf.end - cf.start) * 100))}%`;
+      if (v.currentTime >= cf.end || v.ended) { v.pause(); resolve(); } else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  rec.stop(); await done; v.muted = true;
+  const mime = (rec.mimeType || type || "video/webm").split(";")[0], ext = mime.includes("mp4") ? "mp4" : "webm";
+  cf.final = new File(chunks, `volksvision-${today()}.${ext}`, { type: mime });
+  cf.outUrl = URL.createObjectURL(cf.final); cf.step = 2; renderCreate(); toast("Edit exported.");
+}
+// ---------- Thumbnail maker (1280x720) ----------
+function openThumb() {
+  cf.thumbAt = cf.thumbAt ?? (cf.start || 0) + 1;
+  sheet("Thumbnail", `
+    <div class="stage" style="aspect-ratio:16/9;width:100%"><canvas id="th-canvas" width="1280" height="720"></canvas></div>
+    ${cf.video ? `<div class="range-pair"><span>Frame</span><input id="th-at" type="range" min="0" max="${(cf.dur || 1).toFixed(1)}" step="0.1" value="${cf.thumbAt}" aria-label="Frame"><span id="th-at-l">${cf.thumbAt.toFixed(1)}s</span></div>` : ""}
+    <label class="btn" for="th-file" style="display:flex">${cf.thumbImg ? "Use a different photo" : "Or use a photo instead"}</label><input id="th-file" type="file" accept="image/*" hidden>
+    <label class="field" for="th-text"><span>Big text (2 to 4 words)</span><input id="th-text" value="${esc(cf.thumbText || "")}" maxlength="40" placeholder="IT FINALLY STARTED"></label>
+    <label class="field" for="th-sub"><span>Small amber tag (optional)</span><input id="th-sub" value="${esc(cf.thumbSub || "")}" maxlength="24" placeholder="EP. 12"></label>
+    <div class="chips"><button class="chip" type="button" data-thside="left" aria-pressed="${(cf.thumbSide || "left") === "left"}">Text left</button><button class="chip" type="button" data-thside="right" aria-pressed="${cf.thumbSide === "right"}">Text right</button></div>
+    <p class="r-sub" style="white-space:normal;margin:0">Big, short, readable on a phone. Faces and the car up close win clicks.</p>`,
+    [["Back", "", () => renderCreate()], ["Save thumbnail", "solid", saveThumb]]);
+  drawThumb();
+}
+function drawThumb() {
+  const c = $("#th-canvas"); if (!c) return;
+  const ctx = c.getContext("2d"), W = 1280, H = 720;
+  const finish = () => {
+    const side = cf.thumbSide || "left";
+    const g = ctx.createLinearGradient(side === "left" ? 0 : W, 0, side === "left" ? W * .75 : W * .25, 0); g.addColorStop(0, "rgba(11,13,12,.85)"); g.addColorStop(1, "rgba(11,13,12,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const text = ($("#th-text")?.value || cf.thumbText || "").toUpperCase().trim(); cf.thumbText = text;
+    ctx.textBaseline = "alphabetic"; ctx.textAlign = side === "left" ? "left" : "right";
+    const x = side === "left" ? 60 : W - 60, words = text.split(/\s+/).filter(Boolean), lines = [];
+    let size = 150; ctx.font = `900 ${size}px Archivo, Impact, Arial, sans-serif`;
+    let line = ""; for (const w of words) { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > W * .62 && line) { lines.push(line); line = w; } else line = t; } if (line) lines.push(line);
+    while (lines.length * size * .95 > H * .62 && size > 70) { size -= 10; ctx.font = `900 ${size}px Archivo, Impact, Arial, sans-serif`; }
+    let y = H / 2 - (lines.length * size * .95) / 2 + size * .8;
+    lines.forEach((l, i) => { ctx.lineWidth = size * .09; ctx.strokeStyle = "#0b0d0c"; ctx.strokeText(l, x, y); ctx.fillStyle = i === lines.length - 1 ? "#f2a93b" : "#eef0ec"; ctx.fillText(l, x, y); y += size * .95; });
+    const sub = ($("#th-sub")?.value || cf.thumbSub || "").toUpperCase().trim(); cf.thumbSub = sub;
+    if (sub) { ctx.font = `800 40px Archivo, Arial, sans-serif`; const w = ctx.measureText(sub).width + 40, bx = side === "left" ? 60 : W - 60 - w; ctx.fillStyle = "#f2a93b"; ctx.fillRect(bx, 50, w, 64); ctx.fillStyle = "#0b0d0c"; ctx.textAlign = "left"; ctx.fillText(sub, bx + 20, 97); }
+    ctx.globalAlpha = .9; ctx.strokeStyle = "#eef0ec"; ctx.lineWidth = 5; const mx = side === "left" ? W - 70 : 70;
+    ctx.beginPath(); ctx.arc(mx, H - 70, 30, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(mx, H - 70, 15, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = "#f2a93b"; ctx.beginPath(); ctx.arc(mx, H - 70, 6, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+  };
+  const cover = (src, sw, sh) => { const sc = Math.max(W / sw, H / sh); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); ctx.drawImage(src, (W - sw * sc) / 2, (H - sh * sc) / 2, sw * sc, sh * sc); };
+  if (cf.thumbImg) { cover(cf.thumbImg, cf.thumbImg.naturalWidth, cf.thumbImg.naturalHeight); finish(); }
+  else if (cf.video) { cf.video.currentTime = cf.thumbAt; cf.video.onseeked = () => { cover(cf.video, cf.video.videoWidth, cf.video.videoHeight); finish(); }; }
+  else { ctx.fillStyle = "#131715"; ctx.fillRect(0, 0, W, H); finish(); }
+}
+async function saveThumb() {
+  drawThumb(); await new Promise(r => setTimeout(r, 300));
+  const blob = await new Promise(r => $("#th-canvas").toBlob(r, "image/jpeg", 0.92));
+  const file = new File([blob], `volksvision-thumbnail-${today()}.jpg`, { type: "image/jpeg" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "Thumbnail" }).catch(() => {}); }
+  else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); }
+  toast("Thumbnail ready. Save it to Photos, then pick it in YouTube.");
+  renderCreate();
+}
+
+async function writeCaptions() {
+  cf.about = $("#cf-about").value.trim(); cf.sponsor = $("#cf-sponsor")?.value || ""; cf.sponsored = $("#cf-ad").checked || !!cf.sponsor; cf.long = $("#cf-long").checked;
+  cf.pillar = document.querySelector('[data-cpick="pillar"][aria-pressed="true"]')?.dataset.val || ""; cf.hookType = document.querySelector('[data-cpick="hook"][aria-pressed="true"]')?.dataset.val || "";
+  if (cf.about.length < 5) throw new Error("Say what the video is about first.");
+  const btn = document.querySelector('[data-sa="1"]'); if (btn) btn.textContent = "Writing…";
+  cf.caps = await api("captions", { method: "POST", body: { about: cf.about, pillar: cf.pillar, hook: cf.hookType, sponsored: cf.sponsored, sponsor: cf.sponsor, format: cf.long ? "long" : "short" } });
+  if (cf.long) { cf.caps.title = cf.caps.titles[0]; cf.thumbText = cf.caps.thumbnail_text[0]; }
+  cf.step = 3; renderCreate();
+}
+async function logPosted(platform) {
+  if (cf.posted[platform]) return;
+  cf.posted[platform] = true;
+  try {
+    const saved = await api("videos", { method: "POST", body: { platform, title: cf.about, posted_on: today(), pillar: cf.pillar, hook: cf.hookType, length_sec: cf.end && cf.start != null ? Math.round(cf.end - cf.start) : "" } });
+    if (state.videos) state.videos = [saved, ...state.videos];
+  } catch (e) { fail(e); }
+  renderCreate();
+}
+
+// ---------- Help popups ----------
+const HELP = {
+  "grow:today": ["Today is your home base", ["Your week: videos posted vs your goal, and your streak. Hit the goal every week to keep the 🔥.", "\"Film today\" is your coach's pick (or the next idea in your bank). Film it, then tap Filmed it.", "🎬 Edit & post everywhere: trim, add your hook and watermark, get captions for every app, post.", "Milestones unlock as you grow. Nudges show anything waiting on you."]],
+  "grow:videos": ["Log every video", ["Tap + Log video after you post, or let Edit & post log it for you.", "Open the app's analytics and copy the numbers in. \"12.5k\" works.", "Update the numbers after 2 days and after a week. That's what the coach learns from.", "Tag the pillar and how it opened so you can see what works."]],
+  "grow:stats": ["Your stats and your coach", ["Get coaching: the coach reads your numbers and compares them to what top car creators do.", "It tells you what worked, what to change, a 5-video plan for next week and one crew-building move.", "One tap adds its ideas to your bank or its plan to your checklist.", "Below: what's building your crew best by pillar, opening, length, day and platform."]],
+  "grow:ideas": ["Your idea bank", ["Every video idea lives here: yours and the coach's.", "Tap Filmed ✓, then Posted ✓, as an idea moves along.", "Tap an idea to add the hook, shot list or the link once it's posted."]],
+  "grow:plan": ["Your playbook", ["Playbook: your strategy in your words. Edit or add any section.", "Checklist: the 90-day plan. Tick tasks off, add your own.", "Numbers: every Sunday, log your follower counts so you can see the growth."]],
+  "orders:overview": ["Money, all in one place", ["This month's income vs your goal: merch, sponsors, creator payouts, affiliate.", "Merch sold on the site and deals marked Paid count automatically.", "\"Owed to brands\" shows sponsored content you still need to post."]],
+  "orders:orders": ["Merch orders", ["New orders show here and you get an email.", "Send a payment request, then mark the order Paid, Shipped, Delivered.", "Add tracking so you can answer \"where's my shirt\" fast."]],
+  "orders:deals": ["Sponsorship deals", ["Every brand deal from pitch to paid.", "Brand inquiries from the site turn into deals in one tap (More → Pit Crew).", "Set what you owe them and the due date. Always add #ad on sponsored posts."]],
+  "orders:income": ["Other income", ["Log TikTok or YouTube payouts, affiliate money, merch sold at meets.", "It all adds up in Overview against your monthly goal."]],
+  "orders:kit": ["Your media kit", ["A public page for brands: thevolksvision.com/media-kit.", "It pulls your follower counts and average views automatically.", "Update your pitch, services and past partners here. Send brands the link."]],
+  "products": ["Your shop", ["Tap + New product, take a photo, set the price and sizes.", "Describe each photo. Google reads it.", "Mark items Sold out instead of deleting them. It shows demand.", "Changes go live on the site in about a minute."]],
+  "posts": ["Your blog", ["A new post is written and published automatically every week.", "Tap any post to edit it, add a photo, or unpublish it.", "Write your own with + New post. Follow the ranking checklist to show up on Google."]],
+  "build:build": ["The Mk2 is the brand", ["Set the status and tick off build stages. Fans see the progress bar on the site.", "Add every part to the spec sheet. Add a part link to earn from affiliate programs.", "Tell the story and add photos. Paste your best videos so they show on the homepage."]],
+  "build:stops": ["Where is VolksVision next?", ["Add meets, shows, shoots and drops.", "Fans tap \"I'll pull up\" on the site, and you see the count here.", "The next stop shows on the homepage automatically."]],
+  "settings:fans": ["Your Pit Crew", ["Everyone who signed up for drops or new posts.", "Email them in one tap. An unsubscribe link is added automatically.", "Brand inquiries land here too. Tap \"Make it a deal\" to track one."]],
+  "settings:crew": ["The Crew", ["Followers send in their cars from the Crew page.", "Approve the good ones. Make one Crew car of the week. It shows on the homepage.", "Feature it on your socials too and tag them. That's how you build diehards."]],
+  "settings:text": ["Every word on your site", ["Change any line of the website's wording here.", "Leave a line blank to put the original back."]],
+  "settings:settings": ["Settings", ["Your name, title, socials, shipping and payment info.", "Your weekly video goal drives your streak and the coach.", "Rename your pillars and the blog or email list anytime."]],
+  "create": ["Edit & post everywhere", ["1. Pick a clip. Trim it, choose vertical or wide, add a hook line and your watermark. Or use it as is.", "2. Say what it's about. Flip on Long-form for YouTube build videos.", "3. Captions get written for every app. Edit anything.", "4. Tap each platform: the caption is copied, pick the app, paste. It's logged to your stats automatically."]]
+};
+const tipKey = () => state.tab === "grow" ? `grow:${state.growView}` : state.tab === "orders" ? `orders:${state.moneyView}` : state.tab === "build" ? `build:${state.buildView || "build"}` : state.tab === "settings" ? `settings:${state.moreView || "fans"}` : state.tab;
+const tipStore = { get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+function showTip(key, force = false) {
+  const h = HELP[key]; if (!h) return;
+  const seen = tipStore.get("vv-tips-seen") || [];
+  if (!force && (tipStore.get("vv-tips-off") || seen.includes(key))) return;
+  $("#tipTitle").textContent = h[0]; $("#tipBody").innerHTML = h[1].map(x => `<li>${esc(x)}</li>`).join("");
+  $("#tipScrim").hidden = false; $("#tipScrim").dataset.key = key; $("#tipOk").focus();
+  if (!seen.includes(key)) tipStore.set("vv-tips-seen", [...seen, key]);
+}
+function hideTip() { $("#tipScrim").hidden = true; }
+$("#tipOk").addEventListener("click", hideTip);
+$("#tipOff").addEventListener("click", () => { tipStore.set("vv-tips-off", true); hideTip(); toast("Tips off. Tap ? anytime."); });
+$("#tipScrim").addEventListener("click", e => { if (e.target.id === "tipScrim") hideTip(); });
+$("#helpBtn").addEventListener("click", () => showTip($("#sheet").hidden ? tipKey() : "create", true));
+
+// ---------- settings ----------
+const TEXT_FIELDS = [["heroSub", "Homepage: line under the headline"], ["shopTitle", "Homepage: shop title"], ["carIntro", "Homepage: Mk2 intro (when no summary)"], ["storyEyebrow", "Homepage: small label above your story"], ["storyHeadline", "Homepage: story headline"], ["alertsHeadline", "Signup box headline"], ["alertsBody", "Signup box text"], ["crewHeadline", "Crew page title"], ["crewIntro", "Crew page intro"], ["workIntro", "Work with me intro"]];
+function settingsView() {
+  const s = state.settings, mv = state.moreView || "fans";
+  const nav = `<div class="seg" style="grid-template-columns:repeat(4,1fr)" role="group" aria-label="More sections">${[["fans", "Pit Crew"], ["crew", "Crew"], ["text", "Site text"], ["settings", "Settings"]].map(([k, l]) => `<button type="button" data-mv="${k}" aria-pressed="${mv === k}">${l}</button>`).join("")}</div>`;
+  const head = `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>More</h1></div></div>`;
+  const foot = `<div style="display:flex;flex-direction:column;gap:10px;margin-top:28px;border-top:1px solid var(--rule);padding-top:16px">
+    <button class="btn" type="button" data-act="publish">Refresh the live site now</button>
+    <button class="btn" type="button" data-act="tips-reset">Show the how-to tips again</button>
+    <button class="btn danger" type="button" data-act="lock">Sign out of this phone</button></div>`;
+  return head + nav + ({ fans: audienceView, crew: crewView, text: textView, settings: brandView })[mv]() + foot;
+}
+function brandView() {
+  const s = state.settings;
+  return `<form id="settingsForm" style="display:flex;flex-direction:column;gap:16px">
+    <div class="pair"><label class="field" for="s-owner"><span>Your name</span><input id="s-owner" value="${esc(s.ownerName)}"></label>
+    <label class="field" for="s-title"><span>Your title</span><input id="s-title" value="${esc(s.ownerTitle)}"></label></div>
+    <label class="field" for="s-legal"><span>Legal business name (optional)</span><input id="s-legal" value="${esc(s.legalName)}" placeholder="BayWay Media Co."><small>Only fill this in once the LLC is active on Sunbiz. Then the site footer says "VolksVision is a brand of …".</small></label>
+    <label class="field" for="s-tagline"><span>Tagline</span><input id="s-tagline" value="${esc(s.tagline)}"></label>
+    <label class="field" for="s-about"><span>About you</span><textarea id="s-about" rows="6">${esc(s.about)}</textarea><small>Homepage and About page. Who you are, what you shoot, where.</small></label>
+    <div class="pair"><label class="field" for="s-jn"><span>Blog name</span><input id="s-jn" value="${esc(s.journalName)}"></label>
+    <label class="field" for="s-ln"><span>Email list name</span><input id="s-ln" value="${esc(s.listName)}"></label></div>
+    <label class="field" for="s-goal"><span>Videos per week goal</span><input id="s-goal" type="number" inputmode="numeric" min="1" max="21" value="${esc(s.weeklyGoal)}"><small>Drives your streak and the coach.</small></label>
+    <label class="field" for="s-pillars"><span>Your content pillars</span><input id="s-pillars" value="${esc((s.pillars || []).join(", "))}"><small>Comma separated. Used for videos, ideas and coaching.</small></label>
+    <label class="field" for="s-hooks"><span>Opening styles you track</span><textarea id="s-hooks" rows="3">${esc((s.hooks || []).join(", "))}</textarea><small>Comma separated.</small></label>
+    <label class="field" for="s-instagram"><span>Instagram link</span><input id="s-instagram" value="${esc(s.instagram)}" inputmode="url" autocapitalize="none"></label>
+    <label class="field" for="s-tiktok"><span>TikTok link</span><input id="s-tiktok" value="${esc(s.tiktok)}" inputmode="url" autocapitalize="none"></label>
+    <label class="field" for="s-youtube"><span>YouTube link</span><input id="s-youtube" value="${esc(s.youtube)}" inputmode="url" autocapitalize="none"></label>
+    <div class="pair"><label class="field" for="s-shipping"><span>Shipping ($)</span><input id="s-shipping" inputmode="decimal" value="${esc(s.shipping)}"></label>
+    <label class="field" for="s-free"><span>Free shipping over ($)</span><input id="s-free" inputmode="decimal" value="${esc(s.freeShipOver)}"></label></div>
+    <label class="field" for="s-pay"><span>How buyers pay you</span><input id="s-pay" value="${esc(s.payWith)}"></label>
+    <label class="field" for="s-email"><span>Order email shown to buyers</span><input id="s-email" type="email" value="${esc(s.orderEmail)}" autocapitalize="none"></label>
+    <label class="switch" for="s-auto"><span>Publish weekly ${esc(s.journalName)} posts automatically<br><small class="r-sub" style="white-space:normal">Off: they wait as drafts for you to approve.</small></span><input id="s-auto" type="checkbox"${s.autoPublish !== false ? " checked" : ""}></label>
+    <div class="field"><span>Upcoming ${esc(s.journalName)} topics</span><small>The weekly writer uses these in order, then picks its own.</small>
+      <div id="topics" style="display:flex;flex-direction:column;gap:8px">${(s.topics || []).map((t, i) => `<div class="topic"><div><strong>${esc(t.title)}</strong><div class="r-sub" style="white-space:normal">${esc(t.keyword)}</div></div><button class="link" type="button" data-deltopic="${i}">Remove</button></div>`).join("") || `<p class="r-sub">No topics queued.</p>`}</div>
+      <input id="t-title" placeholder="Topic, e.g. Mk2 Jetta coilover guide"><input id="t-keyword" placeholder="What people would Google (optional)">
+      <button class="btn" type="button" data-act="add-topic">Add topic</button></div>
+    <button class="btn solid" type="submit">Save settings</button>
+  </form>`;
+}
+function textView() {
+  const t = state.settings.text || {};
+  return `<form id="textForm" style="display:flex;flex-direction:column;gap:16px">
+    <p class="r-sub" style="white-space:normal;margin:0">Every line of website wording you can change. Leave one blank to go back to the original.</p>
+    ${TEXT_FIELDS.map(([k, label]) => `<label class="field" for="tx-${k}"><span>${label}</span><textarea id="tx-${k}" rows="2">${esc(t[k])}</textarea></label>`).join("")}
+    <button class="btn solid" type="submit">Save site text</button></form>`;
+}
+function audienceView() {
+  const a = state.audience;
+  if (!a) return `<div class="loading">Loading…</div>`;
+  const active = a.subscribers.filter(x => !x.unsubscribed), on = l => active.filter(x => (x.lists || ["drops", "glovebox"]).includes(l)).length;
+  const ln = state.settings?.listName || "the Pit Crew";
+  return `<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="stats" style="margin:0"><div class="stat"><span class="mono">${esc(ln)}</span><b>${active.length}</b></div><div class="stat"><span class="mono">Drop alerts / posts</span><b>${on("drops")} / ${on("glovebox")}</b></div></div>
+    <div class="card"><strong>Email ${esc(ln)}</strong>
+      <label class="field" for="bc-list"><span>Send to</span><select id="bc-list"><option value="drops">Drop alerts list (${on("drops")})</option><option value="glovebox">${esc(state.settings?.journalName || "Blog")} readers (${on("glovebox")})</option></select></label>
+      <label class="field" for="bc-subject"><span>Subject</span><input id="bc-subject" placeholder="Drop 02 is live. 50 made."></label>
+      <label class="field" for="bc-body"><span>Message</span><textarea id="bc-body" rows="6" placeholder="What it is, how many, link to the shop."></textarea><small>An unsubscribe link is added automatically.</small></label>
+      <button class="btn sea" type="button" data-act="broadcast">Send</button></div>
+    ${active.length ? `<button class="btn" type="button" data-act="export-subs">Download email list (CSV)</button>` : ""}
+    <div class="mono" style="margin-top:8px">Brand inquiries</div>
+    <div class="list">${a.inquiries.map(i => `<div class="row" style="cursor:default;grid-template-columns:minmax(0,1fr) auto">
+      <span class="r-main"><strong style="white-space:normal">${esc(i.kind)}: ${esc(i.name)}${i.company ? `, ${esc(i.company)}` : ""}</strong><span class="r-sub" style="white-space:normal">${esc(i.message.slice(0, 200))}</span><span class="copyable mono" style="text-transform:none">${esc(i.email)}</span><button class="link" type="button" data-todeal="${i.id}" style="text-align:left">Make it a deal →</button></span>
+      <span class="r-end"><select data-inq="${i.id}" aria-label="Status">${["new", "replied", "closed"].map(st => `<option${st === i.status ? " selected" : ""}>${st}</option>`).join("")}</select></span></div>`).join("")
+      || `<div class="empty">No brand inquiries yet. They come in from the Work with me page.</div>`}</div></div>`;
+}
+function crewView() {
+  const c = state.crew;
+  if (!c) return `<div class="loading">Loading…</div>`;
+  const pending = c.filter(x => x.status === "pending"), live = c.filter(x => x.status === "approved");
+  const card = x => `<div class="card"><img src="${esc(x.photo)}" alt="${esc(x.car)}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px" loading="lazy">
+    <strong>${esc(x.car)}${x.featured ? ` <span class="pill p-paid">Car of the week</span>` : ""}</strong><span class="r-sub" style="white-space:normal">${esc(x.name)} ${esc(x.handle || "")}${x.story ? ` · ${esc(x.story)}` : ""}</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${x.status !== "approved" ? `<button class="btn sea" type="button" data-crew="${x.id}:approved">Approve</button>` : ""}${!x.featured ? `<button class="btn" type="button" data-crew="${x.id}:feature">Make car of the week</button>` : ""}<button class="btn danger" type="button" data-crew="${x.id}:rejected">${x.status === "approved" ? "Remove" : "Decline"}</button></div></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:12px">
+    <p class="r-sub" style="white-space:normal;margin:0">Followers send their cars from the Crew page. Nothing shows on the site until you approve it.</p>
+    <div class="mono">Waiting (${pending.length})</div>${pending.map(card).join("") || `<div class="empty">No new submissions. Share thevolksvision.com/crew in your bio or a video.</div>`}
+    <div class="mono">On the site (${live.length})</div>${live.map(card).join("") || `<p class="r-sub">None yet.</p>`}</div>`;
+}
+function settingsBody() {
+  const s = state.settings, split = v => v.split(",").map(x => x.trim()).filter(Boolean);
+  if (!$("#s-owner")) return s;
+  return { ...s, ownerName: $("#s-owner").value, ownerTitle: $("#s-title").value, legalName: $("#s-legal").value, tagline: $("#s-tagline").value, about: $("#s-about").value,
+    journalName: $("#s-jn").value, listName: $("#s-ln").value, weeklyGoal: $("#s-goal").value, pillars: split($("#s-pillars").value), hooks: split($("#s-hooks").value),
+    instagram: $("#s-instagram").value, tiktok: $("#s-tiktok").value, youtube: $("#s-youtube").value,
+    shipping: $("#s-shipping").value, freeShipOver: $("#s-free").value, payWith: $("#s-pay").value, orderEmail: $("#s-email").value, autoPublish: $("#s-auto").checked };
+}
+
+// ---------- sheet + photos ----------
+let sheetActions = [];
+function sheet(title, html, actions) {
+  $("#sheetTitle").textContent = title; $("#sheetBody").innerHTML = html;
+  sheetActions = actions;
+  $("#sheetFoot").innerHTML = actions.map(([label, kind], i) => `<button class="btn ${kind}" type="button" data-sa="${i}">${label}</button>`).join("");
+  $("#sheet").hidden = false; document.body.style.overflow = "hidden";
+  $("#sheetBody").parentElement.scrollTop = 0;
+}
+function closeSheet() { $("#sheet").hidden = true; document.body.style.overflow = ""; }
+
+async function shrink(file) {
+  // Phone photos are 3-12 MB. Resize to 1600px JPEG so pages stay fast (Core Web Vitals).
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+  if (!bmp) return file;
+  const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.85));
+}
+async function upload(input) {
+  const file = input.files[0]; if (!file) return;
+  const prefix = input.dataset.upload, box = $(`#${prefix}-photo`);
+  box.innerHTML = `<div class="ph">Uploading…</div>`;
+  try {
+    const blob = await shrink(file);
+    const { url } = await api(`upload?kind=${input.dataset.kind}`, { method: "POST", raw: blob, type: blob.type || "image/jpeg" });
+    $(`#${prefix}-image`).value = url; box.innerHTML = `<img src="${esc(url)}" alt="">`;
+    $(`#${prefix}-alt`)?.focus();
+    $("#sheetBody").dispatchEvent(new Event("input"));
+  } catch (e) { box.innerHTML = `<div class="ph">Upload failed. Try again.</div>`; fail(e); }
+  input.value = "";
+}
+
+// ---------- events ----------
+document.addEventListener("click", async e => {
+  const t = e.target;
+  const tab = t.closest(".tabbar button"); if (tab) return go(tab.dataset.tab);
+  const of = t.closest("[data-of]"); if (of) { state.orderFilter = of.dataset.of; return render(); }
+  const pf = t.closest("[data-pf]"); if (pf) { state.postFilter = pf.dataset.pf; return render(); }
+  const ord = t.closest("[data-order]"); if (ord) return openOrder(+ord.dataset.order);
+  const prod = t.closest("[data-product]"); if (prod) return openProduct(prod.dataset.product);
+  const post = t.closest("[data-post]"); if (post) return openPost(+post.dataset.post);
+  const md = t.closest("[data-md]"); if (md) return formatMd(md.dataset.md);
+  const cp = t.closest("[data-clearphoto]"); if (cp) { const p = cp.dataset.clearphoto; $(`#${p}-image`).value = ""; $(`#${p}-photo`).innerHTML = `<div class="ph">Photo removed. Save to apply.</div>`; cp.remove(); return; }
+  const gt = t.closest("[data-goto]"); if (gt) { state.buildView = gt.dataset.goto === "stops" ? "stops" : "build"; return go("build"); }
+  const bvb = t.closest("[data-bv]"); if (bvb) { state.buildView = bvb.dataset.bv; if (bvb.dataset.bv === "stops" && state.events == null) { state.events = null; load("events"); } return render(); }
+  const stp = t.closest("[data-stop]"); if (stp) return editStop(state.events.find(x => x.id === +stp.dataset.stop));
+  const dst = t.closest("[data-delstage]"); if (dst) { state.settings = buildBody(); state.settings.build.stages.splice(+dst.dataset.delstage, 1); return render(); }
+  const dsp = t.closest("[data-delsp]"); if (dsp) { const list = readSponsors(); list.splice(+dsp.dataset.delsp, 1); state.settings.sponsors = list; return render(); }
+  const mnv = t.closest("[data-moneyv]"); if (mnv) { state.moneyView = mnv.dataset.moneyv; return render(); }
+  const dl = t.closest("[data-deal]"); if (dl) return editDeal(state.money.deals.find(x => x.id === +dl.dataset.deal));
+  const ic = t.closest("[data-income]"); if (ic) return editIncome(state.money.income.find(x => x.id === +ic.dataset.income));
+  const td = t.closest("[data-todeal]"); if (td) { const q = state.audience.inquiries.find(x => x.id === +td.dataset.todeal); if (state.money === null) state.money = await api("money"); return editDeal(null, { brand: q.company || q.name, contact: q.name, email: q.email, notes: q.message, inquiry_id: q.id }); }
+  const mvb = t.closest("[data-mv]"); if (mvb) { state.moreView = mvb.dataset.mv; if (mvb.dataset.mv === "crew" && state.crew === null) load("crew"); return render(); }
+  const gv = t.closest("[data-gv]"); if (gv) { state.growView = gv.dataset.gv; window.scrollTo(0, 0); return render(); }
+  const pv = t.closest("[data-pv]"); if (pv) { state.planView = pv.dataset.pv; return render(); }
+  const nd = t.closest("[data-nudge]"); if (nd) { const g = nd.dataset.nudge; if (g === "videos" || g === "numbers") { state.growView = g === "videos" ? "videos" : "plan"; if (g === "numbers") state.planView = "numbers"; return render(); } return go(g); }
+  const cpk = t.closest("[data-cpick]"); if (cpk) { document.querySelectorAll(`[data-cpick="${cpk.dataset.cpick}"]`).forEach(b => b.setAttribute("aria-pressed", String(b === cpk && cpk.getAttribute("aria-pressed") !== "true"))); return; }
+  const fmt = t.closest("[data-format]"); if (fmt) { readEditor(); cf.format = fmt.dataset.format; renderCreate(); return; }
+  const tht = t.closest("[data-thumbtext]"); if (tht) { cf.thumbText = tht.dataset.thumbtext; document.querySelectorAll("[data-thumbtext]").forEach(b => b.setAttribute("aria-pressed", String(b === tht))); return; }
+  const ths = t.closest("[data-thside]"); if (ths) { cf.thumbSide = ths.dataset.thside; document.querySelectorAll("[data-thside]").forEach(b => b.setAttribute("aria-pressed", String(b === ths))); drawThumb(); return; }
+  const fit = t.closest("[data-fit]"); if (fit) { readEditor(); cf.fit = fit.dataset.fit; renderCreate(); return; }
+  const pt = t.closest("[data-post-to]");
+  if (pt) { const name = pt.dataset.postTo, cap = captionFor(name);
+    navigator.clipboard?.writeText(cap).catch(() => {});
+    navigator.share({ files: [cf.final], title: cf.caps.title || cf.caps.youtube_title, text: cap }).then(() => logPosted(name), err => { if (err.name !== "AbortError") fail(new Error("Sharing didn't work. Save the video and post it from the app.")); });
+    return; }
+  const cc = t.closest("[data-copy-cap]"); if (cc) { navigator.clipboard?.writeText(captionFor(cc.dataset.copyCap)).then(() => toast("Caption copied."), () => toast("Couldn't copy. Press and hold the caption to copy it.", true)); return; }
+  const mp = t.closest("[data-mark-posted]"); if (mp) { logPosted(mp.dataset.markPosted); return; }
+  const pk = t.closest("[data-pick]"); if (pk) { const was = pk.getAttribute("aria-pressed") === "true"; document.querySelectorAll(`[data-pick="${pk.dataset.pick}"]`).forEach(b => b.setAttribute("aria-pressed", "false")); if (!was || pk.dataset.pick === "platform") pk.setAttribute("aria-pressed", "true"); return; }
+  const vd = t.closest("[data-video]"); if (vd) return editVideo(state.videos.find(x => x.id === +vd.dataset.video));
+  const cr = t.closest("[data-crew]");
+  if (cr) { const [id, action] = cr.dataset.crew.split(":"); const body = action === "feature" ? { id: +id, featured: true } : { id: +id, status: action };
+    try { const { crew, live } = await api("crew", { method: "PATCH", body }); state.crew = state.crew.map(x => x.id === crew.id ? crew : action === "feature" ? { ...x, featured: false } : x); render(); toast(action === "feature" ? "Crew car of the week! Live in about a minute." : action === "approved" ? "Approved. It's on the Crew page soon." : "Hidden."); } catch (err) { fail(err); } return; }
+  const sg = t.closest("[data-stage]"); if (sg) { state.ideaStage = sg.dataset.stage; return render(); }
+  const sec = t.closest("[data-sec]"); if (sec) return openSection(+sec.dataset.sec);
+  const tk = t.closest("[data-task]"); if (tk) return editTask(planOf("task").find(x => x.id === +tk.dataset.task));
+  const idea = t.closest("[data-idea]"); if (idea) return editIdea(planOf("idea").find(x => x.id === +idea.dataset.idea));
+  const adv = t.closest("[data-advance]");
+  if (adv) { const i = planOf("idea").find(x => x.id === +adv.dataset.advance); const stage = i.data.stage === "filmed" ? "posted" : "filmed";
+    try { await savePlan({ ...i, data: { ...i.data, stage } }, { quiet: true }); toast(stage === "posted" ? "Nice. Moved to Posted. Add the link so you can find it later." : "Moved to Filmed."); } catch (err) { fail(err); } return; }
+  const ds = t.closest("[data-delspec]"); if (ds) { state.settings = buildBody(); state.settings.build.specs.splice(+ds.dataset.delspec, 1); return render(); }
+  const dg = t.closest("[data-delgal]"); if (dg) { state.settings = buildBody(); state.settings.build.gallery.splice(+dg.dataset.delgal, 1); return render(); }
+  const dv = t.closest("[data-delvid]"); if (dv) { state.settings = { ...buildBody(), videos: state.settings.videos.filter((_, i) => i !== +dv.dataset.delvid) }; return render(); }
+  const dt = t.closest("[data-deltopic]"); if (dt) { state.settings = { ...settingsBody(), topics: state.settings.topics.filter((_, i) => i !== +dt.dataset.deltopic) }; return render(); }
+  const sa = t.closest("[data-sa]");
+  if (sa) {
+    const btns = [...document.querySelectorAll("[data-sa]")]; btns.forEach(b => b.disabled = true);
+    try { await sheetActions[+sa.dataset.sa][2](); } catch (err) { fail(err); } finally { btns.forEach(b => b.disabled = false); }
+    return;
+  }
+  const act = t.closest("[data-act]")?.dataset.act;
+  try {
+    if (act === "reload-orders") { state.orders = await api("orders"); render(); toast("Up to date."); }
+    if (act === "new-product") openProduct(null);
+    if (act === "new-post") { if (state.products === null) api("products").then(d => { state.products = d; }).catch(() => {}); openPost(null); }
+    if (act === "import") { const r = await api("products", { method: "POST", body: { import: true } }); state.products = await api("products"); render(); toast(`Added ${r.imported} products. Live in about a minute.`); }
+    if (act === "delete-product") {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete for good"; return; }
+      const { live } = await api(`products?id=${encodeURIComponent(t.dataset.id)}`, { method: "DELETE" });
+      state.products = state.products.filter(p => p.id !== t.dataset.id); closeSheet(); render(); toast(live ? "Deleted. Gone from the site in about a minute." : "Deleted.");
+    }
+    if (act === "delete-post") {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete for good"; return; }
+      await api(`posts?id=${t.dataset.id}`, { method: "DELETE" });
+      state.posts = state.posts.filter(p => p.id !== +t.dataset.id); closeSheet(); render(); toast("Post deleted.");
+    }
+    if (act === "new-video") editVideo(null);
+    if (act === "new-deal") editDeal(null);
+    if (act === "add-sponsor") { state.settings.sponsors = [...readSponsors(), { name: "", url: "", tagline: "", disclosure: "", logo: "", show: true }]; render(); }
+    if (act === "new-stop") editStop(null);
+    if (act === "add-stage") { state.settings = buildBody(); state.settings.build.stages.push({ name: "", done: false }); render(); }
+    if (act === "stop-delete") {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete"; return; }
+      await api(`events?id=${t.dataset.id}`, { method: "DELETE" }); state.events = state.events.filter(x => x.id !== +t.dataset.id); closeSheet(); render(); toast("Stop deleted.");
+    }
+    if (act === "new-income") editIncome(null);
+    if (act === "money-delete") {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete"; return; }
+      await api(`money?kind=${t.dataset.kind}&id=${t.dataset.id}`, { method: "DELETE" });
+      const key = t.dataset.kind === "deal" ? "deals" : "income"; state.money[key] = state.money[key].filter(x => x.id !== +t.dataset.id); closeSheet(); render(); toast("Deleted.");
+    }
+    if (act === "create") openCreate();
+    if (act === "thumb") { saveCaps(); openThumb(); }
+    if (act === "broadcast") {
+      const body = { list: $("#bc-list").value, subject: $("#bc-subject").value, body: $("#bc-body").value };
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to send to everyone on this list"; return; }
+      t.disabled = true; try { const r = await api("broadcast", { method: "POST", body }); toast(`Sent to ${r.sent} ${r.sent === 1 ? "person" : "people"}.`); $("#bc-subject").value = ""; $("#bc-body").value = ""; } finally { t.disabled = false; t.dataset.confirm = ""; t.textContent = "Send"; }
+    }
+    if (act === "video-delete") {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Tap again to delete"; return; }
+      await api(`videos?id=${t.dataset.id}`, { method: "DELETE" }); state.videos = state.videos.filter(v => v.id !== +t.dataset.id); closeSheet(); render(); toast("Deleted.");
+    }
+    if (act === "yt-sync") { toast("Syncing YouTube…"); const r = await api("youtube", { method: "POST" }); state.videos = await api("videos"); render(); toast(`Synced ${r.synced} YouTube videos${r.subscribers != null ? ` · ${fmtN(r.subscribers)} subscribers` : ""}.`); }
+    if (act === "coach") {
+      t.disabled = true; t.textContent = "Coach is reading your numbers… (about 30 sec)";
+      try {
+        const r = await api("coach", { method: "POST" });
+        if (r.pending) {   // runs in the background; check every 5 seconds for up to 3 minutes
+          const before = state.coach[0]?.id;
+          for (let i = 0; i < 36; i++) { await new Promise(ok => setTimeout(ok, 5000)); const list = await api("coach"); if (list[0] && list[0].id !== before) { state.coach = list; break; } }
+          if (state.coach[0]?.id === before) throw new Error("The coach is taking a while. Check back in a few minutes.");
+        } else state.coach = [r, ...state.coach];
+        render(); toast("Fresh coaching is in.");
+      }
+      finally { t.disabled = false; }
+    }
+    if (act === "coach-ideas") {
+      const r = state.coach.find(x => x.id === +t.dataset.id).report;
+      const items = [...r.next_week.map(x => ({ title: x.idea, pillar: x.pillar, platform: "TikTok", body: `Open with: ${x.hook}` })), ...r.new_ideas.map(x => ({ ...x, body: "" }))];
+      let sort = (planOf("idea").at(-1)?.sort || 0) + 1;
+      for (const x of items) await savePlan({ kind: "idea", title: x.title, body: x.body, data: { pillar: x.pillar, platform: x.platform, stage: "idea", link: "" }, sort: sort++ }, { quiet: true });
+      toast(`Added ${items.length} ideas. Find them in Ideas.`); t.disabled = true;
+    }
+    if (act === "coach-tasks") {
+      const r = state.coach.find(x => x.id === +t.dataset.id).report;
+      const start = state.plan.filter(x => x.kind === "task").reduce((m, x) => Math.max(m, x.data.week || 1), 1);
+      let sort = (planOf("task").at(-1)?.sort || 0) + 1;
+      for (const x of r.next_week) await savePlan({ kind: "task", title: `${x.day}: ${x.idea}`, data: { week: start }, sort: sort++ }, { quiet: true });
+      toast(`Added ${r.next_week.length} tasks to week ${start}.`); t.disabled = true;
+    }
+    if (act === "plan-import") { state.plan = await api("plan", { method: "POST", body: { import: true } }); render(); toast("Your starter plan is loaded. Edit anything."); }
+    if (act === "new-sec") editSection(null);
+    if (act === "new-task") editTask(null);
+    if (act === "new-idea") editIdea(null);
+    if (act === "plan-delete") {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = t.textContent.length > 2 ? "Tap again to delete" : "Sure?"; return; }
+      await api(`plan?id=${t.dataset.id}`, { method: "DELETE" });
+      state.plan = state.plan.filter(x => x.id !== +t.dataset.id); if (!$("#sheet").hidden) closeSheet(); render(); toast("Deleted.");
+    }
+    if (act === "add-spec") { state.settings = buildBody(); state.settings.build.specs.push({ label: "", value: "" }); render(); document.querySelector("[data-spec-l]:last-of-type")?.focus(); }
+    if (act === "add-video") {
+      const v = $("#v-url").value.trim();
+      if (!/^https:\/\/(www\.|m\.|vm\.)?(tiktok\.com|youtube\.com|youtu\.be|instagram\.com)\//.test(v)) return toast("Paste a TikTok, YouTube or Instagram link.", true);
+      state.settings = { ...buildBody(), videos: [v, ...(state.settings.videos || [])].slice(0, 12) }; render(); toast("Video added. Tap Save to put it on the site.");
+    }
+    if (act === "export-subs") {
+      const csv = ["email,source,signed_up", ...state.audience.subscribers.map(x => `"${x.email}","${x.source || ""}","${x.created_at}"`)].join("\n");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = `volksvision-drop-list-${today()}.csv`; a.click();
+    }
+    if (act === "add-topic") {
+      const title = $("#t-title").value.trim(); if (!title) return toast("Type a post idea first.", true);
+      state.settings = { ...settingsBody(), topics: [...(state.settings.topics || []), { title, keyword: $("#t-keyword").value.trim() || title.toLowerCase(), angle: "" }] };
+      render(); toast("Idea added. Tap Save settings to keep it.");
+    }
+    if (act === "publish") { const { live } = await api("publish", { method: "POST" }); toast(live ? "Refreshing. Live in about a minute." : "Site refresh isn't set up yet (deploy hook missing)."); }
+    if (act === "lock") lock();
+    if (act === "tips-reset") { tipStore.set("vv-tips-off", false); tipStore.set("vv-tips-seen", []); toast("Tips are back on."); }
+    if (act === "export") {
+      const cols = ["order_number", "created_at", "status", "customer_name", "customer_contact", "ship_to", "total", "tracking", "notes"];
+      const csv = [cols.join(","), ...state.orders.map(o => cols.map(c => `"${String(o[c] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      a.download = `volksvision-orders-${today()}.csv`; a.click();
+    }
+  } catch (err) { fail(err); }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "ed-start" || e.target.id === "ed-end") { readEditor(); $("#ed-start-l").textContent = cf.start.toFixed(1) + "s"; $("#ed-end-l").textContent = cf.end.toFixed(1) + "s"; drawFrame(); }
+  if (e.target.id === "ed-hook" || e.target.id === "ed-badge") { readEditor(); drawFrame(); }
+  if (e.target.id === "th-text" || e.target.id === "th-sub") drawThumb();
+  if (e.target.id === "th-at") { cf.thumbAt = +e.target.value; $("#th-at-l").textContent = cf.thumbAt.toFixed(1) + "s"; drawThumb(); }
+});
+document.addEventListener("change", async e => {
+  if (e.target.matches("[data-upload]")) upload(e.target);
+  if (e.target.id === "gal-file") addGallery(e.target);
+  if (e.target.id === "ed-file" && e.target.files[0]) loadClip(e.target.files[0]).catch(fail);
+  if (e.target.id === "th-file" && e.target.files[0]) { const img = new Image(); img.onload = () => { cf.thumbImg = img; drawThumb(); }; img.src = URL.createObjectURL(e.target.files[0]); }
+  if (["ed-start", "ed-end", "ed-mark"].includes(e.target.id)) { readEditor(); drawFrame(); }
+  if (e.target.matches("[data-tick]")) {
+    const tsk = planOf("task").find(x => x.id === +e.target.dataset.tick);
+    try { await savePlan({ ...tsk, done: e.target.checked }, { quiet: true }); } catch (err) { e.target.checked = !e.target.checked; fail(err); }
+  }
+  if (e.target.matches("[data-inq]")) {
+    try { const row = await api("audience", { method: "PATCH", body: { id: +e.target.dataset.inq, status: e.target.value } });
+      state.audience.inquiries = state.audience.inquiries.map(i => i.id === row.id ? row : i); toast("Inquiry updated."); } catch (err) { fail(err); }
+  }
+});
+document.addEventListener("submit", async e => {
+  if (e.target.id === "loginForm") {
+    e.preventDefault(); token = $("#token").value.trim();
+    try { await api("orders").then(d => { state.orders = d; }); store.set("vv-admin", token, $("#remember").checked); start(); }
+    catch (err) { if (err.message !== "locked") $("#loginErr").textContent = err.message; }
+  }
+  if (e.target.id === "kitForm") {
+    e.preventDefault();
+    const lines = v => v.split("\n").map(x => x.trim()).filter(Boolean);
+    const body = { ...state.settings, sponsors: readSponsors(), incomeGoal: $("#mk-goal").value, mediaKit: { showNumbers: $("#mk-show").checked, pitch: $("#mk-pitch").value, audience: $("#mk-aud").value, services: lines($("#mk-svc").value), partners: lines($("#mk-partners").value) } };
+    try { const { settings, live } = await api("settings", { method: "PUT", body }); state.settings = { ...state.settings, ...settings, text: state.settings.text }; render(); toast(savedMsg(live)); } catch (err) { fail(err); }
+    return;
+  }
+  if (e.target.id === "textForm") {
+    e.preventDefault();
+    const text = Object.fromEntries(TEXT_FIELDS.map(([k]) => [k, $("#tx-" + k).value]));
+    try { const { settings, live } = await api("settings", { method: "PUT", body: { ...state.settings, text } }); state.settings = { ...state.settings, ...settings, text: { ...state.settings.text, ...settings.text } }; render(); toast(savedMsg(live)); }
+    catch (err) { fail(err); }
+    return;
+  }
+  if (e.target.id === "numForm") {
+    e.preventDefault();
+    const n = id => $(id).value.trim() === "" ? null : Number($(id).value.replace(/[^0-9]/g, ""));
+    try { await savePlan({ kind: "metric", data: { date: $("#n-date").value, tiktok: n("#n-tt"), instagram: n("#n-ig"), youtube: n("#n-yt"), posts: n("#n-posts"), sales: n("#n-sales") } }, { quiet: true }); toast("Numbers saved. See you next Sunday."); }
+    catch (err) { fail(err); }
+    return;
+  }
+  if (e.target.id === "buildForm") {
+    e.preventDefault();
+    const body = buildBody();
+    if (body.heroImage && !body.heroAlt.trim()) return toast("Describe the homepage photo first.", true);
+    const btn = e.target.querySelector("[type=submit]"); btn.disabled = true;
+    try { const { settings, live } = await api("settings", { method: "PUT", body }); state.settings = { ...state.settings, ...settings }; render(); toast(savedMsg(live)); }
+    catch (err) { fail(err); } finally { btn.disabled = false; }
+  }
+  if (e.target.id === "settingsForm") {
+    e.preventDefault();
+    const btn = e.target.querySelector("[type=submit]"); btn.disabled = true;
+    try { const { settings, live } = await api("settings", { method: "PUT", body: settingsBody() }); state.settings = { ...state.settings, ...settings }; render(); toast(savedMsg(live)); }
+    catch (err) { fail(err); } finally { btn.disabled = false; }
+  }
+});
+$("#sheetClose").addEventListener("click", closeSheet);
+document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("#tipScrim").hidden) return hideTip(); if (!$("#sheet").hidden) closeSheet(); });
+
+function start() {
+  $("#loginView").hidden = true; $("#appView").hidden = false;
+  const hash = location.hash.slice(1);
+  go(["orders", "products", "posts", "build", "grow", "settings"].includes(hash) ? hash : "grow");
+  if (state.settings === null) api("settings").then(s => { state.settings = s; }).catch(() => {});
+}
+token ? start() : lock();
+</script>
+</body></html>

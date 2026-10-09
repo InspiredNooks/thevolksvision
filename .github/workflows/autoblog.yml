@@ -1,0 +1,38 @@
+# Writes and publishes one VolksVision Journal post every Tuesday.
+# The post goes straight into the database RJ edits from his phone, the site
+# rebuilds itself, and RJ gets an email with a link to review it.
+# Repo secrets (Settings > Secrets and variables > Actions):
+#   ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEPLOY_HOOK_URL
+#   optional: RESEND_API_KEY, ORDER_NOTIFY_EMAIL, ORDER_FROM_EMAIL
+name: VolksVision auto-blog
+
+on:
+  schedule:
+    - cron: "17 13 * * 2"   # Tuesdays 13:17 UTC (9:17 a.m. Eastern in summer)
+  workflow_dispatch: {}      # "Run workflow" button for an extra post
+
+permissions:
+  contents: read
+
+concurrency:
+  group: volksvision-autoblog
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: node scripts/auto-post.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEPLOY_HOOK_URL: ${{ secrets.DEPLOY_HOOK_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ORDER_NOTIFY_EMAIL: ${{ secrets.ORDER_NOTIFY_EMAIL }}
+          ORDER_FROM_EMAIL: ${{ secrets.ORDER_FROM_EMAIL }}

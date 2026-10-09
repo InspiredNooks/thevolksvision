@@ -1,0 +1,20 @@
+{
+  "name": "volksvision",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "VolksVision merch shop, Journal and order CRM (Cloudflare Pages + Supabase)",
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "node build.mjs --preview",
+    "post": "node scripts/auto-post.mjs",
+    "post:dry": "node scripts/auto-post.mjs --dry-run",
+    "coach": "node scripts/coach.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1"
+  }
+}

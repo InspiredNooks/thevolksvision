@@ -1,0 +1,31 @@
+# Netlify: site lives in the volksvision/ folder of the repo.
+[build]
+  command = "npm install --no-audit --no-fund && node build.mjs"
+  publish = "public"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# One address for Google: .shop and www forward to thevolksvision.com
+[[redirects]]
+  from = "https://thevolksvision.shop/*"
+  to = "https://thevolksvision.com/:splat"
+  status = 301
+  force = true
+[[redirects]]
+  from = "https://www.thevolksvision.shop/*"
+  to = "https://thevolksvision.com/:splat"
+  status = 301
+  force = true
+[[redirects]]
+  from = "https://www.thevolksvision.com/*"
+  to = "https://thevolksvision.com/:splat"
+  status = 301
+  force = true
+
+# /admin serves the Studio
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
