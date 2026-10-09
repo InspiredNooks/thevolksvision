@@ -1,7 +1,8 @@
 // /api/admin/products - RJ manages the shop from his phone.
 // GET            all products, hidden ones included
 // POST {...}     create or update (by id); the site rebuilds after saving
-// DELETE ?id=    remove a product
+// PATCH {id, archived}  archive (pull from the shop, keep for later) or restore to the shop
+// DELETE ?id=    remove a product for good (for mistakes)
 // POST {import: true}  first-run: copy the starter catalog into the database
 import { PRODUCTS } from "../../../catalog.js";
 import { db, json, adminRoute, publishSite, str, UserError } from "../../../lib/server.js";
@@ -71,4 +72,16 @@ export const onRequestDelete = adminRoute(async ({ request, env }) => {
   await db(env, `vv_products?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
   const live = await publishSite(env);
   return json({ deleted: id, live });
+});
+
+export const onRequestPatch = adminRoute(async ({ request, env }) => {
+  const b = await request.json();
+  const id = slugify(b.id || "");
+  if (!id) throw new UserError("Missing product.");
+  const archived = b.archived === true;
+  const [saved] = await db(env, `vv_products?id=eq.${encodeURIComponent(id)}`, { method: "PATCH",
+    body: JSON.stringify({ archived, active: !archived, updated_at: new Date().toISOString() }) });
+  if (!saved) throw new UserError("That product no longer exists.");
+  const live = await publishSite(env);
+  return json({ product: saved, live });
 });

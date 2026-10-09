@@ -71,12 +71,19 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 
 .prow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;border-bottom:1px solid var(--rule)}
 .prow .row{border-bottom:0}
+.prow .r-main strong{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.2}
+@media (max-width:480px){.prow .row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.prow .thumb{display:none}.prow .act-btn{min-width:40px;padding:0 8px}}
 .row-acts{display:flex;gap:6px}
 .act-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;padding:0 10px;border:1px solid var(--rule);border-radius:10px;background:var(--frame);color:var(--ink);cursor:pointer;font-size:14px;font-weight:600}
 .act-btn span{display:none}
 .act-btn.del{color:var(--bad)}
 .act-btn.armed{background:var(--bad);border-color:var(--bad);color:#fff}
 .act-btn.armed span{display:inline}
+.archive{margin-top:24px;border:1px solid var(--rule);border-radius:10px;padding:4px 12px}
+.archive summary{cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:12px 2px;list-style:none}
+.archive summary::-webkit-details-marker{display:none}
+.archive .list{border-top:1px solid var(--rule)}
+.archive .prow:last-child{border-bottom:0}
 @media (min-width:1024px){.act-btn span{display:inline}.act-btn:hover{border-color:var(--ink)}.screen{padding-bottom:120px}}
 /* Sheets (editors) */
 .sheet{position:fixed;inset:0;z-index:10;background:var(--paper);display:flex;flex-direction:column}
@@ -479,14 +486,20 @@ const ARTSVG = { tee: '<path d="M38 18l-22 12 8 18 10-5v59h52V43l10 5 8-18-22-12
 const thumb = p => `<span class="thumb">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : `<svg viewBox="0 0 120 120" aria-hidden="true">${ARTSVG[p.art] || ARTSVG.tee}</svg>`}</span>`;
 const ICON_EDIT = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>`;
 const ICON_DEL = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`;
-function productsView() {
-  const list = state.products;
-  return `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Shop</h1></div><a class="btn" href="/#shop" target="_blank" rel="noopener">View shop</a></div>
-  <div class="list">${list.map(p => `<div class="prow"><button class="row" type="button" data-product="${esc(p.id)}">${thumb(p)}
+const ICON_ARCHIVE = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4"/></svg>`;
+const ICON_RESTORE = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6L4 8.7"/><path d="M4 4v4.7h4.7"/></svg>`;
+const productRow = (p, archived) => `<div class="prow"><button class="row" type="button" data-product="${esc(p.id)}">${thumb(p)}
     <span class="r-main"><strong>${esc(p.name)}</strong><span class="r-sub">${esc(p.cat)} · ${p.sizes.length} size(s)${p.image ? "" : " · needs a photo"}</span></span>
-    <span class="r-end">${money(p.price)}<span class="pill ${!p.active ? "p-hidden" : p.sold_out ? "p-draft" : "p-live"}">${!p.active ? "Hidden" : p.sold_out ? "Sold out" : "Live"}</span></span></button>
-    <span class="row-acts"><button class="act-btn" type="button" data-product="${esc(p.id)}" aria-label="Edit ${esc(p.name)}">${ICON_EDIT}<span>Edit</span></button><button class="act-btn del" type="button" data-act="delete-product" data-short="1" data-id="${esc(p.id)}" aria-label="Delete ${esc(p.name)}">${ICON_DEL}<span>Delete</span></button></span></div>`).join("")
-    || `<div class="empty"><span>No products yet. Start with the six starter designs, then edit them, or add your own.</span><button class="btn sea" type="button" data-act="import">Add the starter products</button></div>`}</div>
+    <span class="r-end">${money(p.price)}<span class="pill ${archived ? "p-hidden" : !p.active ? "p-hidden" : p.sold_out ? "p-draft" : "p-live"}">${archived ? "Archived" : !p.active ? "Hidden" : p.sold_out ? "Sold out" : "Live"}</span></span></button>
+    <span class="row-acts">${archived
+      ? `<button class="act-btn" type="button" data-act="archive-product" data-archive="0" data-id="${esc(p.id)}" aria-label="Bring back ${esc(p.name)}">${ICON_RESTORE}<span>Bring back</span></button>`
+      : `<button class="act-btn" type="button" data-product="${esc(p.id)}" aria-label="Edit ${esc(p.name)}">${ICON_EDIT}<span>Edit</span></button><button class="act-btn" type="button" data-act="archive-product" data-archive="1" data-id="${esc(p.id)}" aria-label="Archive ${esc(p.name)}">${ICON_ARCHIVE}<span>Archive</span></button>`}<button class="act-btn del" type="button" data-act="delete-product" data-short="1" data-id="${esc(p.id)}" aria-label="Delete ${esc(p.name)}">${ICON_DEL}<span>Delete</span></button></span></div>`;
+function productsView() {
+  const list = state.products.filter(p => !p.archived), arch = state.products.filter(p => p.archived);
+  return `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Shop</h1></div><a class="btn" href="/#shop" target="_blank" rel="noopener">View shop</a></div>
+  <div class="list">${list.map(p => productRow(p, false)).join("")
+    || (arch.length ? `<div class="empty"><span>Nothing in the shop right now. Bring something back from the archive, or add a new product.</span></div>` : `<div class="empty"><span>No products yet. Start with the six starter designs, then edit them, or add your own.</span><button class="btn sea" type="button" data-act="import">Add the starter products</button></div>`)}</div>
+  ${arch.length ? `<details class="archive"${state.archiveOpen ? " open" : ""}><summary><span class="mono">Archive · ${arch.length}</span><span class="r-sub">Pulled from the shop, saved to bring back anytime</span></summary><div class="list">${arch.map(p => productRow(p, true)).join("")}</div></details>` : ""}
   <button class="btn solid fab" type="button" data-act="new-product">+ New product</button>`;
 }
 function photoField(prefix, url, alt, kind) {
@@ -523,7 +536,7 @@ function openProduct(id) {
     <label class="field" for="p-sort"><span>Position in shop</span><input id="p-sort" inputmode="numeric" value="${esc(p.sort)}"><small>Lower numbers show first.</small></label>
     <label class="switch" for="p-active"><span>Show in the shop</span><input id="p-active" type="checkbox"${p.active ? " checked" : ""}></label>
     <label class="switch" for="p-sold"><span>Sold out<br><small class="r-sub">Stays on the site marked "Sold out". That shows demand.</small></span><input id="p-sold" type="checkbox"${p.sold_out ? " checked" : ""}></label>
-    ${isNew ? "" : `<button class="btn danger" type="button" data-act="delete-product" data-id="${esc(p.id)}">Delete product</button>`}`,
+    ${isNew ? "" : `<div class="photo-actions">${p.archived ? `<button class="btn" type="button" data-act="archive-product" data-archive="0" data-id="${esc(p.id)}">Bring back to the shop</button>` : `<button class="btn" type="button" data-act="archive-product" data-archive="1" data-id="${esc(p.id)}">Archive (pull from shop, keep it)</button>`}<button class="btn danger" type="button" data-act="delete-product" data-id="${esc(p.id)}">Delete for good</button></div><small class="r-sub" style="white-space:normal">Archive when you're pulling it down but might bring it back. Delete is for mistakes.</small>`}`,
     [["Save", "solid", async () => {
       const body = { id: p.id, name: $("#p-name").value, price: $("#p-price").value, cat: $("#p-cat").value, sizes: $("#p-sizes").value,
         blurb: $("#p-blurb").value, details: $("#p-details").value, tag: $("#p-tag").value, exif: $("#p-exif").value,
@@ -1225,7 +1238,7 @@ const HELP = {
   "orders:deals": ["Sponsorship deals", ["Every brand deal from pitch to paid.", "Brand inquiries from the site turn into deals in one tap (More → Pit Crew).", "Set what you owe them and the due date. Always add #ad on sponsored posts."]],
   "orders:income": ["Other income", ["Log TikTok or YouTube payouts, affiliate money, merch sold at meets.", "It all adds up in Overview against your monthly goal."]],
   "orders:kit": ["Your media kit", ["A public page for brands: thevolksvision.com/media-kit.", "It pulls your follower counts and average views automatically.", "Update your pitch, services and past partners here. Send brands the link."]],
-  "products": ["Your shop", ["Tap + New product, take a photo, set the price and sizes.", "Describe each photo. Google reads it.", "Mark items Sold out instead of deleting them. It shows demand.", "Changes go live on the site in about a minute."]],
+  "products": ["Your shop", ["Tap + New product, take a photo, set the price and sizes.", "Describe each photo. Google reads it.", "Sold out keeps it on the site to show demand. Archive pulls it off the site but saves it to bring back. Delete is only for mistakes.", "Changes go live on the site in about a minute."]],
   "posts": ["Your blog", ["A new post is written and published automatically every week.", "Tap any post to edit it, add a photo, or unpublish it.", "Write your own with + New post. Follow the ranking checklist to show up on Google."]],
   "build:build": ["The Mk2 is the brand", ["Set the status and tick off build stages. Fans see the progress bar on the site.", "Add every part to the spec sheet. Add a part link to earn from affiliate programs.", "Tell the story and add photos. Paste your best videos so they show on the homepage."]],
   "build:stops": ["Where is VolksVision next?", ["Add meets, shows, shoots and drops.", "Fans tap \"I'll pull up\" on the site, and you see the count here.", "The next stop shows on the homepage automatically."]],
@@ -1437,6 +1450,14 @@ document.addEventListener("click", async e => {
     if (act === "new-product") openProduct(null);
     if (act === "new-post") { if (state.products === null) api("products").then(d => { state.products = d; }).catch(() => {}); openPost(null); }
     if (act === "import") { const r = await api("products", { method: "POST", body: { import: true } }); state.products = await api("products"); render(); toast(`Added ${r.imported} products. Live in about a minute.`); }
+    if (act === "archive-product") {
+      const b = t.closest("[data-act]"), archived = b.dataset.archive === "1";
+      const { product, live } = await api("products", { method: "PATCH", body: { id: b.dataset.id, archived } });
+      state.products = state.products.map(p => p.id === product.id ? { ...p, ...product, price: Number(product.price) } : p);
+      if (archived) state.archiveOpen = false;
+      closeSheet(); render();
+      toast(archived ? `Archived. Off the site${live ? " in about a minute" : ""}; bring it back anytime from the Archive.` : `Back in the shop${live ? " in about a minute" : ""}.`);
+    }
     if (act === "delete-product") {
       const b = t.closest("[data-act]");
       if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; if (b.dataset.short) { b.classList.add("armed"); b.querySelector("span").textContent = "Sure?"; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ""; b.classList.remove("armed"); b.querySelector("span").textContent = "Delete"; } }, 4000); } else b.textContent = "Tap again to delete for good"; return; }

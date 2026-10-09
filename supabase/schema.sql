@@ -47,6 +47,7 @@ create table if not exists public.vv_products (
   stripe      text,
   active      boolean not null default true,
   sold_out    boolean not null default false,       -- stays visible as proof of demand
+  archived    boolean not null default false,       -- pulled from the shop but kept to bring back later
   sort        int not null default 100,
   updated_at  timestamptz not null default now()
 );
@@ -74,6 +75,7 @@ create table if not exists public.vv_settings (
 );
 insert into public.vv_settings (id, data) values (1, '{}') on conflict do nothing;
 
+alter table public.vv_products add column if not exists archived boolean not null default false;
 alter table public.vv_products enable row level security;
 alter table public.vv_posts    enable row level security;
 alter table public.vv_settings enable row level security;
