@@ -109,7 +109,9 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabbar) + env(safe-area-inset-bottom,0px) + 16px);z-index:20;background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;max-width:min(92vw,520px);font-size:15px;box-shadow:0 6px 20px rgb(0 0 0 / .2)}
 .toast.err{background:var(--bad);color:#fff}
 .login{max-width:400px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12vh) 16px 32px;display:flex;flex-direction:column;gap:14px}
-.login input[type=password]{padding:14px;border:1px solid var(--rule);border-radius:8px;background:var(--frame)}
+.pw{position:relative;display:block}.pw input{padding-right:76px!important}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--sea);font-weight:600;font-size:15px;padding:8px 10px;min-height:40px;cursor:pointer}
+.login input[type=password],.login #token{padding:14px;border:1px solid var(--rule);border-radius:8px;background:var(--frame)}
 .err{color:var(--bad);font-size:15px;margin:0;min-height:1.3em}
 .loading{color:var(--muted);padding:24px 2px}
 .help-btn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:6;width:40px;height:40px;border-radius:50%;border:1.5px solid var(--rule);background:var(--frame);color:var(--ink);font:800 18px var(--body);cursor:pointer}
@@ -145,30 +147,83 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .ntable th,.ntable td{padding:8px 4px;border-bottom:1px solid var(--rule);text-align:right}
 .ntable th:first-child,.ntable td:first-child{text-align:left}
 .ntable th{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+/* Desktop: same Studio, laid out for a big screen. Sidebar instead of the bottom tab bar,
+   wider content, editors slide in from the right instead of covering everything. */
+.side-brand,.side-foot{display:none}
+@media (min-width:1024px){
+  :root{--tabbar:0px;--side:240px}
+  body{font-size:16px}
+  .tabbar{top:0;bottom:0;right:auto;width:var(--side);display:flex;flex-direction:column;gap:2px;padding:24px 14px;border-top:0;border-right:1px solid var(--rule)}
+  .tabbar button{height:auto;min-height:46px;flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 14px;border-radius:10px;font-size:15px}
+  .tabbar button:hover{background:var(--paper);color:var(--ink)}
+  .tabbar button[aria-current="page"]{background:var(--paper)}
+  .tabbar svg{width:20px;height:20px}
+  .side-brand{display:flex;align-items:center;gap:10px;padding:4px 14px 22px;margin-bottom:8px;border-bottom:1px solid var(--rule)}
+  .side-brand b{font-size:18px;font-stretch:125%;text-transform:uppercase;font-weight:800;line-height:1}
+  .side-foot{display:block;margin-top:auto;padding:14px;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0}
+  .side-foot a{color:var(--muted)}
+  .screen{margin-left:var(--side);max-width:calc(1120px + var(--side));padding:40px 48px 64px}
+  .screen>*{max-width:1120px}
+  h1{font-size:40px}
+  .top{margin-bottom:24px;padding-right:56px}
+  .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .seg{max-width:720px}
+  .help-btn{top:28px;right:32px}
+  .fab{right:40px;bottom:32px}
+  .tip-scrim{align-items:center}
+  /* editor drawer */
+  .sheet{left:auto;width:min(720px,100vw - var(--side));border-left:1px solid var(--rule);box-shadow:0 0 0 100vmax rgb(0 0 0 / .55)}
+  .sheet-inner{padding:24px 28px 40px}
+  .sheet .photo{max-width:440px}
+  .sheet-foot{padding:14px 28px}
+  .sheet-foot .btn{flex:0 1 auto;min-width:160px}
+  .sheet-foot{justify-content:flex-end}
+  /* sign-in: split screen */
+  .login{max-width:none;min-height:100vh;margin:0;padding:0;display:grid;grid-template-columns:1.1fr 1fr;gap:0}
+  .login-art{display:flex!important}
+  .login-panel{display:flex;flex-direction:column;justify-content:center;gap:16px;padding:48px max(48px,8vw);max-width:620px}
+  .login .phone-only{display:none}
+}
+.login-art{display:none;position:relative;overflow:hidden;background:var(--frame);border-right:1px solid var(--rule);flex-direction:column;justify-content:flex-end;padding:56px}
+.login-art .ghost{position:absolute;inset:auto 0 22% 6%;font-size:min(22vw,380px);line-height:.8;font-weight:900;font-stretch:125%;color:transparent;-webkit-text-stroke:1.5px #2b322e;letter-spacing:-.02em;user-select:none}
+.login-art h2{position:relative;font-size:clamp(40px,4.4vw,72px);line-height:.95;text-transform:uppercase;font-stretch:125%;font-weight:800}
+.login-art h2 em{color:var(--signal);font-style:italic}
+.login-art p{position:relative;color:var(--muted);max-width:44ch;margin:18px 0 0}
+.login-panel{display:flex;flex-direction:column;gap:14px}
 </style>
 </head><body>
 
 <section id="loginView" class="login" hidden>
+  <div class="login-art" aria-hidden="true">
+    <div class="ghost">MK2</div>
+    <h2>Built slow.<br><em>Run right.</em></h2>
+    <p>Orders, deals, the build, the Glovebox and the crew. The whole VolksVision business, in one place.</p>
+  </div>
+  <div class="login-panel">
   <svg viewBox="0 0 40 40" width="48" height="48" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="20" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="20" r="3" fill="#e5a03a"/></svg>
   <div><div class="mono">VolksVision</div><h1>Studio</h1></div>
   <form id="loginForm" style="display:flex;flex-direction:column;gap:12px">
-    <label class="field" for="token"><span>Passphrase</span><input id="token" type="password" autocomplete="current-password" required></label>
-    <label class="switch" for="remember"><span>Keep me signed in on this phone</span><input id="remember" type="checkbox" checked></label>
+    <label class="field" for="token"><span>Passphrase</span><span class="pw"><input id="token" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required><button type="button" id="showPw" aria-controls="token" aria-pressed="false">Show</button></span></label>
+    <label class="switch" for="remember"><span id="rememberLabel">Keep me signed in on this phone</span><input id="remember" type="checkbox" checked></label>
     <button class="btn solid" type="submit">Open Studio</button>
     <p class="err" id="loginErr" role="alert"></p>
   </form>
-  <p class="mono" style="text-transform:none;letter-spacing:0">Tip: in Safari tap Share, then "Add to Home Screen" to open the Studio like an app.</p>
+  <p class="mono phone-only" style="text-transform:none;letter-spacing:0">Tip: in Safari tap Share, then "Add to Home Screen" to open the Studio like an app.</p>
+  </div>
 </section>
 
 <div id="appView" hidden>
   <main class="screen" id="screen"></main>
   <nav class="tabbar" aria-label="Studio sections">
+    <div class="side-brand"><svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="20" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="20" r="3" fill="#e5a03a"/></svg><div><div class="mono">VolksVision</div><b>Studio</b></div></div>
     <button type="button" data-tab="grow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/></svg><span>Grow</span></button>
     <button type="button" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v18"/><path d="M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/></svg><span>Money <span class="badge" id="newBadge" hidden></span></span></button>
     <button type="button" data-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3q-2 2-4 2T8 3z"/></svg><span>Shop</span></button>
     <button type="button" data-tab="posts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Journal</span></button>
     <button type="button" data-tab="build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 15v-3l2-1 3-4h8l3 4 2 1v3z"/><circle cx="7.5" cy="16" r="2"/><circle cx="16.5" cy="16" r="2"/></svg><span>Mk2</span></button>
     <button type="button" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>More</span></button>
+    <div class="side-foot"><a href="/" target="_blank" rel="noopener">View the site ↗</a></div>
   </nav>
 </div>
 
@@ -187,6 +242,8 @@ import { markdown, wordCount, plainText } from "/js/markdown.js";
 import { analyze, score, PILLARS as V_PILLARS, HOOKS } from "/js/analytics.js";
 
 const $ = s => document.querySelector(s);
+$("#showPw").addEventListener("click", e => { const t = $("#token"), show = t.type === "password"; t.type = show ? "text" : "password"; e.currentTarget.textContent = show ? "Hide" : "Show"; e.currentTarget.setAttribute("aria-pressed", String(show)); t.focus(); });
+if (matchMedia("(min-width:1024px)").matches) $("#rememberLabel").textContent = "Keep me signed in on this computer";
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const money = n => "$" + Number(n || 0).toFixed(2);
 const today = () => new Date().toISOString().slice(0, 10);
