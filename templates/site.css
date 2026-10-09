@@ -48,7 +48,8 @@ nav a{text-decoration:none;font-weight:600;font-size:14px;text-transform:upperca
 nav a:hover,nav a[aria-current="page"]{color:var(--fg)}
 .cart-btn{font:700 13px var(--body);text-transform:uppercase;letter-spacing:.06em;background:var(--fg);color:var(--bg);border:0;border-radius:2px;padding:10px 14px;cursor:pointer;display:flex;gap:8px;align-items:center;min-height:40px}
 .cart-btn b{font-family:var(--mono);font-weight:500;background:var(--accent);color:var(--accent-ink);border-radius:2px;min-width:22px;padding:0 6px;text-align:center}
-@media (max-width:760px){nav .hide-sm{display:none}nav{gap:16px}}
+@media (max-width:1060px){nav .hide-sm{display:none}nav{gap:18px}}
+@media (max-width:520px){nav .hide-xs{display:none}nav{gap:14px}}
 @media (max-width:400px){.mark svg{display:none}.mark{font-size:14px}}
 
 /* Hero: the Mk2 */
@@ -183,8 +184,8 @@ select{font:15px var(--body);padding:10px;border:1px solid var(--line);backgroun
 .build-hero{position:relative;min-height:min(78vh,760px);display:flex;align-items:flex-end;overflow:hidden;border-bottom:1px solid var(--line)}
 .build-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .build-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgb(11 13 12 / .92))}
-.build-hero-in{position:relative;z-index:1;padding-block:48px}
-.build-hero h1{font-size:clamp(40px,8vw,112px);line-height:.88;font-stretch:125%;text-transform:uppercase;margin-top:10px}
+.build-hero-in{position:relative;z-index:1;padding-block:48px;min-width:0;max-width:100%}
+.build-hero h1{font-size:clamp(34px,8vw,112px);overflow-wrap:anywhere;line-height:.88;font-stretch:125%;text-transform:uppercase;margin-top:10px}
 .build-hero .dek{color:#d4d9d5;font-size:clamp(17px,2vw,21px);margin:14px 0 0;max-width:56ch}
 .build-hero:not(:has(img)){min-height:auto}
 .build-body{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);gap:clamp(28px,5vw,72px);padding-block:clamp(40px,6vw,72px);align-items:start}
@@ -302,3 +303,4 @@ a.partner:hover{border-color:var(--accent)}
 .partner strong{font-size:17px;font-stretch:112%;text-transform:uppercase}
 .partner span{color:var(--muted);font-size:14px}
 .partner img{max-height:48px;width:auto;object-fit:contain}
+@media (max-width:359px){.bar{gap:8px}nav{gap:9px}nav a{font-size:11px;letter-spacing:.02em}.cart-btn{padding:8px;gap:5px}.mark{font-size:12px;letter-spacing:.05em}}

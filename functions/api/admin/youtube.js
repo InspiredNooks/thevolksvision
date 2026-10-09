@@ -7,7 +7,7 @@ import { getSettings } from "../../../lib/content.js";
 const iso = d => { const m = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d || ""); return m ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : null; };
 
 export const onRequestPost = adminRoute(async ({ env }) => {
-  if (!env.YOUTUBE_API_KEY) throw new UserError("YouTube sync isn't switched on yet (YOUTUBE_API_KEY missing in Cloudflare).");
+  if (!env.YOUTUBE_API_KEY) throw new UserError("YouTube sync isn't switched on yet (YOUTUBE_API_KEY missing in Netlify).");
   const s = await getSettings(env);
   const m = /youtube\.com\/(@[\w.-]+|channel\/(UC[\w-]+))/.exec(s.youtube || "");
   if (!m) throw new UserError("Add your YouTube channel link in More → Settings first (youtube.com/@yourname).");

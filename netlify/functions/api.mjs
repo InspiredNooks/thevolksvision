@@ -45,4 +45,4 @@ export default async (request, context) => {
   catch (err) { console.error(err); return Response.json({ error: "Something went wrong. Try again." }, { status: 500 }); }
 };
 
-export const config = { path: "/api/*" };
+export const config = { path: "/api/*", rateLimit: { windowLimit: 90, windowSize: 60, aggregateBy: ["ip", "domain"] } };

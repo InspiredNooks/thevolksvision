@@ -96,7 +96,13 @@ const row = { slug, title: post.title.slice(0, 120), description: post.descripti
 if (dryRun) { console.log(JSON.stringify(row, null, 2)); process.exit(0); }
 
 await supa(env, "vv_posts", { method: "POST", body: JSON.stringify(row) });
-if (topic) await supa(env, "vv_settings?id=eq.1", { method: "PATCH", body: JSON.stringify({ data: { ...settings, topics } }) });
+if (topic) {
+  // Re-read what's stored right now (RJ may have saved settings while the post was being written)
+  // and only remove the topic we used, so nothing else he changed is overwritten.
+  const [cur] = await supa(env, "vv_settings?id=eq.1&select=data");
+  const stored = cur?.data || {};
+  await supa(env, "vv_settings?id=eq.1", { method: "PATCH", body: JSON.stringify({ data: { ...stored, topics: (stored.topics || []).filter(t => t.title !== topic.title) } }) });
+}
 console.log(`Saved "${row.title}" as ${status}.`);
 
 if (status === "published" && env.DEPLOY_HOOK_URL) {

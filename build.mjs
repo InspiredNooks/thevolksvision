@@ -109,7 +109,7 @@ function head({ title, description, url, type = "website", image, jsonld = [], n
 <link rel="canonical" href="${url}">${noindex ? '\n<meta name="robots" content="noindex">' : ""}
 <meta property="og:type" content="${type}"><meta property="og:site_name" content="${esc(S.brand)}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}">
-<meta property="og:url" content="${url}"><meta property="og:image" content="${esc(image || SITE + "/img/og.png")}"><meta property="og:locale" content="en_US">
+<meta property="og:url" content="${url}"><meta property="og:image" content="${esc(image && !/\.svg$/i.test(image) ? image : SITE + "/img/og.png")}"><meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="${esc(S.brand)} ${esc(JN)}" href="${SITE}/rss.xml">
 <link rel="icon" href="/img/mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -120,7 +120,7 @@ ${jsonld.map(j => `<script type="application/ld+json">${JSON.stringify(j).replac
 }
 const header = () => `<header class="site"><div class="wrap bar">
   <a class="mark" href="/" aria-label="${esc(S.brand)} home">${MARK} VOLKSVISION</a>
-  <nav><a class="hide-sm" href="/#shop">Shop</a><a href="/build/">The Mk2</a><a href="/next/">Next stop</a><a class="hide-sm" href="/journal/">${esc(JN.replace(/^The /, ""))}</a><a class="hide-sm" href="/crew/">Crew</a><a class="hide-sm" href="/work-with-me/">Work with me</a>
+  <nav><a href="/#shop">Shop</a><a href="/build/">The Mk2</a><a class="hide-xs" href="/next/">Next stop</a><a class="hide-sm" href="/journal/">${esc(JN.replace(/^The /, ""))}</a><a class="hide-sm" href="/crew/">Crew</a><a class="hide-sm" href="/work-with-me/">Work with me</a>
   <button class="cart-btn" id="openCart" type="button">Bag <b id="count">0</b></button></nav>
 </div></header>`;
 const footer = () => `<footer><div class="wrap foot">
@@ -371,7 +371,7 @@ function buildPage() {
   ${VIDEOS.length ? `<div style="border-top:1px solid var(--line)">${videoGrid()}</div>` : ""}
   ${dropAlerts("build")}
 </main>`;
-  return page(head({ title: `${car} Build: Specs, Mods & Photos | ${S.brand}`, description: (BUILD.headline ? `${BUILD.headline}. ` : "") + `RJ's ${car} build from St. Petersburg, FL: spec sheet, mods, photos and build log.`.slice(0, 158), url, type: "article", image: abs(lead?.url),
+  return page(head({ title: `${car} Build: Specs, Mods & Photos | ${S.brand}`, description: ((BUILD.headline ? `${BUILD.headline}. ` : "") + `RJ's ${car} build from St. Petersburg, FL: spec sheet, mods, photos and build log.`).slice(0, 158), url, type: "article", image: abs(lead?.url),
     jsonld: [{ "@context": "https://schema.org", "@type": "Car", name: car, description: plainText(BUILD.story || BUILD.headline || ""), brand: { "@type": "Brand", name: "Volkswagen" }, model: "Jetta", vehicleConfiguration: "Mk2",
       image: [lead?.url, ...g.map(x => x.url)].filter(Boolean).map(abs), url },
       crumbs([["Home", SITE + "/"], ["The Mk2", url]])] }), main);
@@ -564,7 +564,7 @@ copyDir(path.join(here, "static"), OUT);
 // (Google discovers changes through the sitemap in Search Console.)
 if (env.INDEXNOW_KEY && /^[a-zA-Z0-9-]{8,128}$/.test(env.INDEXNOW_KEY)) {
   write(`${env.INDEXNOW_KEY}.txt`, env.INDEXNOW_KEY);
-  if (env.CF_PAGES_BRANCH === "main" || env.INDEXNOW_PING === "1") {
+  if (env.CONTEXT === "production" || env.CF_PAGES_BRANCH === "main" || env.INDEXNOW_PING === "1") {
     try {
       const res = await fetch("https://api.indexnow.org/indexnow", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ host: new URL(SITE).host, key: env.INDEXNOW_KEY, keyLocation: `${SITE}/${env.INDEXNOW_KEY}.txt`, urlList: urls.map(u => u.loc) }) });

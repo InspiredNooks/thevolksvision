@@ -1,3 +1,13 @@
+// Shrinks a photo in the browser before upload. Falls back to the original if the browser can't decode it.
+async function shrink(file, max = 1600) {
+  try {
+    const img = await createImageBitmap(file);
+    const k = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.85));
+  } catch { return file; }
+}
 // Drop-alert signup and Work-with-me forms (any page). Posts to /api/subscribe and /api/inquiry.
 document.addEventListener("submit", async e => {
   const f = e.target.closest("[data-form]"); if (!f) return;
@@ -7,6 +17,8 @@ document.addEventListener("submit", async e => {
   btn.disabled = true; msg.textContent = "Sending…";
   try {
     // The Crew form carries a photo, so it goes as multipart; the others are JSON.
+    // Phone photos are often 3-12 MB, so shrink to 1600px JPEG first (the server takes up to 4.5 MB).
+    if (f.dataset.form === "crew") { const file = fd.get("photo"); if (file && file.size > 1.5e6) fd.set("photo", await shrink(file), "car.jpg"); }
     const res = f.dataset.form === "crew" ? await fetch("/api/crew", { method: "POST", body: fd })
       : await fetch("/api/" + f.dataset.form, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
     const out = await res.json().catch(() => ({}));
@@ -37,7 +49,8 @@ document.addEventListener("submit", async e => {
       const out = await res.json(); if (!res.ok) throw new Error(out.error || "Didn't go through. Try again.");
       document.querySelectorAll(`[data-count="${id}"]`).forEach(el => el.textContent = `${out.count} pulling up`);
       btn.textContent = "You're pulling up ✓"; msg.textContent = fd.get("email") ? "See you there. Reminder's coming." : "See you there.";
-      try { localStorage.setItem("vv-pullups", JSON.stringify([...seen, id])); } catch {}
+      if (!seen.includes(id)) seen.push(id);
+      try { localStorage.setItem("vv-pullups", JSON.stringify(seen)); } catch {}
     } catch (err) { msg.textContent = err.message; btn.disabled = false; }
   });
 })();

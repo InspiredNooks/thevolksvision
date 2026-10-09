@@ -265,6 +265,8 @@ const money = n => "$" + Number(n || 0).toFixed(2);
 const today = () => new Date().toISOString().slice(0, 10);
 const ORDER_STATUSES = [["new", "New"], ["awaiting_payment", "Awaiting payment"], ["paid", "Paid, to ship"], ["shipped", "Shipped"], ["delivered", "Delivered"], ["cancelled", "Cancelled"]];
 const ART = ["tee", "hoodie", "cap", "sticker", "key", "print"];
+// Spreadsheet-safe cell: quotes escaped, and a leading = + - @ can't run as a formula in Excel or Sheets.
+const csvCell = v => { let s = typeof v === "object" && v ? JSON.stringify(v) : String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
 const statusLabel = s => (ORDER_STATUSES.find(x => x[0] === s) || [s, s])[1];
 
 // ---------- session ----------
@@ -1539,7 +1541,7 @@ document.addEventListener("click", async e => {
       state.settings = { ...buildBody(), videos: [v, ...(state.settings.videos || [])].slice(0, 12) }; render(); toast("Video added. Tap Save to put it on the site.");
     }
     if (act === "export-subs") {
-      const csv = ["email,source,signed_up", ...state.audience.subscribers.map(x => `"${x.email}","${x.source || ""}","${x.created_at}"`)].join("\n");
+      const csv = ["email,source,signed_up", ...state.audience.subscribers.map(x => [x.email, x.source, x.created_at].map(csvCell).join(","))].join("\n");
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = `volksvision-drop-list-${today()}.csv`; a.click();
     }
     if (act === "add-topic") {
@@ -1552,7 +1554,7 @@ document.addEventListener("click", async e => {
     if (act === "tips-reset") { tipStore.set("vv-tips-off", false); tipStore.set("vv-tips-seen", []); toast("Tips are back on."); }
     if (act === "export") {
       const cols = ["order_number", "created_at", "status", "customer_name", "customer_contact", "ship_to", "total", "tracking", "notes"];
-      const csv = [cols.join(","), ...state.orders.map(o => cols.map(c => `"${String(o[c] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
+      const csv = [cols.join(","), ...state.orders.map(o => cols.map(c => csvCell(o[c])).join(","))].join("\n");
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
       a.download = `volksvision-orders-${today()}.csv`; a.click();
     }

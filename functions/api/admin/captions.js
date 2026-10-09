@@ -38,7 +38,7 @@ const LONG_SCHEMA = { type: "object", additionalProperties: false, required: ["t
   } };
 
 export const onRequestPost = adminRoute(async ({ request, env }) => {
-  if (!env.ANTHROPIC_API_KEY) throw new UserError("Caption writing isn't switched on yet (ANTHROPIC_API_KEY missing in Cloudflare).");
+  if (!env.ANTHROPIC_API_KEY) throw new UserError("Caption writing isn't switched on yet (ANTHROPIC_API_KEY missing in Netlify).");
   const b = await request.json();
   const about = str(b.about, 600);
   if (about.length < 5) throw new UserError("Say what the video is about first.");
