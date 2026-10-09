@@ -126,7 +126,7 @@ const header = () => `<header class="site"><div class="wrap bar">
 const footer = () => `<footer><div class="wrap foot">
   <div><div class="mark" style="margin-bottom:10px">VOLKSVISION</div>
   <p>${esc(S.brand)} is an independent creator brand from ${esc(S.city)}, run by ${esc(S.ownerName)}${S.legalName ? `. VolksVision is a brand of ${esc(S.legalName)}` : ""}. It is not affiliated with, sponsored by, or endorsed by Volkswagen AG. All vehicle photography is original work by RJ.</p></div>
-  <div class="links">${SOCIAL.map(([t, u]) => `<a href="${esc(u)}" rel="me noopener" target="_blank">${t}</a>`).join("")}<a href="/build/">The Mk2</a><a href="/next/">Where's VolksVision next</a><a href="/journal/">${esc(JN)}</a><a href="/crew/">The Crew</a><a href="/media-kit/">Media kit</a><a href="/about/">About</a><a href="/work-with-me/">Work with me</a><a href="/rss.xml">RSS</a>${S.contactEmail ? `<a class="mono" style="text-transform:none" href="mailto:${esc(S.contactEmail)}">${esc(S.contactEmail)}</a>` : ""}<a class="mono" style="text-transform:none" href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a></div>
+  <div class="links">${SOCIAL.map(([t, u]) => `<a href="${esc(u)}" rel="me noopener" target="_blank">${t}</a>`).join("")}<a href="/build/">The Mk2</a><a href="/next/">Where's VolksVision next</a><a href="/journal/">${esc(JN)}</a><a href="/crew/">The Crew</a><a href="/media-kit/">Media kit</a><a href="/about/">About</a><a href="/work-with-me/">Work with me</a><a href="/shipping-returns/">Shipping &amp; returns</a><a href="/rss.xml">RSS</a>${S.contactEmail ? `<a class="mono" style="text-transform:none" href="mailto:${esc(S.contactEmail)}">${esc(S.contactEmail)}</a>` : ""}<a class="mono" style="text-transform:none" href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a></div>
 </div></footer>`;
 const STRIPE = Boolean(env.STRIPE_SECRET_KEY);   // only a yes/no reaches the page, never the key
 const SHIP_NOTE = S.shipping > 0 ? (S.freeShipOver > 0 ? `Flat ${money(S.shipping)} shipping, free over ${money(S.freeShipOver)}.` : `Flat ${money(S.shipping)} shipping.`) : "Free shipping.";
@@ -141,7 +141,7 @@ const drawer = () => `<div class="scrim" id="scrim" hidden></div>
     <label for="buyerShip">Shipping address, or "pickup"<input id="buyerShip" required autocomplete="street-address" maxlength="300"></label>`}
     <input id="website" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
     <button class="btn solid" type="submit" id="placeOrder">${STRIPE ? "Checkout" : "Place order request"}</button>
-    <p class="note">${SHIP_NOTE}${STRIPE ? " Secure checkout by Stripe: cards, Apple Pay and Google Pay." : ` RJ confirms every order personally, then sends a payment request (${esc(S.payWith)}).`}</p>
+    <p class="note">${SHIP_NOTE} 14-day returns on unworn items (<a href="/shipping-returns/">details</a>).${STRIPE ? " Secure checkout by Stripe: cards, Apple Pay and Google Pay." : ` RJ confirms every order personally, then sends a payment request (${esc(S.payWith)}).`}</p>
     <div class="done" id="done" role="status" hidden></div>
   </form>
 </aside>`;
@@ -177,6 +177,9 @@ const productLd = p => ({
   description: p.blurb + (p.details ? " " + plainText(p.details) : ""), image: productImage(p), sku: p.id, url: `${SITE}/shop/${p.id}/`,
   category: p.cat, brand: { "@type": "Brand", name: S.brand },
   offers: { "@type": "Offer", price: p.price.toFixed(2), priceCurrency: "USD", availability: p.sold_out ? "https://schema.org/SoldOut" : "https://schema.org/InStock", url: `${SITE}/shop/${p.id}/`, seller: { "@id": `${SITE}/#org` },
+    hasMerchantReturnPolicy: { "@type": "MerchantReturnPolicy", applicableCountry: "US", returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow", merchantReturnDays: 14, returnMethod: "https://schema.org/ReturnByMail", returnFees: "https://schema.org/ReturnShippingFees", merchantReturnLink: `${SITE}/shipping-returns/` },
+    shippingDetails: { "@type": "OfferShippingDetails", shippingDestination: { "@type": "DefinedRegion", addressCountry: "US" }, shippingRate: { "@type": "MonetaryAmount", value: Number(S.shipping || 0).toFixed(2), currency: "USD" },
+      deliveryTime: { "@type": "ShippingDeliveryTime", handlingTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 5, unitCode: "DAY" }, transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 6, unitCode: "DAY" } } },
     shippingDetails: { "@type": "OfferShippingDetails", shippingDestination: { "@type": "DefinedRegion", addressCountry: "US" }, shippingRate: { "@type": "MonetaryAmount", value: S.shipping.toFixed(2), currency: "USD" } } }
 });
 
@@ -325,7 +328,7 @@ function productPage(p) {
       <p class="dek">${esc(p.blurb)}</p>
       ${buyRow(p)}
       ${p.details ? `<div class="prose" style="margin:24px 0 0">${markdown(p.details, SITE)}</div>` : ""}
-      <p class="note" style="margin-top:20px">Ships from ${esc(S.city)}. ${SHIP_NOTE} Local pickup available.</p>
+      <p class="note" style="margin-top:20px">Ships from ${esc(S.city)}. ${SHIP_NOTE} Local pickup available. <a href="/shipping-returns/">Shipping &amp; returns</a>.</p>
     </div>
   </div>
   ${others.length ? `<section style="margin-top:56px"><div class="sheet-head"><h2>More from the roll</h2></div><div class="grid">${others.map((x) => productCard(x, PRODUCTS.indexOf(x))).join("")}</div></section>` : ""}
@@ -333,6 +336,33 @@ function productPage(p) {
 </main>`;
   return page(head({ title: `${p.name} | ${S.brand}`, description: `${p.blurb} ${money(p.price)} from VolksVision, St. Petersburg, FL.`.slice(0, 160), url, type: "product", image: productImage(p),
     jsonld: [productLd(p), crumbs([["Home", SITE + "/"], ["Shop", SITE + "/#shop"], [p.name, url]])] }), main);
+}
+
+function returnsPage() {
+  const url = `${SITE}/shipping-returns/`;
+  const main = `<main class="wrap article"><article>
+  <header><div class="crumbs">Help</div><h1>Shipping &amp; Returns</h1><p class="dek">Straight answers. If anything's off with your order, email <a href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a> and RJ will make it right.</p></header>
+  <div class="prose">
+  <h2>Shipping</h2>
+  <ul><li>Orders ship from ${esc(S.city)} within <strong>3 to 5 business days</strong>. Limited drops can take a little longer; the product page will say so.</li>
+  <li>${SHIP_NOTE} US addresses only for now.</li>
+  <li>You'll get an email with tracking when your order ships.</li>
+  <li><strong>Local pickup</strong> in St. Petersburg is free. Choose it at checkout and RJ will email you to set a time.</li></ul>
+  <h2>Returns and exchanges</h2>
+  <ul><li>Unworn, unwashed items with tags can be returned or exchanged within <strong>14 days</strong> of delivery.</li>
+  <li>Email <a href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a> with your order number (it starts with VV-) to start a return. You cover return shipping unless we made a mistake.</li>
+  <li>Refunds go back to your original payment method within 5 business days of the item arriving back.</li>
+  <li>Need a different size? Ask for an exchange and we'll hold the size while yours ships back, if it's in stock.</li></ul>
+  <h2>Final sale</h2>
+  <ul><li><strong>Signed and numbered prints</strong> and anything marked <strong>sale</strong> or <strong>final</strong> can't be returned.</li></ul>
+  <h2>Damaged or wrong item</h2>
+  <ul><li>If something arrives damaged or isn't what you ordered, email a photo within 7 days. We'll replace it or refund you, and cover the shipping.</li></ul>
+  <h2>Questions</h2>
+  <p>Orders: <a href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a>${S.contactEmail ? `. Everything else: <a href="mailto:${esc(S.contactEmail)}">${esc(S.contactEmail)}</a>` : ""}.</p>
+  <p class="note">${esc(S.brand)} is an independent creator brand${S.legalName ? ` of ${esc(S.legalName)}` : ""} based in ${esc(S.city)}.</p>
+  </div></article></main>`;
+  return page(head({ title: `Shipping & Returns | ${S.brand}`, description: `${S.brand} shipping times, local pickup in St. Pete, and the 14-day return and exchange policy.`, url,
+    jsonld: [crumbs([["Home", SITE + "/"], ["Shipping & Returns", url]])] }), main);
 }
 
 function aboutPage() {
@@ -507,6 +537,7 @@ function postPage(p) {
 fs.rmSync(OUT, { recursive: true, force: true });
 write("index.html", homePage());
 write("about/index.html", aboutPage());
+write("shipping-returns/index.html", returnsPage());
 write("build/index.html", buildPage());
 write("work-with-me/index.html", workPage());
 write("crew/index.html", crewPage());
@@ -528,6 +559,7 @@ const urls = [
   { loc: `${SITE}/`, images: PRODUCTS.map(productImage) },
   { loc: `${SITE}/build/`, images: [S.heroImage, ...(BUILD.gallery || []).map(x => x.url)].filter(Boolean).map(abs) },
   { loc: `${SITE}/about/` },
+  { loc: `${SITE}/shipping-returns/` },
   { loc: `${SITE}/work-with-me/` },
   { loc: `${SITE}/crew/`, images: CREW.map(c => c.photo) },
   { loc: `${SITE}/next/` },
