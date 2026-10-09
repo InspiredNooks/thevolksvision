@@ -360,6 +360,12 @@ function homePage() {
     <div class="grid">${PRODUCTS.map(productCard).join("\n") || `<p class="empty">The next drop is coming. Get on the list below.</p>`}</div>
   </div></section>
 
+  ${UPCOMING.some(e => e.lat != null && pinXY(e.lat, e.lng)) ? `<section class="band" aria-labelledby="bayTitle"><div class="wrap bay-home">
+    <div><div class="mono">Around the Bay</div><h2 id="bayTitle" style="margin-top:10px">Meets, shows &amp; cars and coffee</h2>
+      <p class="r-sub" style="white-space:normal">Every car event on the VolksVision radar from Clearwater to Lakeland. Solid pins are where RJ is pulling up. Tap a pin, then "I'm going."</p>
+      <div class="cta"><a class="btn solid" href="/next/">All events &amp; calendar</a><a class="btn" href="webcal://${SITE.replace(/^https?:\/\//, "")}/calendar.ics">📅 Subscribe</a></div></div>
+    <div>${mapBlock(UPCOMING)}</div>
+  </div></section>` : ""}
   <section class="band" aria-labelledby="carTitle"><div class="wrap car">
     <a class="car-photo" href="/build/" aria-label="See the ${esc(car)} build">${carPhoto ? `<img src="${esc(carPhoto.url)}" alt="${esc(carPhoto.alt || car)}" loading="lazy" decoding="async">` : `<span class="ph" aria-hidden="true">MK2</span>`}</a>
     <div>

@@ -393,3 +393,7 @@ a.partner:hover{border-color:var(--accent)}
 .bay-key .attr{margin-left:auto;font-size:11px;opacity:.7}
 .tag-rj{color:var(--accent)}
 .tag-comm{color:var(--muted)}
+.bay-home{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(24px,4vw,56px);align-items:center}
+.bay-home .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.bay-home .bay,.bay-home .bay-key{max-width:min(560px,calc(70vh * .9));margin-inline:auto 0}
+@media (max-width:860px){.bay-home{grid-template-columns:1fr}.bay-home .bay,.bay-home .bay-key{margin-inline:auto}}
