@@ -286,6 +286,12 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .found .r-main{display:flex;flex-direction:column;gap:3px}
 .found-acts{display:flex;gap:6px;flex-wrap:wrap}
 .found-acts .btn{padding:8px 12px;font-size:13px}
+.stock-panel{border:1px solid var(--rule);border-radius:10px;padding:10px;margin:8px 0;display:flex;flex-direction:column;gap:10px}
+.stock-search{display:flex;gap:8px}.stock-search input{flex:1;min-width:0}
+.stock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;max-height:360px;overflow:auto}
+.stock-item{display:flex;flex-direction:column;gap:4px}.stock-item img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px}
+.stock-item small{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stock-acts{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 </style>
 </head><body>
 
@@ -706,8 +712,12 @@ function openPost(id) {
       <div class="toolbar" role="toolbar" aria-label="Formatting">
         <button type="button" data-md="h2" aria-label="Heading">H</button><button type="button" data-md="bold" aria-label="Bold"><b>B</b></button>
         <button type="button" data-md="list" aria-label="List">• List</button><button type="button" data-md="link" aria-label="Link">Link</button>
-        <button type="button" data-md="photo" aria-label="Add a photo">📷 Photo</button><button type="button" data-md="shop" aria-label="Link a product">🔗 Shop</button><button type="button" data-md="quote" aria-label="Quote">“ ”</button>
+        <button type="button" data-md="photo" aria-label="Add a photo">📷 Photo</button><button type="button" data-md="stock" aria-label="Free photo">🔎 Free photo</button><button type="button" data-md="shop" aria-label="Link a product">🔗 Shop</button><button type="button" data-md="quote" aria-label="Quote">“ ”</button>
         <button type="button" data-md="preview" id="previewBtn">Preview</button>
+      </div>
+      <div id="b-stock" class="stock-panel" hidden>
+        <form id="bStockForm" class="stock-search"><input name="q" placeholder="volkswagen jetta" aria-label="Search free photos"><button class="btn solid" type="submit">Search</button></form>
+        <div id="bStockOut"><p class="r-sub" style="white-space:normal">Free photos from Unsplash${""}. Pick one for the cover or to drop into the post. The photographer is credited automatically.</p></div>
       </div>
       <textarea id="b-body" class="body-edit" placeholder="Start writing. Use the buttons above for headings and lists.">${esc(p.body)}</textarea>
       <div class="preview" id="b-preview" hidden></div>
@@ -734,6 +744,38 @@ async function savePost(p, status) {
   state.posts.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   closeSheet(); render(); toast(status === "draft" ? "Draft saved." : savedMsg(live));
 }
+// Free photos in the post editor: search, then use one as the cover or drop it into the post.
+// Unsplash rules: the photo stays on Unsplash's servers, the download is reported, and the photographer is credited and linked.
+let bStock = [];
+async function postStockSearch(q) {
+  const out = $("#bStockOut"); out.innerHTML = `<div class="loading">Searching…</div>`;
+  try {
+    const r = await api(`photos?q=${encodeURIComponent(q)}`);
+    if (r.off) { out.innerHTML = `<p class="r-sub" style="white-space:normal">Free photos need the Unsplash key in Netlify (UNSPLASH_ACCESS_KEY).</p>`; return; }
+    bStock = r.photos;
+    out.innerHTML = bStock.length ? `<div class="stock-grid">${bStock.map((p, i) => `<div class="stock-item"><img src="${esc(p.thumb)}" alt="${esc(p.alt)}" loading="lazy"><small>${esc(p.by)} · ${esc(p.source)}</small>
+      <div class="stock-acts"><button type="button" class="act-btn" data-bstock="cover" data-i="${i}">Cover</button><button type="button" class="act-btn" data-bstock="insert" data-i="${i}">In post</button></div></div>`).join("")}</div>` : `<p class="r-sub">Nothing found. Try other words.</p>`;
+  } catch (e) { out.innerHTML = `<p class="r-sub">${esc(e.message)}</p>`; }
+}
+function useStock(how, i) {
+  const p = bStock[i]; if (!p) return;
+  if (p.download) api("photos", { method: "POST", body: { download_location: p.download } }).catch(() => {});
+  const ta = $("#b-body"), alt = (p.alt || "").replace(/[\[\]"]/g, "");
+  if (how === "cover") {
+    $("#b-image").value = p.full; $("#b-photo").innerHTML = `<img src="${esc(p.full)}" alt="">`;
+    if (!$("#b-alt").value.trim()) $("#b-alt").value = alt.slice(0, 160);
+    const line = `*${p.credit.replace(/^Photo by/, "Cover photo by")}*`;
+    ta.value = `${ta.value.replace(/\n*\*Cover photo by [^\n]*\*[ \t]*/g, "").trimEnd()}\n\n${line}`;
+    toast("Cover set. The photographer credit is at the end of the post.");
+  } else {
+    const at = ta.selectionStart ?? ta.value.length, md = `\n\n![${alt || "Describe what's in this photo"}](${p.full} "${p.credit.replace(/"/g, "'")}")\n\n`;
+    ta.value = ta.value.slice(0, at) + md + ta.value.slice(at);
+    toast("Photo added with its credit. Check the description in [ ] says what's in it.");
+  }
+  $("#sheetBody").dispatchEvent(new Event("input"));
+}
+document.addEventListener("submit", e => { if (e.target.id === "bStockForm") { e.preventDefault(); postStockSearch(new FormData(e.target).get("q") || "volkswagen"); } });
+document.addEventListener("click", e => { const b = e.target.closest("[data-bstock]"); if (b) useStock(b.dataset.bstock, +b.dataset.i); });
 // Puts a photo into the post where the cursor is: pick it, adjust it, it uploads, the line is inserted.
 async function insertPostPhoto() {
   const pick = document.createElement("input"); pick.type = "file"; pick.accept = "image/*";
@@ -754,6 +796,7 @@ async function insertPostPhoto() {
 }
 function formatMd(kind) {
   if (kind === "photo") return insertPostPhoto();
+  if (kind === "stock") { const pn = $("#b-stock"); pn.hidden = !pn.hidden; if (!pn.hidden) pn.querySelector("input").focus(); return; }
   const ta = $("#b-body");
   if (kind === "preview") {
     const pv = $("#b-preview"), showing = !pv.hidden;
@@ -1756,6 +1799,10 @@ function openStoryEdit() {
     <label class="field" for="se-d"><span>Under the headline</span><textarea id="se-d" rows="2">${esc(st.dek)}</textarea></label>
     <label class="field" for="se-q"><span>Pull quote (your words)</span><textarea id="se-q" rows="2">${esc(st.pullQuote)}</textarea></label>
     <label class="field" for="b-body"><span>The story</span><div class="toolbar" role="toolbar"><button type="button" data-md="photo">📷 Photo</button><button type="button" data-md="h2">H</button><button type="button" data-md="bold"><b>B</b></button><button type="button" data-md="preview" id="previewBtn">Preview</button></div>
+      <div id="b-stock" class="stock-panel" hidden>
+        <form id="bStockForm" class="stock-search"><input name="q" placeholder="volkswagen jetta" aria-label="Search free photos"><button class="btn solid" type="submit">Search</button></form>
+        <div id="bStockOut"><p class="r-sub" style="white-space:normal">Free photos from Unsplash${""}. Pick one for the cover or to drop into the post. The photographer is credited automatically.</p></div>
+      </div>
       <textarea id="b-body" class="body-edit">${esc(st.body)}</textarea><div class="preview" id="b-preview" hidden></div></label>
     <label class="field" for="se-seo"><span>Google title</span><input id="se-seo" value="${esc(st.seoTitle)}" maxlength="70"></label>
     <label class="field" for="se-desc"><span>Google description</span><textarea id="se-desc" rows="2" maxlength="200">${esc(st.description)}</textarea></label>
