@@ -59,6 +59,7 @@ export const onRequestPut = adminRoute(async ({ request, env }) => {
       services: list(b.mediaKit?.services, 12, 120, []), partners: list(b.mediaKit?.partners, 30, 80, []) },
     sponsors: (Array.isArray(b.sponsors) ? b.sponsors : []).slice(0, 12).map(x => ({ name: str(x.name, 80), url: /^https:\/\//.test(str(x.url, 300)) ? str(x.url, 300) : "",
       tagline: str(x.tagline, 120), logo: photo(x.logo), disclosure: str(x.disclosure, 300), show: x.show !== false })).filter(x => x.name),
+    library: (Array.isArray(b.library) ? b.library : []).slice(0, 60).map(x => ({ url: photo(x?.url), label: str(x?.label, 40) })).filter(x => x.url),
     weeklyGoal: Math.min(21, Math.max(1, Math.round(Number(b.weeklyGoal)) || 5)),
     journalName: str(b.journalName, 40) || "The Glovebox",
     listName: str(b.listName, 40) || "the Pit Crew",

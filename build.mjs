@@ -469,7 +469,7 @@ function crewPage() {
       <label for="cr-car">Your car<input id="cr-car" name="car" required maxlength="120" placeholder="1991 VW Jetta GLI, bagged"></label>
       <label for="cr-story">The story (optional)<textarea id="cr-story" name="story" rows="4" maxlength="1200"></textarea></label>
       <label for="cr-photo">Photo<input id="cr-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required></label>
-      <label class="check-line"><input type="checkbox" name="consent" value="yes" required> It's my car and my photo, and VolksVision can feature it with my handle.</label>
+      <label class="check-line"><input type="checkbox" name="consent" value="yes" required> It's my car and I took this photo (or have the photographer's OK). VolksVision can feature it, with credit to my handle, on the site, socials, ads and merch promotion.</label>
       <input name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
       <button class="btn solid" type="submit">Send it</button>
       <p class="form-msg" role="status"></p>

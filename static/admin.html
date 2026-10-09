@@ -99,6 +99,29 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .field .soc-in input{border:0;background:transparent;padding-left:4px}
 .soc-meta{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
 .soc-meta .link{min-height:0;padding:0;flex:none;font-size:14px}
+/* Mockup maker */
+.mk{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;color:var(--ink)}
+.mk-stage{position:relative;flex:1;min-height:0;display:grid;place-items:center;touch-action:none;overflow:hidden;background:repeating-conic-gradient(#111 0 25%,#0b0b0b 0 50%) 0 0/24px 24px}
+.mk-canvas{box-shadow:0 10px 40px rgb(0 0 0 / .6)}
+.mk-tools{background:var(--frame);border-top:1px solid var(--rule);padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto}
+.mk-add{display:flex;gap:6px;flex-wrap:wrap}
+.mk-tools .chips{flex-wrap:wrap;overflow:visible}
+.mk-add .btn{flex:none;min-height:40px;padding:8px 14px;font-size:14px}
+.mk-panel{display:flex;flex-direction:column;gap:8px}
+.mk-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mk-btns{display:flex;gap:4px}.mk-btns .act-btn{min-width:38px;min-height:38px;padding:0}
+.mk-colors{display:flex;gap:6px}.mk-color{width:32px;height:32px;border-radius:50%;border:2px solid var(--rule);cursor:pointer}.mk-color[aria-pressed="true"]{outline:2px solid var(--sea);outline-offset:2px}
+.mk-plate{display:flex;align-items:center;gap:6px;font-size:14px}
+.mk-pick{position:absolute;inset:0;background:rgb(0 0 0 / .6);display:flex;align-items:flex-end;justify-content:center;z-index:2}
+.mk-pick-in{background:var(--paper);width:min(100%,760px);max-height:88vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.mk-pick-body{overflow-y:auto;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.mk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.mk-tile{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.mk-tile img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--rule);background:var(--frame)}
+.mk-tile span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk-tpl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.mk-tplb{all:unset;cursor:pointer;background:var(--frame);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px}
+@media (min-width:1024px){.mk{inset:24px;border-radius:14px;overflow:hidden;box-shadow:0 0 0 100vmax rgb(0 0 0 / .6)}.mk{flex-direction:row}.mk>.pe-bar{position:absolute;top:0;left:0;right:0;z-index:3}.mk-stage{margin-top:56px}.mk-tools{width:380px;max-height:none;margin-top:56px;border-top:0;border-left:1px solid var(--rule)}}
 /* Photo editor */
 .pe{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;color:var(--ink)}
 .pe-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;background:var(--frame);border-bottom:1px solid var(--rule)}
@@ -582,6 +605,7 @@ function openProduct(id) {
   const p = isNew ? { name: "", price: "", cat: "wear", sizes: ["S", "M", "L", "XL"], blurb: "", details: "", tag: "", exif: "", art: "tee", image: "", image_alt: "", stripe: "", active: true, sort: 100 } : state.products.find(x => x.id === id);
   sheet(isNew ? "New product" : "Edit product", `
     ${photoField("p", p.image, p.image_alt, "products")}
+    ${isNew ? "" : `<button class="btn" type="button" data-act="mockup" data-prod="${esc(p.id)}">🎨 Make a mockup with this product</button>`}
     <div class="field"><span>More photos <small class="r-sub" style="display:inline">(back, close-ups, on someone · up to 8)</small></span><div id="p-more"></div></div>
     <label class="field" for="p-name"><span>Name</span><input id="p-name" value="${esc(p.name)}" required placeholder="VR6 Firing Order Hoodie"><small>Use words people search for, like "VR6", "VW" or "hoodie".</small></label>
     <div class="pair">
@@ -833,7 +857,7 @@ function growView() {
   if (state.videos === null || state.coach === null) return `<div class="loading">Loading…</div>`;
   const head = `<div class="top"><div><div class="mono">${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div><h1>${state.growView === "today" ? greeting() : "Grow"}</h1></div></div>`;
   const seg = `<div class="seg" style="grid-template-columns:repeat(5,1fr)" role="group" aria-label="Grow sections">${[["today", "Today"], ["videos", "Videos"], ["stats", "Stats"], ["ideas", "Ideas"], ["plan", "Plan"]].map(([k, l]) => `<button type="button" data-gv="${k}" aria-pressed="${state.growView === k}">${l}</button>`).join("")}</div>`;
-  if (!state.plan.length && state.growView !== "videos" && state.growView !== "stats") return head + seg + `<div class="empty"><span>Your growth hub: what to film today, your video stats, a weekly coach, an idea bank and your playbook. Only you can see it.</span><button class="btn sea" type="button" data-act="plan-import">Set up my growth plan</button><button class="btn solid" type="button" data-act="create">🎬 Edit &amp; post a video</button></div>`;
+  if (!state.plan.length && state.growView !== "videos" && state.growView !== "stats") return head + seg + `<div class="empty"><span>Your growth hub: what to film today, your video stats, a weekly coach, an idea bank and your playbook. Only you can see it.</span><button class="btn sea" type="button" data-act="plan-import">Set up my growth plan</button><button class="btn solid" type="button" data-act="create">🎬 Edit &amp; post a video</button><button class="btn" type="button" data-act="mockup">🎨 Make a mockup</button></div>`;
   return head + seg + ({ today: todayView, videos: videosView, stats: statsView, ideas: ideasView, plan: planView })[state.growView]();
 }
 
@@ -889,6 +913,7 @@ function todayView() {
   ${f ? `<div class="card" style="margin-top:12px;border-color:var(--signal)"><div class="mono">${f.from} · film today</div><strong style="font-size:20px;line-height:1.2">${esc(f.title)}</strong><span class="r-sub" style="white-space:normal">${esc(f.sub)}</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${f.id ? `<button class="btn sea" type="button" data-advance="${f.id}">Filmed it ✓</button>` : ""}<button class="btn solid" type="button" data-act="new-video">Posted it: log it</button></div></div>` : ""}
   <button class="btn solid big-cta" type="button" data-act="create" style="margin-top:12px">🎬 Edit &amp; post everywhere</button>
+  <button class="btn big-cta" type="button" data-act="mockup" style="margin-top:8px">🎨 Make a mockup</button>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
     <button class="btn" type="button" data-act="new-video">+ Log a video</button><button class="btn" type="button" data-act="new-idea">+ Idea</button>
   </div>
@@ -1312,6 +1337,7 @@ function goScreen(key) {
   hideTip();
   if (!key || key === "none") return;
   if (key === "create") return openCreate();
+  if (key === "mockup") return openMockupTool().catch(fail);
   const [tab, view] = key.split(":");
   if (tab === "grow" && view) state.growView = view;
   if (tab === "orders" && view) state.moneyView = view;
@@ -1468,6 +1494,23 @@ async function shrink(file) {
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.85));
+}
+// ---------- mockup maker (loaded only when opened) ----------
+async function openMockupTool(productId) {
+  ["products", "settings", "crew"].forEach(k => { if (state[k] === null) load(k); });
+  const { openMockup } = await import("/mockup.js");
+  const uploadBlob = async blob => { const shr = blob.size > 1.5e6 ? await shrink(blob) : blob; return (await api("upload?kind=products", { method: "POST", raw: shr, type: shr.type || "image/jpeg" })).url; };
+  openMockup({
+    api, toast, fail, esc, state, uploadBlob,
+    saveSettings: async patch => { const { settings } = await api("settings", { method: "PUT", body: { ...state.settings, ...patch } }); state.settings = { ...state.settings, ...settings }; },
+    useAsProductPhoto: async (file, id) => {
+      const p = state.products.find(x => x.id === id); if (!p) throw new Error("Pick a product.");
+      const url = await uploadBlob(file);
+      const body = { ...p, images: [...(p.images || []), { url, alt: `${p.name} mockup` }].slice(0, 8) };
+      const { product } = await api("products", { method: "POST", body });
+      state.products = state.products.map(x => x.id === id ? product : x);
+    }
+  }, productId ? { productImage: state.products?.find(x => x.id === productId)?.image } : {});
 }
 // ---------- phone notifications (RJ / Cara) ----------
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -1742,6 +1785,7 @@ document.addEventListener("click", async e => {
       const key = t.dataset.kind === "deal" ? "deals" : "income"; state.money[key] = state.money[key].filter(x => x.id !== +t.dataset.id); closeSheet(); render(); toast("Deleted.");
     }
     if (act === "create") openCreate();
+    if (act === "mockup") openMockupTool(t.dataset.prod).catch(fail);
     if (act === "push-on") { t.disabled = true; try { await turnOnPush(); } catch (err) { fail(err); } finally { t.disabled = false; } }
     if (act === "push-off") { try { await turnOffPush(); } catch (err) { fail(err); } }
     if (act === "push-test") { try { const reg = await navigator.serviceWorker.getRegistration("/"); const sub = await reg.pushManager.getSubscription();

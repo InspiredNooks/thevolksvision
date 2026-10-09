@@ -19,6 +19,7 @@ import * as aEvents from "../../functions/api/admin/events.js";
 import * as aMoney from "../../functions/api/admin/money.js";
 import * as aOrders from "../../functions/api/admin/orders.js";
 import * as aPlan from "../../functions/api/admin/plan.js";
+import * as aPhotos from "../../functions/api/admin/photos.js";
 import * as aPosts from "../../functions/api/admin/posts.js";
 import * as aProducts from "../../functions/api/admin/products.js";
 import * as aPublish from "../../functions/api/admin/publish.js";
@@ -30,7 +31,7 @@ import * as aYoutube from "../../functions/api/admin/youtube.js";
 const ROUTES = {
   order, subscribe, unsubscribe, inquiry, crew, pullup, "stripe-webhook": stripeWebhook, push,
   "admin/ask": aAsk, "admin/audience": aAudience, "admin/broadcast": aBroadcast, "admin/captions": aCaptions, "admin/coach": aCoach,
-  "admin/crew": aCrew, "admin/events": aEvents, "admin/money": aMoney, "admin/orders": aOrders, "admin/plan": aPlan,
+  "admin/crew": aCrew, "admin/events": aEvents, "admin/money": aMoney, "admin/orders": aOrders, "admin/plan": aPlan, "admin/photos": aPhotos,
   "admin/posts": aPosts, "admin/products": aProducts, "admin/publish": aPublish, "admin/settings": aSettings,
   "admin/upload": aUpload, "admin/videos": aVideos, "admin/youtube": aYoutube
 };
