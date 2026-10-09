@@ -185,8 +185,8 @@ select{font:15px var(--body);padding:10px;border:1px solid var(--line);backgroun
 .prose a{color:var(--accent);text-underline-offset:3px}
 .prose strong{color:#fff}
 .prose blockquote{margin:1.6em 0;padding-left:18px;border-left:3px solid var(--accent);color:var(--muted);font-style:italic}
-.cover{max-width:110ch;margin:0 auto 40px}
-.cover img{width:100%;display:block}
+.cover{max-width:min(1040px,100%);margin:0 auto 40px}
+.cover img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;max-height:60vh}
 .shop-cta{max-width:72ch;margin:48px auto 0;border:1px solid var(--line);background:var(--panel);padding:22px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .shop-cta p{margin:0}
 .shop-cta a:not(.btn){color:var(--accent)}
@@ -338,7 +338,8 @@ a.partner:hover{border-color:var(--accent)}
 
 /* Photos inside posts and the story */
 .post-photo{margin:28px 0}
-.post-photo img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.post-photo img{width:auto;max-width:100%;height:auto;max-height:min(68vh,560px);display:block;margin:0 auto;object-fit:contain;border:1px solid var(--line)}
+.post-photo figcaption{text-align:center}
 .post-photo figcaption{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:8px;letter-spacing:.02em}
 .post-photo figcaption a{color:var(--muted)}
 .prose blockquote.pull{font-size:clamp(22px,3vw,30px);line-height:1.25;font-weight:700;border-left:4px solid var(--accent);padding-left:18px;margin:8px 0 28px;color:var(--fg)}
