@@ -18,6 +18,11 @@ Open `https://thevolksvision.com/admin`, sign in with the passphrase, then in Sa
 
 Every save that changes the public site rebuilds it automatically; changes are live in about a minute.
 
+### Events: the map and the event finder
+- `/next/` shows a dark map of Tampa Bay (`static/img/bay-map.svg`, made by `scripts/make-bay-map.mjs` from OpenStreetMap and Natural Earth data) with a yellow pin per stop. Hover or tap a pin for details and an "I'm going" button. Solid pins are stops RJ is going to; outlined pins are community events.
+- Pins come from the address when a stop is saved (US Census geocoder, then OpenStreetMap, then the town center). RJ can tap the map in the Studio to move a pin.
+- The event finder (`lib/scout.js`) reads RJ's saved sources and searches the web for cars & coffee, meets and shows. It runs every Monday and Thursday (`.github/workflows/scout.yml`) and from the Studio (Look now). RJ can also paste a social post or a flyer screenshot (Add from a post). New finds wait in Found for you unless he picks Add automatically. Needs `ANTHROPIC_API_KEY` in Netlify and in GitHub Actions secrets.
+
 ### Honest limits
 - **TikTok and Instagram stats** are logged by RJ (about 20 seconds per video). Automatic pulls need TikTok and Meta developer apps, which require their review; YouTube syncs automatically with an API key.
 - **Posting** uses the phone's share sheet (one tap per app, caption copied). Fully automatic posting needs the same platform approvals.

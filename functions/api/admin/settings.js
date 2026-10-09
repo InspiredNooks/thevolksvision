@@ -35,6 +35,9 @@ export const onRequestPut = adminRoute(async ({ request, env }) => {
     shipping: money(b.shipping, "Shipping"),
     freeShipOver: money(b.freeShipOver, "Free shipping amount"),
     autoPublish: b.autoPublish === true,
+    eventsAuto: b.eventsAuto === true,
+    eventSources: (Array.isArray(b.eventSources) ? b.eventSources : []).slice(0, 30).map(x => ({ url: str(x?.url, 400), label: str(x?.label, 60) }))
+      .filter(x => /^https:\/\/[^\s]+\.[^\s]+/.test(x.url)),
     heroImage: photo(b.heroImage), heroAlt: str(b.heroAlt, 160),
     heroHeadline: str(b.heroHeadline, 80),
     dropName: str(b.dropName, 40), dropNote: str(b.dropNote, 60),
@@ -82,6 +85,9 @@ export const onRequestPut = adminRoute(async ({ request, env }) => {
     const [cur] = await db(env, "vv_settings?id=eq.1&select=data");
     if (cur?.data?.story) data.story = cur.data.story;
   }
+  // The event scout's status is written by the scout itself; keep it.
+  const [prev] = await db(env, "vv_settings?id=eq.1&select=data");
+  if (prev?.data?.scout) data.scout = prev.data.scout;
   await db(env, "vv_settings?id=eq.1", { method: "PATCH", body: JSON.stringify({ data }) });
   const live = await publishSite(env);
   return json({ settings: data, live });

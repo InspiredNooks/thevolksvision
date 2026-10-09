@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getSettings, getProducts, getPosts, hasDb, supa } from "./lib/content.js";
 import { markdown, wordCount, plainText } from "./lib/markdown.js";
+import { pinXY } from "./lib/bay-map.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(here, "public");
@@ -48,7 +49,7 @@ const FEATURED = CREW.find(c => c.featured);
 const NOW = new Date().toISOString();
 const EVENTS = hasDb(env) ? await supa(env, "vv_events?select=*&published=eq.true&order=starts_at.asc&limit=100") : [];
 const UPCOMING = EVENTS.filter(e => (e.ends_at || e.starts_at) >= NOW), PAST = EVENTS.filter(e => (e.ends_at || e.starts_at) < NOW).reverse().slice(0, 12);
-const NEXT = UPCOMING[0];
+const NEXT = UPCOMING.find(e => e.rj_going !== false);   // the homepage only shows stops RJ is actually going to
 const STAGES = BUILD.stages || [], STAGES_DONE = STAGES.filter(x => x.done).length;
 // Media kit numbers: latest weekly log + last 30 days of logged videos.
 const KIT = await (async () => {
@@ -129,11 +130,17 @@ ${FONTS}
 ${jsonld.map(j => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("\n")}
 <style>${CSS}</style>`;
 }
+const MENU = () => [["/#shop", "Shop"], ["/build/", "The Mk2"], ["/next/", "Events & map"], ["/journal/", JN], ["/crew/", "The Crew"], ...(STORY ? [["/story/", "Our story"]] : []), ["/about/", "About RJ"], ["/work-with-me/", "Work with me"]];
 const header = () => `<header class="site"><div class="wrap bar">
   <a class="mark" href="/" aria-label="${esc(S.brand)} home">${MARK} VOLKSVISION</a>
-  <nav><a href="/#shop">Shop</a><a href="/build/">The Mk2</a><a class="hide-xs" href="/next/">Next stop</a><a class="hide-sm" href="/journal/">${esc(JN.replace(/^The /, ""))}</a><a class="hide-sm" href="/crew/">Crew</a><a class="hide-sm" href="/work-with-me/">Work with me</a>
-  <button class="cart-btn" id="openCart" type="button">Bag <b id="count">0</b></button></nav>
-</div></header>`;
+  <nav><a class="hide-md" href="/#shop">Shop</a><a class="hide-md" href="/build/">The Mk2</a><a class="hide-sm" href="/next/">Next stop</a><a class="hide-sm" href="/journal/">${esc(JN.replace(/^The /, ""))}</a><a class="hide-sm" href="/crew/">Crew</a><a class="hide-sm" href="/work-with-me/">Work with me</a>
+  <button class="cart-btn" id="openCart" type="button">Bag <b id="count">0</b></button>
+  <button class="menu-btn" id="openMenu" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu"><span></span><span></span></button></nav>
+</div></header>
+<div class="menu" id="menu" hidden role="dialog" aria-modal="true" aria-label="Menu"><div class="menu-in">
+  <ol>${MENU().map(([u, t], i) => `<li><a href="${u}"><span class="mono">${String(i + 1).padStart(2, "0")}</span>${esc(t)}</a></li>`).join("")}</ol>
+  ${SOCIAL.length ? `<div class="menu-soc">${SOCIAL.map(([t, u]) => `<a href="${esc(u)}" rel="me noopener" target="_blank">${t}</a>`).join("")}</div>` : ""}
+</div></div>`;
 const footer = () => `<footer><div class="wrap foot">
   <div><div class="mark" style="margin-bottom:10px">VOLKSVISION</div>
   <p>${esc(S.brand)} is an independent creator brand from ${esc(S.city)}, run by ${esc(S.ownerName)}${S.legalName ? `. VolksVision is a brand of ${esc(S.legalName)}` : ""}. It is not affiliated with, sponsored by, or endorsed by Volkswagen AG. All vehicle photography is original work by RJ.</p></div>
@@ -228,15 +235,17 @@ const tracker = (compact) => STAGES.length ? `<div class="tracker${compact ? " c
   <ol class="stages">${STAGES.map((x, i) => `<li class="${x.done ? "done" : i === STAGES_DONE ? "now" : ""}"><span>${x.done ? "✓" : i + 1}</span>${esc(x.name)}</li>`).join("")}</ol></div>` : "";
 const eventCard = (e, big) => `<article class="event${big ? " big" : ""}" id="stop-${e.id}">
   <div class="event-when"><span class="pill ${e.kind === "reveal" || e.kind === "drop" ? "hot" : ""}">${KIND_LABEL[e.kind] || "Stop"}</span><span class="mono">${fmtWhen(e)}</span></div>
-  <h3>${esc(e.title)}</h3><p class="r-sub">${esc([e.venue, e.city].filter(Boolean).join(" · "))}</p>
+  <h3>${esc(e.title)}</h3><p class="r-sub">${esc([e.venue, e.city].filter(Boolean).join(" · "))}${e.rj_going === false ? ` · <span class="tag-comm">Community event</span>` : ` · <span class="tag-rj">RJ's going</span>`}</p>
   ${e.details ? `<p>${esc(e.details)}</p>` : ""}
   ${(e.ends_at || e.starts_at) >= NOW ? `<form class="pullup" data-pullup="${e.id}">
-    <button class="btn solid" type="submit">I'll pull up</button><span class="mono pull-count" data-count="${e.id}">${e.pullups} pulling up</span>
+    <button class="btn solid" type="submit">I'm going</button><span class="mono pull-count" data-count="${e.id}">${e.pullups} going</span>
     <input name="email" type="email" placeholder="Email for a reminder (optional)" aria-label="Email for a reminder" autocomplete="email">
     <label class="check-line"><input type="checkbox" name="join"> Also join ${esc(LIST)}</label>
     <input name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true"><p class="form-msg" role="status"></p></form>` : ""}
-  ${e.link ? `<a class="link-out" href="${esc(e.link)}" rel="noopener" target="_blank">Event details</a>` : ""}
+  ${e.link ? `<a class="link-out" href="${esc(e.link)}" rel="noopener" target="_blank">${e.rj_going === false ? "Organizer's page" : "Event details"}</a>` : ""}
   ${(e.ends_at || e.starts_at) >= NOW ? addToCal(e) : ""}
+  ${e.lat != null && pinXY(e.lat, e.lng) ? `<a class="link-out" href="#map" data-show-pin="${e.id}">See it on the map</a>` : ""}
+  ${e.lat != null ? `<a class="link-out" href="https://www.google.com/maps/dir/?api=1&amp;destination=${e.lat},${e.lng}" rel="noopener" target="_blank">Directions</a>` : ""}
 </article>`;
 // ---------- calendar: month grids, add-to-calendar links, .ics files and a subscribe feed ----------
 const icsTime = d => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
@@ -273,6 +282,34 @@ function calendarBlock(list) {
   const host = SITE.replace(/^https?:\/\//, "");
   return `<div class="cal-wrap">${months.join("")}</div>
     <p class="cal-sub"><a class="btn" href="webcal://${host}/calendar.ics">📅 Subscribe in your calendar</a><a class="link-out" href="/calendar.ics" download>Download all stops (.ics)</a></p>`;
+}
+// ---------- the Bay map: yellow pins on a dark map, a card with Going + details on hover or tap ----------
+const PIN = `<svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 31s10-11.2 10-19A10 10 0 0 0 2 12c0 7.8 10 19 10 19z"/><circle cx="12" cy="12" r="4"/></svg>`;
+function mapBlock(list) {
+  const groups = new Map();
+  for (const e of list) { const xy = e.lat != null ? pinXY(e.lat, e.lng) : null; if (!xy) continue;
+    const k = `${e.lat.toFixed(3)},${e.lng.toFixed(3)}`; if (!groups.has(k)) groups.set(k, { xy, list: [] }); groups.get(k).list.push(e); }
+  const pins = [...groups.values()].map((g, i) => {
+    const first = g.list[0], rj = g.list.some(e => e.rj_going !== false), more = g.list.length - 1;
+    const side = `${g.xy.x > 58 ? " left" : ""}${g.xy.y < 34 ? " below" : ""}`;
+    return `<div class="pin-wrap${rj ? " rj" : ""}" style="left:${g.xy.x}%;top:${g.xy.y}%">
+      <button class="pin" type="button" aria-expanded="false" aria-controls="pc-${i}" data-pins="${g.list.map(e => e.id).join(",")}" aria-label="${esc(`${first.title}, ${fmtWhen(first)}${more ? `, and ${more} more date${more > 1 ? "s" : ""} here` : ""}`)}">${PIN}${more ? `<b>${more + 1}</b>` : ""}</button>
+      <div class="pin-card${side}" id="pc-${i}" role="dialog" aria-label="${esc(first.venue || first.title)}"><button class="pc-close" type="button" aria-label="Close">×</button>
+        ${g.list.slice(0, 4).map(e => `<div class="pc-ev">
+          <div class="mono">${fmtWhen(e)} · ${e.rj_going === false ? "Community" : "RJ's going"}</div>
+          <strong>${esc(e.title)}</strong><span class="r-sub">${esc([e.venue, e.city].filter(Boolean).join(" · "))}</span>
+          ${e.details ? `<p>${esc(e.details.length > 150 ? e.details.slice(0, 147).replace(/\s+\S*$/, "") + "…" : e.details)}</p>` : ""}
+          <div class="pc-act"><button class="btn solid sm" type="button" data-going="${e.id}">I'm going</button><span class="mono" data-count="${e.id}">${e.pullups} going</span><a href="/next/#stop-${e.id}">Details</a></div>
+        </div>`).join("")}
+        ${g.list.length > 4 ? `<a class="link-out" href="/next/#stop-${g.list[4].id}">${g.list.length - 4} more dates</a>` : ""}
+      </div></div>`;
+  }).join("");
+  const off = list.filter(e => !(e.lat != null && pinXY(e.lat, e.lng))).length;
+  return `<div class="bay" id="map">
+    <img src="/img/bay-map.svg" alt="Map of the Tampa Bay area with upcoming car events marked" width="923" height="1026" loading="lazy" decoding="async">
+    ${pins}
+  </div>
+  <p class="bay-key"><span class="k-rj"></span>RJ's going <span class="k-comm"></span>Community events${off ? ` · ${off} more ${off === 1 ? "stop isn't" : "stops aren't"} on the map, see the list` : ""}<span class="attr">Map data © OpenStreetMap contributors, Natural Earth</span></p>`;
 }
 const addToCal = e => `<span class="add-cal"><a href="/next/${e.id}.ics" download>+ Apple / Outlook calendar</a><a href="${esc(gcalLink(e))}" rel="noopener" target="_blank">+ Google Calendar</a></span>`;
 const eventLd = e => ({ "@context": "https://schema.org", "@type": "Event", name: e.title, startDate: e.starts_at, ...(e.ends_at ? { endDate: e.ends_at } : {}),
@@ -544,8 +581,9 @@ function crewPage() {
 function nextPage() {
   const url = `${SITE}/next/`;
   const main = `<main>
-  <section class="journal-head wrap"><div class="mono">Meets · shows · shoots · drops</div><h1>Where is VolksVision next?</h1><p>Pull up, say what's up, bring your car. Tap "I'll pull up" so RJ knows you're coming.</p></section>
-  <section class="wrap" style="padding-top:24px" aria-label="Calendar">${calendarBlock(UPCOMING)}</section>
+  <section class="journal-head wrap"><div class="mono">Meets · shows · shoots · drops</div><h1>Where is VolksVision next?</h1><p>Car meets, cars &amp; coffee and shows around Tampa Bay, plus every stop RJ is pulling up to. Tap a pin, then "I'm going" so people know you're coming.</p></section>
+  <section class="wrap" style="padding-top:24px" aria-label="Map of events">${mapBlock(UPCOMING)}</section>
+  <section class="wrap" style="padding-top:32px" aria-label="Calendar">${calendarBlock(UPCOMING)}</section>
   <section class="wrap events" style="padding-block:32px">${UPCOMING.map(e => eventCard(e, true)).join("") || `<p class="r-sub">No stops on the calendar right now. Join ${esc(LIST)} and you'll hear first.</p>`}</section>
   ${PAST.length ? `<section class="wrap" style="padding-bottom:48px"><div class="mono" style="margin-bottom:12px">Been there</div><div class="events past">${PAST.map(e => eventCard(e, false)).join("")}</div></section>` : ""}
   ${dropAlerts("next")}

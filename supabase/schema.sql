@@ -282,3 +282,21 @@ alter table public.vv_secrets enable row level security;
 grant all on public.vv_push, public.vv_secrets to service_role;
 grant all on all sequences in schema public to service_role;
 revoke all on public.vv_push, public.vv_secrets from anon, authenticated;
+
+-- Map pins + the event scout (migration: events_map_scout).
+-- origin: rj (added by RJ), scout (found on the web), post (pulled from a social post/screenshot)
+-- review: 'pending' = waiting for RJ to approve, 'skipped' = RJ passed (kept so it isn't suggested again)
+-- rj_going: false = listed for the community, RJ isn't confirmed
+alter table public.vv_events
+  add column if not exists lat double precision,
+  add column if not exists lng double precision,
+  add column if not exists origin text not null default 'rj',
+  add column if not exists source_url text,
+  add column if not exists review text,
+  add column if not exists rj_going boolean not null default true,
+  add column if not exists scout_key text;
+alter table public.vv_events drop constraint if exists vv_events_origin_chk;
+alter table public.vv_events add constraint vv_events_origin_chk check (origin in ('rj','scout','post'));
+alter table public.vv_events drop constraint if exists vv_events_review_chk;
+alter table public.vv_events add constraint vv_events_review_chk check (review is null or review in ('pending','skipped'));
+create unique index if not exists vv_events_scout_key_idx on public.vv_events (scout_key);

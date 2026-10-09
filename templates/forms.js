@@ -1,3 +1,12 @@
+// Menu (phones and tablets): full-screen list; Esc, a link, or the button closes it.
+(() => {
+  const btn = document.getElementById("openMenu"), menu = document.getElementById("menu"); if (!btn || !menu) return;
+  const set = open => { menu.hidden = !open; btn.setAttribute("aria-expanded", String(open)); btn.setAttribute("aria-label", open ? "Close menu" : "Menu"); document.documentElement.style.overflow = open ? "hidden" : ""; if (open) menu.querySelector("a")?.focus(); };
+  btn.addEventListener("click", () => set(menu.hidden));
+  menu.addEventListener("click", e => { if (e.target.closest("a") || e.target === menu) set(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !menu.hidden) { set(false); btn.focus(); } });
+})();
+
 // Shrinks a photo in the browser before upload. Falls back to the original if the browser can't decode it.
 async function shrink(file, max = 1600) {
   try {
@@ -29,15 +38,24 @@ document.addEventListener("submit", async e => {
   finally { btn.disabled = false; }
 });
 
-// "I'll pull up" buttons: refresh live counts, then count a pull-up when tapped (once per stop per phone).
+// "I'm going" buttons (event cards and map pins): refresh live counts, count a tap once per stop per phone.
 (async () => {
-  const forms = [...document.querySelectorAll("[data-pullup]")]; if (!forms.length) return;
+  const forms = [...document.querySelectorAll("[data-pullup]")], quick = [...document.querySelectorAll("[data-going]")];
+  if (!forms.length && !quick.length) return;
   const seen = (() => { try { return JSON.parse(localStorage.getItem("vv-pullups") || "[]"); } catch { return []; } })();
-  forms.forEach(f => { if (seen.includes(+f.dataset.pullup)) { const b = f.querySelector("[type=submit]"); b.textContent = "You're pulling up ✓"; b.disabled = true; } });
-  try {
-    const r = await fetch("/api/pullup?ids=" + forms.map(f => f.dataset.pullup).join(","));
-    const counts = await r.json(); Object.entries(counts).forEach(([id, n]) => document.querySelectorAll(`[data-count="${id}"]`).forEach(el => el.textContent = `${n} pulling up`));
-  } catch {}
+  const remember = id => { if (!seen.includes(id)) seen.push(id); try { localStorage.setItem("vv-pullups", JSON.stringify(seen)); } catch {} };
+  const markGoing = id => {
+    document.querySelectorAll(`[data-pullup="${id}"] [type=submit], [data-going="${id}"]`).forEach(b => { b.textContent = "Going ✓"; b.disabled = true; });
+  };
+  const setCount = (id, n) => document.querySelectorAll(`[data-count="${id}"]`).forEach(el => el.textContent = `${n} going`);
+  seen.forEach(markGoing);
+  const ids = [...new Set([...forms.map(f => f.dataset.pullup), ...quick.map(b => b.dataset.going)])].slice(0, 20);
+  try { const counts = await (await fetch("/api/pullup?ids=" + ids.join(","))).json(); Object.entries(counts).forEach(([id, n]) => setCount(id, n)); } catch {}
+  const going = async (id, body) => {
+    const res = await fetch("/api/pullup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, ...body }) });
+    const out = await res.json(); if (!res.ok) throw new Error(out.error || "Didn't go through. Try again.");
+    setCount(id, out.count); markGoing(id); remember(id);
+  };
   document.addEventListener("submit", async e => {
     const f = e.target.closest("[data-pullup]"); if (!f) return;
     e.preventDefault();
@@ -45,13 +63,35 @@ document.addEventListener("submit", async e => {
     btn.disabled = true;
     try {
       const fd = new FormData(f);
-      const res = await fetch("/api/pullup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, email: fd.get("email") || "", join: fd.get("join") === "on", website: fd.get("website") || "" }) });
-      const out = await res.json(); if (!res.ok) throw new Error(out.error || "Didn't go through. Try again.");
-      document.querySelectorAll(`[data-count="${id}"]`).forEach(el => el.textContent = `${out.count} pulling up`);
-      btn.textContent = "You're pulling up ✓"; msg.textContent = fd.get("email") ? "See you there. Reminder's coming." : "See you there.";
-      if (!seen.includes(id)) seen.push(id);
-      try { localStorage.setItem("vv-pullups", JSON.stringify(seen)); } catch {}
+      await going(id, { email: fd.get("email") || "", join: fd.get("join") === "on", website: fd.get("website") || "" });
+      msg.textContent = fd.get("email") ? "See you there. Reminder's coming." : "See you there.";
     } catch (err) { msg.textContent = err.message; btn.disabled = false; }
+  });
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-going]"); if (!b) return;
+    b.disabled = true;
+    try { await going(+b.dataset.going, {}); } catch (err) { b.disabled = false; b.textContent = "Try again"; }
+  });
+})();
+
+// The Bay map: hover a pin (mouse) or tap it (phone) to open its card. Esc or tapping elsewhere closes it.
+(() => {
+  const map = document.getElementById("map"); if (!map) return;
+  const wraps = [...map.querySelectorAll(".pin-wrap")];
+  const close = except => wraps.forEach(w => { if (w !== except) { w.classList.remove("open"); w.querySelector(".pin").setAttribute("aria-expanded", "false"); } });
+  const open = w => { close(w); w.classList.add("open"); w.querySelector(".pin").setAttribute("aria-expanded", "true"); };
+  const hover = matchMedia("(hover:hover) and (pointer:fine)").matches;
+  wraps.forEach(w => {
+    w.querySelector(".pin").addEventListener("click", () => w.classList.contains("open") && !hover ? close() : open(w));
+    if (hover) { let t; w.addEventListener("mouseenter", () => { clearTimeout(t); open(w); }); w.addEventListener("mouseleave", () => { t = setTimeout(() => w.classList.remove("open"), 250); }); }
+  });
+  document.addEventListener("click", e => { if (!e.target.closest(".pin-wrap") || e.target.closest(".pc-close")) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+  // "See it on the map" links on event cards
+  document.addEventListener("click", e => {
+    const a = e.target.closest("[data-show-pin]"); if (!a) return;
+    const w = wraps.find(x => x.querySelector(".pin").dataset.pins.split(",").includes(a.dataset.showPin)); if (!w) return;
+    e.preventDefault(); map.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => open(w), 350);
   });
 })();
 

@@ -1,0 +1,33 @@
+# Finds car events around Tampa Bay twice a week and adds them to "Where is VolksVision next?"
+# (or to RJ's "Found for you" list for approval). He can also run it any time from the Studio.
+# Repo secrets: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEPLOY_HOOK_URL
+name: VolksVision event scout
+
+on:
+  schedule:
+    - cron: "41 11 * * 1,4"   # Mondays and Thursdays 11:41 UTC (7:41 a.m. Eastern in summer)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: volksvision-scout
+  cancel-in-progress: false
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: node scripts/scout-events.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEPLOY_HOOK_URL: ${{ secrets.DEPLOY_HOOK_URL }}

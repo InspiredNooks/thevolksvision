@@ -277,6 +277,15 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .login-art h2 em{color:var(--signal);font-style:italic}
 .login-art p{position:relative;color:var(--muted);max-width:44ch;margin:18px 0 0}
 .login-panel{display:flex;flex-direction:column;gap:14px}
+.pinmap{position:relative;border:1px solid var(--rule);background:#0b0d0c;aspect-ratio:923/1026;cursor:crosshair;max-width:420px;width:100%}
+.pinmap.small{max-width:360px;cursor:default;margin-bottom:14px}
+.pinmap img{display:block;width:100%;height:100%;pointer-events:none}
+.mpin{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#f2a93b;border:2px solid #0b0d0c;box-shadow:0 0 0 2px rgb(242 169 59 / .35)}
+.mpin.comm{background:#0b0d0c;border-color:#f2a93b}
+.found{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--rule)}
+.found .r-main{display:flex;flex-direction:column;gap:3px}
+.found-acts{display:flex;gap:6px;flex-wrap:wrap}
+.found-acts .btn{padding:8px 12px;font-size:13px}
 </style>
 </head><body>
 
@@ -800,42 +809,155 @@ function studioCal(ev) {
     <table><thead><tr>${"SMTWTFS".split("").map(x => `<th>${x}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>
     <small class="r-sub" style="white-space:normal">Amber days have a stop. Tap an empty day to add one. Fans can add any stop to their own calendar from the site, or subscribe to all of them.</small></div>`;
 }
+// The Bay map in the Studio (same projection as lib/bay-map.js): shows the pin, tap to move it.
+const BAY = { W: -83.02, N: 28.4, WIDTH: 923, HEIGHT: 1026, C: Math.cos(27.83 * Math.PI / 180), K: 900 };
+const bayXY = (lat, lng) => lat == null || lng == null ? null : { x: (lng - BAY.W) * BAY.C * BAY.K / BAY.WIDTH * 100, y: (BAY.N - lat) * BAY.K / BAY.HEIGHT * 100 };
+const bayLatLng = (x, y) => ({ lat: Math.round((BAY.N - y / 100 * BAY.HEIGHT / BAY.K) * 1e5) / 1e5, lng: Math.round((BAY.W + x / 100 * BAY.WIDTH / (BAY.C * BAY.K)) * 1e5) / 1e5 });
+const pinDot = (xy, cls = "") => xy && xy.x > 0 && xy.x < 100 && xy.y > 0 && xy.y < 100 ? `<span class="mpin ${cls}" style="left:${xy.x}%;top:${xy.y}%"></span>` : "";
+
+function scoutCard() {
+  const s = state.settings || {}, sc = s.scout || {}, auto = s.eventsAuto === true, srcs = s.eventSources || [];
+  const when = sc.lastRun ? new Date(sc.lastRun).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
+  const status = sc.status === "running" && Date.now() - new Date(sc.started) < 15 * 6e4 ? "Looking now… you'll get a notification when it's done."
+    : sc.status === "failed" ? `Last try didn't finish (${esc(sc.error || "unknown problem")}).` : when ? `Last looked ${when}${sc.found != null ? ` · found ${sc.found} new` : ""}.` : "Hasn't looked yet.";
+  return `<div class="card" style="gap:10px;margin-bottom:14px">
+    <div><div class="mono">Event finder</div><strong style="font-size:18px">Cars &amp; coffee, meets and shows around the Bay</strong>
+      <p class="r-sub" style="white-space:normal;margin:4px 0 0">Checks your sources and the web every Monday and Thursday. ${status}</p></div>
+    <div class="seg" style="grid-template-columns:1fr 1fr" role="group" aria-label="New events">
+      <button type="button" data-evauto="0" aria-pressed="${!auto}">I approve first</button><button type="button" data-evauto="1" aria-pressed="${auto}">Add automatically</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn solid" type="button" data-act="scout-scan">🔎 Look now</button>
+      <button class="btn" type="button" data-act="scout-post">📲 Add from a post</button>
+      <button class="btn" type="button" data-act="scout-sources">🔗 My sources (${srcs.length})</button></div>
+  </div>`;
+}
+function foundCard(pending) {
+  if (!pending.length) return "";
+  return `<div class="card" style="gap:4px;margin-bottom:14px;border-color:var(--signal)">
+    <div class="mono">Found for you · ${pending.length}</div>
+    <p class="r-sub" style="white-space:normal;margin:0 0 6px">Add the ones you want on the site and map. "I'm going" puts it on the homepage too.</p>
+    ${pending.map(e => `<div class="found">
+      <div class="r-main"><strong>${esc(e.title)}</strong><span class="r-sub" style="white-space:normal">${new Date(e.starts_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${esc([e.venue, e.city].filter(Boolean).join(", "))}</span>
+        ${e.details ? `<span class="r-sub" style="white-space:normal">${esc(e.details)}</span>` : ""}
+        ${e.source_url ? `<a class="r-sub" href="${esc(e.source_url)}" target="_blank" rel="noopener" style="color:var(--signal)">Check the source ↗</a>` : ""}</div>
+      <div class="found-acts"><button class="btn solid" type="button" data-review="going" data-id="${e.id}">I'm going</button><button class="btn" type="button" data-review="list" data-id="${e.id}">Just list it</button><button class="btn" type="button" data-review="edit" data-id="${e.id}">Edit</button><button class="btn ghost" type="button" data-review="skip" data-id="${e.id}">Skip</button></div>
+    </div>`).join("")}
+  </div>`;
+}
 function stopsView() {
-  const ev = state.events;
-  if (ev === null) return `<div class="loading">Loading…</div>`;
+  const all = state.events;
+  if (all === null || state.settings === null) return `<div class="loading">Loading…</div>`;
+  const pending = all.filter(e => e.review === "pending"), ev = all.filter(e => !e.review);
   const now = new Date().toISOString(), up = ev.filter(e => (e.ends_at || e.starts_at) >= now).sort((a, b) => a.starts_at.localeCompare(b.starts_at)), past = ev.filter(e => (e.ends_at || e.starts_at) < now);
-  const row = e => `<button class="row" type="button" data-stop="${e.id}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong>${esc(e.title)}</strong><span class="r-sub">${new Date(e.starts_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${esc(e.venue || e.city)}</span></span><span class="r-end">${e.pullups} pulling up${e.published ? "" : `<span class="pill p-hidden">Hidden</span>`}</span></button>`;
-  return `<p class="r-sub" style="white-space:normal;margin:0 0 12px">Shows on the site as "Where is VolksVision next?" with an "I'll pull up" button. The next one also shows on the homepage.</p>
+  const row = e => `<button class="row" type="button" data-stop="${e.id}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong>${esc(e.title)}</strong><span class="r-sub">${new Date(e.starts_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${esc(e.venue || e.city)}${e.rj_going === false ? " · community" : ""}</span></span><span class="r-end">${e.pullups} going${e.lat == null ? `<span class="pill p-hidden">No pin</span>` : ""}${e.published ? "" : `<span class="pill p-hidden">Hidden</span>`}</span></button>`;
+  const pins = up.filter(e => e.published).map(e => pinDot(bayXY(e.lat, e.lng), e.rj_going === false ? "comm" : "")).join("");
+  return `<p class="r-sub" style="white-space:normal;margin:0 0 12px">Shows on the site as "Where is VolksVision next?" with a map, a calendar and an "I'm going" button. The next stop you're going to also shows on the homepage.</p>
+    ${foundCard(pending)}
+    ${scoutCard()}
+    <div class="mono week-h">On the map</div>
+    <div class="pinmap small"><img src="/img/bay-map.svg" alt="Map of Tampa Bay with your upcoming stops">${pins}</div>
     ${studioCal(ev)}
-    <div class="mono week-h">Coming up</div><div class="list">${up.map(row).join("") || `<div class="empty">Nothing scheduled. Add the next meet, show, shoot or drop.</div>`}</div>
+    <div class="mono week-h">Coming up</div><div class="list">${up.map(row).join("") || `<div class="empty">Nothing scheduled. Add the next meet, show, shoot or drop, or tap Look now.</div>`}</div>
     ${past.length ? `<div class="mono week-h">Been there</div><div class="list">${past.slice(0, 10).map(row).join("")}</div>` : ""}
     <button class="btn solid fab" type="button" data-act="new-stop">+ Stop</button>`;
 }
-function editStop(e) {
+function editStop(e, { approving = false } = {}) {
   const isNew = !e;
   const local = iso => { if (!iso) return ""; const d = new Date(iso); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); };
-  e = e || { title: "", kind: "meet", starts_at: "", ends_at: "", venue: "", address: "", city: "St. Petersburg, FL", link: "", details: "", published: true };
+  e = e || { title: "", kind: "meet", starts_at: "", ends_at: "", venue: "", address: "", city: "St. Petersburg, FL", link: "", details: "", published: true, rj_going: true, lat: null, lng: null };
+  let pin = e.lat != null ? { lat: e.lat, lng: e.lng } : null, moved = false;
   const kinds = [["meet", "Meet"], ["show", "Show"], ["shoot", "Shoot"], ["drop", "Drop"], ["reveal", "Reveal"], ["other", "Other"]];
-  sheet(isNew ? "New stop" : e.title, `
+  const drawPin = () => { const m = $("#ev-map"); if (!m) return; m.querySelector(".mpin")?.remove(); m.insertAdjacentHTML("beforeend", pinDot(bayXY(pin?.lat, pin?.lng)));
+    $("#ev-pinnote").textContent = pin ? (moved ? "Pin moved. Save to keep it." : "Tap the map to move the pin.") : "No pin yet. It's found from the address when you save, or tap the map to place it."; };
+  sheet(approving ? "Check and add" : isNew ? "New stop" : e.title, `
     <label class="field" for="ev-title"><span>What is it</span><input id="ev-title" value="${esc(e.title)}" placeholder="Sunday VW meet at the pier"></label>
     <div class="field"><span>Type</span><div class="chips" style="flex-wrap:wrap">${kinds.map(([k, l]) => `<button class="chip" type="button" data-pick="evkind" data-val="${k}" aria-pressed="${k === e.kind}">${l}</button>`).join("")}</div></div>
     <div class="pair"><label class="field" for="ev-start"><span>Starts</span><input id="ev-start" type="datetime-local" value="${local(e.starts_at)}"></label>
     <label class="field" for="ev-end"><span>Ends (optional)</span><input id="ev-end" type="datetime-local" value="${local(e.ends_at)}"></label></div>
     <label class="field" for="ev-venue"><span>Where</span><input id="ev-venue" value="${esc(e.venue)}" placeholder="Spot name"></label>
-    <div class="pair"><label class="field" for="ev-address"><span>Address (optional)</span><input id="ev-address" value="${esc(e.address)}"></label>
+    <div class="pair"><label class="field" for="ev-address"><span>Address (helps the map)</span><input id="ev-address" value="${esc(e.address)}"></label>
     <label class="field" for="ev-city"><span>City</span><input id="ev-city" value="${esc(e.city)}"></label></div>
+    <div class="field"><span>Map pin</span><div class="pinmap" id="ev-map" role="button" tabindex="0" aria-label="Tap to place the pin"><img src="/img/bay-map.svg" alt=""></div>
+      <small id="ev-pinnote"></small>${pin ? `<button class="btn ghost" type="button" id="ev-refind" style="align-self:flex-start">Find it from the address again</button>` : ""}</div>
     <label class="field" for="ev-link"><span>Event link (optional)</span><input id="ev-link" value="${esc(e.link)}" inputmode="url" autocapitalize="none"></label>
     <label class="field" for="ev-details"><span>Details</span><textarea id="ev-details" rows="3" placeholder="Bring your car. Shirts will be there.">${esc(e.details)}</textarea></label>
-    <label class="switch" for="ev-pub"><span>Show on the site</span><input id="ev-pub" type="checkbox"${e.published ? " checked" : ""}></label>
-    ${isNew ? "" : `<p class="r-sub">${e.pullups} people tapped "I'll pull up".</p><button class="btn danger" type="button" data-act="stop-delete" data-id="${e.id}">Delete stop</button>`}`,
-    [["Save", "solid", async () => {
+    <label class="switch" for="ev-going"><span>I'm going (shows "RJ's going" and can lead the homepage)</span><input id="ev-going" type="checkbox"${e.rj_going !== false ? " checked" : ""}></label>
+    <label class="switch" for="ev-pub"><span>Show on the site</span><input id="ev-pub" type="checkbox"${e.published || approving ? " checked" : ""}></label>
+    ${isNew || approving ? "" : `<p class="r-sub">${e.pullups} people tapped "I'm going".</p><button class="btn danger" type="button" data-act="stop-delete" data-id="${e.id}">Delete stop</button>`}`,
+    [[approving ? "Add it" : "Save", "solid", async () => {
       const kind = document.querySelector('[data-pick="evkind"][aria-pressed="true"]')?.dataset.val || e.kind;
       const start = $("#ev-start").value, end = $("#ev-end").value;
       if (!start) throw new Error("Pick when it starts.");
-      const { event, live } = await api("events", { method: "POST", body: { id: e.id, title: $("#ev-title").value, kind, starts_at: new Date(start).toISOString(), ends_at: end ? new Date(end).toISOString() : null, venue: $("#ev-venue").value, address: $("#ev-address").value, city: $("#ev-city").value, link: $("#ev-link").value, details: $("#ev-details").value, published: $("#ev-pub").checked } });
+      const placeChanged = ["venue", "address", "city"].some(k => ($(`#ev-${k}`).value || null) !== (e[k] || null));
+      const keepPin = pin && (moved || !placeChanged);
+      const { event, live } = await api("events", { method: "POST", body: { id: e.id, title: $("#ev-title").value, kind, starts_at: new Date(start).toISOString(), ends_at: end ? new Date(end).toISOString() : null, venue: $("#ev-venue").value, address: $("#ev-address").value, city: $("#ev-city").value, link: $("#ev-link").value, details: $("#ev-details").value, published: $("#ev-pub").checked, rj_going: $("#ev-going").checked, lat: keepPin ? pin.lat : null, lng: keepPin ? pin.lng : null } });
+      if (approving) await api("events", { method: "POST", body: { id: e.id, action: "approve", rj_going: $("#ev-going").checked } }).then(r => Object.assign(event, r.event));
       state.events = e.id ? state.events.map(x => x.id === e.id ? event : x) : [event, ...state.events];
-      closeSheet(); render(); toast(savedMsg(live));
+      closeSheet(); render(); toast(event.lat == null ? "Saved. Couldn't find it on the map: open it and tap the map to place the pin." : savedMsg(live));
     }]]);
+  drawPin();
+  const m = $("#ev-map");
+  const place = (cx, cy) => { const r = m.getBoundingClientRect(); pin = bayLatLng((cx - r.left) / r.width * 100, (cy - r.top) / r.height * 100); moved = true; drawPin(); };
+  m.addEventListener("click", ev => place(ev.clientX, ev.clientY));
+  $("#ev-refind")?.addEventListener("click", () => { pin = null; moved = false; drawPin(); toast("It'll be found from the address when you save."); });
+}
+async function reviewFound(id, how) {
+  const e = state.events.find(x => x.id === id); if (!e) return;
+  if (how === "edit") return editStop(e, { approving: true });
+  try {
+    const { event } = await api("events", { method: "POST", body: how === "skip" ? { id, action: "skip" } : { id, action: "approve", rj_going: how === "going" } });
+    state.events = how === "skip" ? state.events.filter(x => x.id !== id) : state.events.map(x => x.id === id ? event : x);
+    render(); toast(how === "skip" ? "Skipped. It won't be suggested again." : event.lat == null ? "Added. It has no map pin yet: open it and tap the map." : "Added to the site and the map. Live in about a minute.");
+  } catch (err) { fail(err); }
+}
+function openSources() {
+  const list = [...(state.settings.eventSources || [])];
+  const rowHtml = (x, i) => `<div class="pair src-row"><label class="field"><span>Link</span><input data-src="url" data-i="${i}" value="${esc(x.url)}" inputmode="url" autocapitalize="none" placeholder="https://"></label><label class="field"><span>Name (optional)</span><input data-src="label" data-i="${i}" value="${esc(x.label)}" placeholder="Tampa Cars & Coffee"></label></div>`;
+  const draw = () => { $("#srcList").innerHTML = list.map(rowHtml).join("") || `<p class="r-sub">No sources yet. It still searches the web, but your favorite sites make it much better.</p>`; };
+  const read = () => document.querySelectorAll("[data-src]").forEach(inp => { list[+inp.dataset.i][inp.dataset.src] = inp.value.trim(); });
+  sheet("Event sources", `<p class="r-sub" style="white-space:normal;margin:0">Websites and pages that list car events you trust: club sites, venue event pages, Eventbrite or Facebook event links, car show calendars. The finder reads these first, every time.</p>
+    <p class="r-sub" style="white-space:normal;margin:0">Instagram and TikTok posts can't be read from a link. For those, use <b>Add from a post</b> and paste the caption or a screenshot.</p>
+    <div id="srcList" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button class="btn" type="button" id="srcAdd" style="align-self:flex-start">+ Add a source</button>`,
+    [["Save", "solid", async () => {
+      read();
+      const clean = list.map(x => ({ url: /^https?:\/\//i.test(x.url) ? x.url.replace(/^http:/i, "https:") : x.url ? `https://${x.url}` : "", label: x.label || "" })).filter(x => x.url);
+      const { settings } = await api("settings", { method: "PUT", body: { ...state.settings, eventSources: clean } });
+      state.settings = { ...state.settings, ...settings }; closeSheet(); render(); toast(`${clean.length} source${clean.length === 1 ? "" : "s"} saved. Tap Look now to use them.`);
+    }]]);
+  draw();
+  $("#srcAdd").addEventListener("click", () => { read(); list.push({ url: "", label: "" }); draw(); document.querySelector(`[data-src="url"][data-i="${list.length - 1}"]`)?.focus(); });
+}
+function openPostImport() {
+  let shot = "";
+  sheet("Add from a post", `<p class="r-sub" style="white-space:normal;margin:0">Saw a meet on Instagram, TikTok or Facebook? Paste the caption, the link, or add a screenshot of the flyer. It reads the date, time and place and adds it to Found for you.</p>
+    <label class="field" for="pi-text"><span>Caption or details</span><textarea id="pi-text" rows="5" placeholder="Paste the post text here"></textarea></label>
+    <label class="field" for="pi-url"><span>Link (optional)</span><input id="pi-url" inputmode="url" autocapitalize="none" placeholder="https://"></label>
+    <div class="field"><span>Screenshot or flyer (optional)</span><div id="pi-photo" class="photo"><div class="ph">No screenshot</div></div>
+      <label class="btn" style="align-self:flex-start">📷 Add screenshot<input id="pi-file" type="file" accept="image/*" hidden></label></div>`,
+    [["Find the event", "solid", async () => {
+      const text = $("#pi-text").value.trim(), url = $("#pi-url").value.trim();
+      if (!text && !url && !shot) throw new Error("Paste the post, a link, or add a screenshot first.");
+      await api("scout", { method: "POST", body: { mode: "post", text, url: url && !/^https?:\/\//i.test(url) ? `https://${url}` : url, image: shot } });
+      closeSheet(); toast("Reading it now. It'll show up in Found for you in a minute.");
+      pollEvents();
+    }]]);
+  $("#pi-file").addEventListener("change", async ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    $("#pi-photo").innerHTML = `<div class="ph">Uploading…</div>`;
+    try { const blob = await shrink(f); const { url } = await api("upload?kind=posts", { method: "POST", raw: blob, type: "image/jpeg" }); shot = url; $("#pi-photo").innerHTML = `<img src="${esc(url)}" alt="">`; }
+    catch (err) { $("#pi-photo").innerHTML = `<div class="ph">Upload failed. Try again.</div>`; fail(err); }
+  });
+}
+// After a scan or a shared post, check back a few times so new finds appear without a refresh.
+function pollEvents(tries = 10) {
+  setTimeout(async () => {
+    try { const [ev, st] = await Promise.all([api("events"), api("settings")]); const before = (state.events || []).length; state.events = ev; state.settings = st;
+      if (state.tab === "build" && state.buildView === "stops" && $("#sheet").hidden) render();
+      if (ev.length > before) return toast("New events found. Check Found for you.");
+      if (st.scout?.status === "running" || tries > 7) if (tries > 1) pollEvents(tries - 1);
+    } catch {}
+  }, 30000);
 }
 function buildEditView() {
   const s = state.settings, b = s.build || {};
@@ -960,10 +1082,10 @@ function todayView() {
     <div class="progress" role="img" aria-label="${st.thisWeek} of ${goal()} videos this week"><span style="width:${Math.min(100, st.thisWeek / goal() * 100)}%"></span></div>
   </div>
   ${(() => { const b = state.settings?.build, st = b?.stages || [], done = st.filter(x => x.done).length, nx = st.find(x => !x.done);
-    const ev = (state.events || []).filter(e => e.published && (e.ends_at || e.starts_at) >= new Date().toISOString()).sort((a, c) => a.starts_at.localeCompare(c.starts_at))[0];
+    const ev = (state.events || []).filter(e => e.published && !e.review && e.rj_going !== false && (e.ends_at || e.starts_at) >= new Date().toISOString()).sort((a, c) => a.starts_at.localeCompare(c.starts_at))[0];
     return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
       <button class="card" type="button" data-goto="build" style="text-align:left;cursor:pointer;color:inherit;font:inherit"><span class="mono">The Mk2 · ${esc(b?.status || "In the build")}</span><b style="font-size:22px">${done}/${st.length} stages</b><span class="r-sub" style="white-space:normal">${nx ? `Next: ${esc(nx.name)}` : "All done 🔥"}</span></button>
-      <button class="card" type="button" data-goto="stops" style="text-align:left;cursor:pointer;color:inherit;font:inherit"><span class="mono">Next stop</span>${ev ? `<b style="font-size:16px;line-height:1.2">${esc(ev.title)}</b><span class="r-sub" style="white-space:normal">${new Date(ev.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · ${ev.pullups} pulling up</span>` : `<b style="font-size:16px">Nothing set</b><span class="r-sub" style="white-space:normal">Add your next meet or shoot</span>`}</button>
+      <button class="card" type="button" data-goto="stops" style="text-align:left;cursor:pointer;color:inherit;font:inherit"><span class="mono">Next stop</span>${ev ? `<b style="font-size:16px;line-height:1.2">${esc(ev.title)}</b><span class="r-sub" style="white-space:normal">${new Date(ev.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · ${ev.pullups} going</span>` : `<b style="font-size:16px">Nothing set</b><span class="r-sub" style="white-space:normal">Add your next meet or shoot</span>`}</button>
     </div>`; })()}
   ${f ? `<div class="card" style="margin-top:12px;border-color:var(--signal)"><div class="mono">${f.from} · film today</div><strong style="font-size:20px;line-height:1.2">${esc(f.title)}</strong><span class="r-sub" style="white-space:normal">${esc(f.sub)}</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${f.id ? `<button class="btn sea" type="button" data-advance="${f.id}">Filmed it ✓</button>` : ""}<button class="btn solid" type="button" data-act="new-video">Posted it: log it</button></div></div>` : ""}
@@ -1873,8 +1995,14 @@ document.addEventListener("click", async e => {
   const md = t.closest("[data-md]"); if (md) return formatMd(md.dataset.md);
   const cp = t.closest("[data-clearphoto]"); if (cp) { const p = cp.dataset.clearphoto; $(`#${p}-image`).value = ""; $(`#${p}-photo`).innerHTML = `<div class="ph">Photo removed. Save to apply.</div>`; cp.remove(); return; }
   const gt = t.closest("[data-goto]"); if (gt) { state.buildView = gt.dataset.goto === "stops" ? "stops" : "build"; return go("build"); }
-  const bvb = t.closest("[data-bv]"); if (bvb) { state.buildView = bvb.dataset.bv; if (bvb.dataset.bv === "stops" && state.events == null) { state.events = null; load("events"); } return render(); }
+  const bvb = t.closest("[data-bv]"); if (bvb) { state.buildView = bvb.dataset.bv; if (bvb.dataset.bv === "stops") { if (state.events == null) load("events"); if (state.settings == null) load("settings"); } return render(); }
   const stp = t.closest("[data-stop]"); if (stp) return editStop(state.events.find(x => x.id === +stp.dataset.stop));
+  const rv = t.closest("[data-review]"); if (rv) return reviewFound(+rv.dataset.id, rv.dataset.review);
+  const ea = t.closest("[data-evauto]"); if (ea) {
+    const on = ea.dataset.evauto === "1"; if (!state.settings || state.settings.eventsAuto === on) return;
+    try { const { settings } = await api("settings", { method: "PUT", body: { ...state.settings, eventsAuto: on } }); state.settings = { ...state.settings, ...settings }; render(); toast(on ? "New events will go on the site and map on their own. You'll get a notification." : "New events will wait in Found for you."); } catch (err) { fail(err); }
+    return;
+  }
   const dst = t.closest("[data-delstage]"); if (dst) { state.settings = buildBody(); state.settings.build.stages.splice(+dst.dataset.delstage, 1); return render(); }
   const dsp = t.closest("[data-delsp]"); if (dsp) { const list = readSponsors(); list.splice(+dsp.dataset.delsp, 1); state.settings.sponsors = list; return render(); }
   const mnv = t.closest("[data-moneyv]"); if (mnv) { state.moneyView = mnv.dataset.moneyv; return render(); }
@@ -1962,6 +2090,12 @@ document.addEventListener("click", async e => {
     if (act === "create") openCreate();
     if (act === "story-open") { const st = state.settings?.story; if (st?.status === "writing") toast("Still writing. You'll get a notification."); else if (st?.body) openStoryEdit(); else openStoryNotes(); }
     if (act === "story-rewrite") openStoryNotes();
+    if (act === "scout-scan") {
+      try { await api("scout", { method: "POST", body: { mode: "scan" } }); state.settings.scout = { ...(state.settings.scout || {}), status: "running", started: new Date().toISOString() }; render(); toast("Looking for events now. Takes a few minutes; you'll get a notification."); pollEvents(); } catch (err) { fail(err); }
+      return;
+    }
+    if (act === "scout-post") return openPostImport();
+    if (act === "scout-sources") return openSources();
     if (act === "event-writer") { ["crew", "products"].forEach(k => { if (state[k] === null) load(k); }); openEventWriter(); }
     if (act === "mockup") openMockupTool(t.dataset.prod).catch(fail);
     if (act === "push-on") { t.disabled = true; try { await turnOnPush(); } catch (err) { fail(err); } finally { t.disabled = false; } }
