@@ -99,6 +99,15 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .field .soc-in input{border:0;background:transparent;padding-left:4px}
 .soc-meta{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
 .soc-meta .link{min-height:0;padding:0;flex:none;font-size:14px}
+/* Studio calendar */
+.scal{background:var(--frame);border:1px solid var(--rule);border-radius:10px;padding:12px;margin-bottom:12px}
+.scal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.scal table{width:100%;border-collapse:collapse;table-layout:fixed}
+.scal th{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:500;padding:4px 0}
+.scal td{text-align:center;padding:2px}
+.scal td button{all:unset;cursor:pointer;display:grid;place-items:center;width:36px;height:36px;margin:auto;border-radius:50%;font-size:14px;color:var(--muted)}
+.scal td.has button{background:var(--signal);color:#0b0d0c;font-weight:800}
+.scal td.today button{outline:1.5px solid var(--ink);color:var(--ink)}
 /* Photo chooser */
 .chooser{position:fixed;inset:0;z-index:35;background:rgb(0 0 0 / .6);display:flex;align-items:flex-end;justify-content:center}
 .chooser-in{background:var(--paper);width:min(100%,760px);max-height:88vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden}
@@ -372,6 +381,7 @@ function go(tab) {
   render();
   if (state[dataKey(tab)] === null) load(dataKey(tab));
   if (tab === "build" && state.events === null) load("events");
+  if (tab === "posts" && state.settings === null) load("settings");
   if (tab === "orders") ["money", "settings", "audience"].forEach(k => { if (state[k] === null) load(k); });
   if (tab === "grow") ["videos", "coach", "audience", "crew", "settings", "events"].forEach(k => { if (state[k] === null) load(k); });
   if (tab === "settings") ["audience", "crew"].forEach(k => { if (state[k] === null) load(k); });
@@ -653,7 +663,9 @@ function postsView() {
   const all = state.posts;
   const shown = all.filter(p => state.postFilter === "all" || p.status === state.postFilter);
   return `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Journal</h1></div><a class="btn" href="/journal/" target="_blank" rel="noopener">View</a></div>
-  <p class="r-sub" style="white-space:normal;margin:0 0 12px">A new post is written for you every week${state.settings?.autoPublish === true ? " and goes live on its own (Settings)" : " and waits here for your OK"}. You get a notification when it's ready.</p>
+  <div class="card" style="margin-bottom:12px"><strong>Weekly auto-written post</strong>
+    <div class="seg" style="grid-template-columns:1fr 1fr;margin:0" role="group" aria-label="Weekly posts"><button type="button" data-autopub="0" aria-pressed="${state.settings?.autoPublish !== true}">I approve first</button><button type="button" data-autopub="1" aria-pressed="${state.settings?.autoPublish === true}">Post automatically</button></div>
+    <span class="r-sub" style="white-space:normal">${state.settings?.autoPublish === true ? "Each week's post goes live on its own and emails your Pit Crew. You still get a notification and can edit it anytime." : "Each week's post waits here as a draft. You get a notification, check it, then tap Publish."}</span></div>
   <button class="btn sea" type="button" data-act="event-writer" style="margin-bottom:12px">✍️ Write a post from my photos</button>
   ${(() => { const waiting = all.filter(p => p.status === "draft" && p.body); return waiting.length ? `<div class="card" style="margin-bottom:12px;border-color:var(--signal)"><strong>${waiting.length} ${waiting.length === 1 ? "post is" : "posts are"} waiting for your OK</strong><span class="r-sub" style="white-space:normal">Open it, check the photos and words, then tap Publish.</span></div>` : ""; })()}
   <div class="chips" role="group" aria-label="Filter posts">${[["all", "All"], ["published", "Live"], ["draft", "Drafts"]].map(([k, l]) => `<button class="chip" type="button" data-pf="${k}" aria-pressed="${k === state.postFilter}">${l}</button>`).join("")}</div>
@@ -773,12 +785,28 @@ function buildView() {
   return buildNav() + buildEditView();
 }
 const buildNav = () => `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>The Mk2</h1></div></div><div class="seg" style="grid-template-columns:1fr 1fr" role="group" aria-label="Mk2 sections">${[["build", "Build"], ["stops", "Next stops"]].map(([k, l]) => `<button type="button" data-bv="${k}" aria-pressed="${(state.buildView || "build") === k}">${l}</button>`).join("")}</div>`;
+// Month calendar for Next stops: dots on days with stops; tap a dot to open it, tap an empty day to add one there.
+function studioCal(ev) {
+  const off = state.calOffset || 0, base = new Date(); base.setDate(1); base.setMonth(base.getMonth() + off);
+  const y = base.getFullYear(), m = base.getMonth(), lead = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const byDay = {}; for (const e of ev) (byDay[key(new Date(e.starts_at))] ||= []).push(e);
+  const today = key(new Date()), cells = Array(lead).fill(`<td></td>`);
+  for (let d = 1; d <= days; d++) { const k = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, evs = byDay[k] || [];
+    cells.push(`<td class="${k === today ? "today" : ""}${evs.length ? " has" : ""}"><button type="button" ${evs.length ? `data-stop="${evs[0].id}"` : `data-newstop="${k}"`} aria-label="${evs.length ? esc(evs.map(e => e.title).join(", ")) : `Add a stop on ${k}`}">${d}</button></td>`); }
+  while (cells.length % 7) cells.push(`<td></td>`);
+  const rows = []; for (let i = 0; i < cells.length; i += 7) rows.push(`<tr>${cells.slice(i, i + 7).join("")}</tr>`);
+  return `<div class="scal"><div class="scal-head"><button type="button" class="act-btn" data-calnav="-1" aria-label="Previous month">‹</button><strong>${base.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</strong><button type="button" class="act-btn" data-calnav="1" aria-label="Next month">›</button></div>
+    <table><thead><tr>${"SMTWTFS".split("").map(x => `<th>${x}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>
+    <small class="r-sub" style="white-space:normal">Amber days have a stop. Tap an empty day to add one. Fans can add any stop to their own calendar from the site, or subscribe to all of them.</small></div>`;
+}
 function stopsView() {
   const ev = state.events;
   if (ev === null) return `<div class="loading">Loading…</div>`;
   const now = new Date().toISOString(), up = ev.filter(e => (e.ends_at || e.starts_at) >= now).sort((a, b) => a.starts_at.localeCompare(b.starts_at)), past = ev.filter(e => (e.ends_at || e.starts_at) < now);
   const row = e => `<button class="row" type="button" data-stop="${e.id}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong>${esc(e.title)}</strong><span class="r-sub">${new Date(e.starts_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${esc(e.venue || e.city)}</span></span><span class="r-end">${e.pullups} pulling up${e.published ? "" : `<span class="pill p-hidden">Hidden</span>`}</span></button>`;
   return `<p class="r-sub" style="white-space:normal;margin:0 0 12px">Shows on the site as "Where is VolksVision next?" with an "I'll pull up" button. The next one also shows on the homepage.</p>
+    ${studioCal(ev)}
     <div class="mono week-h">Coming up</div><div class="list">${up.map(row).join("") || `<div class="empty">Nothing scheduled. Add the next meet, show, shoot or drop.</div>`}</div>
     ${past.length ? `<div class="mono week-h">Been there</div><div class="list">${past.slice(0, 10).map(row).join("")}</div>` : ""}
     <button class="btn solid fab" type="button" data-act="new-stop">+ Stop</button>`;
@@ -1820,6 +1848,13 @@ document.addEventListener("click", async e => {
   const of = t.closest("[data-of]"); if (of) { state.orderFilter = of.dataset.of; return render(); }
   const pf = t.closest("[data-pf]"); if (pf) { state.postFilter = pf.dataset.pf; return render(); }
   const ord = t.closest("[data-order]"); if (ord) return openOrder(+ord.dataset.order);
+  const cn = t.closest("[data-calnav]"); if (cn) { state.calOffset = (state.calOffset || 0) + +cn.dataset.calnav; return render(); }
+  const ns = t.closest("[data-newstop]"); if (ns) { editStop(null); const f = $("#ev-start") || $("[type=datetime-local]"); if (f) f.value = `${ns.dataset.newstop}T18:00`; return; }
+  const ap = t.closest("[data-autopub]"); if (ap) {
+    const on = ap.dataset.autopub === "1"; if (!state.settings || state.settings.autoPublish === on) return;
+    try { const { settings } = await api("settings", { method: "PUT", body: { ...state.settings, autoPublish: on } }); state.settings = { ...state.settings, ...settings }; render(); toast(on ? "Weekly posts will go live on their own." : "Weekly posts will wait for your OK."); } catch (err) { fail(err); }
+    return;
+  }
   const mv = t.closest("[data-more]"); if (mv) {
     morePhotos = readMore(); const i = +mv.dataset.i, a = mv.dataset.more;
     if (a === "del") morePhotos.splice(i, 1);

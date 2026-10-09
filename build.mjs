@@ -236,7 +236,45 @@ const eventCard = (e, big) => `<article class="event${big ? " big" : ""}" id="st
     <label class="check-line"><input type="checkbox" name="join"> Also join ${esc(LIST)}</label>
     <input name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true"><p class="form-msg" role="status"></p></form>` : ""}
   ${e.link ? `<a class="link-out" href="${esc(e.link)}" rel="noopener" target="_blank">Event details</a>` : ""}
+  ${(e.ends_at || e.starts_at) >= NOW ? addToCal(e) : ""}
 </article>`;
+// ---------- calendar: month grids, add-to-calendar links, .ics files and a subscribe feed ----------
+const icsTime = d => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+const endOf = e => e.ends_at || new Date(new Date(e.starts_at).getTime() + 2 * 3600e3).toISOString();
+const icsText = s => String(s || "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1");
+const icsEvent = e => ["BEGIN:VEVENT", `UID:stop-${e.id}@thevolksvision.com`, `DTSTAMP:${icsTime(new Date())}`, `DTSTART:${icsTime(e.starts_at)}`, `DTEND:${icsTime(endOf(e))}`,
+  `SUMMARY:${icsText(e.title)} (VolksVision)`, `LOCATION:${icsText([e.venue, e.address || e.city].filter(Boolean).join(", "))}`,
+  `DESCRIPTION:${icsText(`${e.details || KIND_LABEL[e.kind] || "VolksVision stop"}\n${SITE}/next/#stop-${e.id}`)}`, `URL:${SITE}/next/#stop-${e.id}`, "END:VEVENT"].join("\r\n");
+const icsFile = list => ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//VolksVision//Next stops//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+  "X-WR-CALNAME:Where is VolksVision next?", "X-WR-TIMEZONE:America/New_York", ...list.map(icsEvent), "END:VCALENDAR"].join("\r\n") + "\r\n";
+const gcalLink = e => `https://calendar.google.com/calendar/render?${new URLSearchParams({ action: "TEMPLATE", text: `${e.title} (VolksVision)`,
+  dates: `${icsTime(e.starts_at)}/${icsTime(endOf(e))}`, details: `${e.details || ""}\n${SITE}/next/#stop-${e.id}`.trim(), location: [e.venue, e.address || e.city].filter(Boolean).join(", ") })}`;
+const TZ = "America/New_York";
+const dayKey = d => new Date(d).toLocaleDateString("en-CA", { timeZone: TZ });          // YYYY-MM-DD in Florida time
+function monthGrid(year, month, byDay) {                                                   // month is 0-11
+  const first = new Date(Date.UTC(year, month, 1)), days = new Date(Date.UTC(year, month + 1, 0)).getUTCDate(), lead = first.getUTCDay();
+  const today = dayKey(new Date()), cells = [];
+  for (let i = 0; i < lead; i++) cells.push(`<td></td>`);
+  for (let d = 1; d <= days; d++) {
+    const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, evs = byDay[key] || [];
+    cells.push(`<td class="${key === today ? "today" : ""}${evs.length ? " has" : ""}">${evs.length ? `<a href="#stop-${evs[0].id}" aria-label="${esc(evs.map(e => e.title).join(", "))} on ${new Date(key + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric" })}">${d}</a>` : `<span>${d}</span>`}</td>`);
+  }
+  while (cells.length % 7) cells.push(`<td></td>`);
+  const rows = []; for (let i = 0; i < cells.length; i += 7) rows.push(`<tr>${cells.slice(i, i + 7).join("")}</tr>`);
+  return `<table class="cal"><caption>${first.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}</caption>
+    <thead><tr>${["S", "M", "T", "W", "T", "F", "S"].map((x, i) => `<th scope="col" abbr="${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][i]}">${x}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
+}
+function calendarBlock(list) {
+  const byDay = {}; for (const e of list) (byDay[dayKey(e.starts_at)] ||= []).push(e);
+  const now = new Date(), months = [];
+  const lastEv = list.length ? new Date(list[list.length - 1].starts_at) : now;
+  const span = Math.min(6, Math.max(2, (lastEv.getFullYear() - now.getFullYear()) * 12 + lastEv.getMonth() - now.getMonth() + 1));
+  for (let i = 0; i < span; i++) { const d = new Date(now.getFullYear(), now.getMonth() + i, 1); months.push(monthGrid(d.getFullYear(), d.getMonth(), byDay)); }
+  const host = SITE.replace(/^https?:\/\//, "");
+  return `<div class="cal-wrap">${months.join("")}</div>
+    <p class="cal-sub"><a class="btn" href="webcal://${host}/calendar.ics">📅 Subscribe in your calendar</a><a class="link-out" href="/calendar.ics" download>Download all stops (.ics)</a></p>`;
+}
+const addToCal = e => `<span class="add-cal"><a href="/next/${e.id}.ics" download>+ Apple / Outlook calendar</a><a href="${esc(gcalLink(e))}" rel="noopener" target="_blank">+ Google Calendar</a></span>`;
 const eventLd = e => ({ "@context": "https://schema.org", "@type": "Event", name: e.title, startDate: e.starts_at, ...(e.ends_at ? { endDate: e.ends_at } : {}),
   eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
   location: { "@type": "Place", name: e.venue || e.city, address: e.address || e.city }, description: e.details || `${KIND_LABEL[e.kind]} with VolksVision`,
@@ -507,6 +545,7 @@ function nextPage() {
   const url = `${SITE}/next/`;
   const main = `<main>
   <section class="journal-head wrap"><div class="mono">Meets · shows · shoots · drops</div><h1>Where is VolksVision next?</h1><p>Pull up, say what's up, bring your car. Tap "I'll pull up" so RJ knows you're coming.</p></section>
+  <section class="wrap" style="padding-top:24px" aria-label="Calendar">${calendarBlock(UPCOMING)}</section>
   <section class="wrap events" style="padding-block:32px">${UPCOMING.map(e => eventCard(e, true)).join("") || `<p class="r-sub">No stops on the calendar right now. Join ${esc(LIST)} and you'll hear first.</p>`}</section>
   ${PAST.length ? `<section class="wrap" style="padding-bottom:48px"><div class="mono" style="margin-bottom:12px">Been there</div><div class="events past">${PAST.map(e => eventCard(e, false)).join("")}</div></section>` : ""}
   ${dropAlerts("next")}
@@ -581,6 +620,8 @@ write("media-kit/index.html", mediaKitPage());
 write("journal/index.html", journalIndex());
 for (const p of posts) write(`journal/${p.slug}/index.html`, postPage(p));
 for (const p of PRODUCTS) write(`shop/${p.id}/index.html`, productPage(p));
+write("calendar.ics", icsFile(UPCOMING));
+for (const e of UPCOMING) write(`next/${e.id}.ics`, icsFile([e]));
 write("thanks/index.html", page(head({ title: `Order confirmed | ${S.brand}`, description: "Thanks for your order.", url: SITE + "/thanks/", noindex: true }),
   `<main class="wrap article"><article><header><div class="crumbs">Order confirmed</div><h1>You're in the crew.</h1>
   <p class="dek">Thanks for repping ${esc(S.brand)}. Your payment went through and a receipt is on its way to your inbox. RJ packs every order himself.</p></header>
