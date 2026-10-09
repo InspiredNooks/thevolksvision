@@ -243,7 +243,7 @@ create table if not exists public.vv_pullups (
 );
 
 -- Atomic "Pull up" counter (called by the server only).
-create or replace function public.vv_pullup(eid bigint) returns int language sql as $$
+create or replace function public.vv_pullup(eid bigint) returns int language sql set search_path = '' as $$
   update public.vv_events set pullups = pullups + 1 where id = eid and published returning pullups;
 $$;
 revoke all on function public.vv_pullup(bigint) from public, anon, authenticated;

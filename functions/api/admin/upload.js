@@ -2,6 +2,7 @@
 // The phone resizes photos to JPEG before sending, so files stay small and fast.
 // Stores them in the public Supabase bucket "vv-media" and returns the public URL.
 import { json, adminRoute, UserError } from "../../../lib/server.js";
+import { supaAuth } from "../../../lib/content.js";
 
 const TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 const MAX = 4.5 * 1024 * 1024;   // Netlify request limit is 6 MB; phones resize photos well under this
@@ -16,7 +17,7 @@ export const onRequestPost = adminRoute(async ({ request, env }) => {
   const path = `${kind}/${new Date().toISOString().slice(0, 10)}-${crypto.randomUUID().slice(0, 8)}.${TYPES[type]}`;
   const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/vv-media/${path}`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, apikey: env.SUPABASE_SERVICE_ROLE_KEY, "Content-Type": type, "Cache-Control": "31536000" },
+    headers: { ...supaAuth(env), "Content-Type": type, "Cache-Control": "31536000" },
     body
   });
   if (!res.ok) { console.error(await res.text()); throw new Error("upload failed"); }

@@ -1,6 +1,7 @@
 // POST /api/crew - followers submit their car for the Crew page (multipart form with one photo).
 // Everything lands as "pending"; nothing shows on the site until RJ approves it in the Studio.
 import { json, db, str, sendEmail } from "../../lib/server.js";
+import { supaAuth } from "../../lib/content.js";
 
 const TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
@@ -17,7 +18,7 @@ export async function onRequestPost({ request, env }) {
   const path = `crew/${new Date().toISOString().slice(0, 10)}-${crypto.randomUUID().slice(0, 8)}.${TYPES[photo.type]}`;
   try {
     const up = await fetch(`${env.SUPABASE_URL}/storage/v1/object/vv-media/${path}`, { method: "POST",
-      headers: { Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, apikey: env.SUPABASE_SERVICE_ROLE_KEY, "Content-Type": photo.type }, body: await photo.arrayBuffer() });
+      headers: { ...supaAuth(env), "Content-Type": photo.type }, body: await photo.arrayBuffer() });
     if (!up.ok) throw new Error(await up.text());
     row.photo = `${env.SUPABASE_URL}/storage/v1/object/public/vv-media/${path}`;
     await db(env, "vv_crew", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify(row) });
