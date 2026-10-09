@@ -2,3 +2,6 @@ node_modules/
 public/
 preview.html
 .netlify/
+
+# test screenshots
+/*.png
