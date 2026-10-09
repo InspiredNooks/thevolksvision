@@ -313,7 +313,7 @@ function homePage() {
   <section class="band" id="story" aria-labelledby="storyTitle"><div class="wrap story-grid">
     <div><div class="mono">${esc(T.storyEyebrow)}</div><h2 id="storyTitle" style="margin-top:10px">${esc(T.storyHeadline)}</h2></div>
     <div><div class="prose">${markdown(S.about, SITE)}</div>
-      <div class="local"><a class="btn" href="/about/">More about RJ</a><a class="btn" href="/work-with-me/">Work with me</a></div></div>
+      <div class="local">${STORY ? `<a class="btn solid" href="/story/">Read the VolksVision story</a>` : ""}<a class="btn" href="/about/">More about RJ</a><a class="btn" href="/work-with-me/">Work with me</a></div></div>
   </div></section>
 
   ${dropAlerts("home")}
@@ -350,6 +350,27 @@ function productPage(p) {
     jsonld: [productLd(p), crumbs([["Home", SITE + "/"], ["Shop", SITE + "/#shop"], [p.name, url]])] }), main);
 }
 
+// The VolksVision story: RJ's own telling, shaped into a feature by the Studio's story writer. Shown once he publishes it.
+const STORY = S.story && S.story.published && S.story.body ? S.story : null;
+function storyPage() {
+  const st = STORY, url = `${SITE}/story/`, cover = st.photos?.[0];
+  const main = `<main class="wrap article"><article>
+  <header><div class="crumbs"><a href="/about/">About</a> · The story</div><h1>${esc(st.headline)}</h1><p class="dek">${esc(st.dek)}</p>
+    <p class="mono" style="margin-top:12px">By ${esc(S.ownerName)} · Updated ${new Date(st.updated || Date.now()).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p></header>
+  ${cover ? `<figure class="cover"><img src="${esc(cover.url)}" alt="${esc(cover.alt || st.headline)}" fetchpriority="high" decoding="async" width="1600" height="1000"></figure>` : ""}
+  <div class="prose">${st.pullQuote ? `<blockquote class="pull">“${esc(st.pullQuote.replace(/^["“]|["”]$/g, ""))}”<cite>${esc(S.ownerName)}</cite></blockquote>` : ""}
+  ${markdown(st.body.split("\n").filter(l => !(cover && l.startsWith("![") && l.includes(cover.url))).join("\n"), SITE)}
+  ${st.boilerplate ? `<h2>About VolksVision</h2><p>${esc(st.boilerplate)}</p>` : ""}
+  <p><a class="btn solid" href="/build/">Follow the Mk2 build</a> <a class="btn" href="/work-with-me/">Press &amp; partnerships</a></p></div>
+</article></main>`;
+  return page(head({ title: st.seoTitle || `The VolksVision Story | ${S.ownerName}`, description: st.description || st.dek, url, type: "article", image: cover ? abs(cover.url) : undefined,
+    jsonld: [{ "@context": "https://schema.org", "@type": "NewsArticle", headline: st.headline, description: st.description || st.dek, url,
+      datePublished: (st.updated || "").slice(0, 10) || undefined, dateModified: (st.updated || "").slice(0, 10) || undefined,
+      image: (st.photos || []).map(p => abs(p.url)), author: { "@type": "Person", "@id": `${SITE}/about/#rj`, name: S.ownerName, url: `${SITE}/about/` },
+      publisher: { "@id": `${SITE}/#org` }, about: { "@id": `${SITE}/#org` }, mainEntityOfPage: url },
+      crumbs([["Home", SITE + "/"], ["About", `${SITE}/about/`], ["The story", url]])] }), main);
+}
+
 function returnsPage() {
   const url = `${SITE}/shipping-returns/`;
   const main = `<main class="wrap article"><article>
@@ -382,6 +403,7 @@ function aboutPage() {
   const main = `<main class="wrap article"><article>
   <header><div class="crumbs">About</div><h1>${esc(S.ownerName)}</h1><p class="dek">${esc(S.ownerTitle)}, VolksVision. ${esc(S.tagline)}, from ${esc(S.city)}.</p></header>
   <div class="prose">${markdown(S.about, SITE)}
+  ${STORY ? `<p><a class="btn solid" href="/story/">Read the full VolksVision story</a></p>` : ""}
   <h2>Follow along</h2>
   <ul>${SOCIAL.map(([t, u]) => `<li><a href="${esc(u)}" rel="me noopener" target="_blank">${t}</a></li>`).join("")}<li><a href="/journal/">${esc(JN)}</a></li></ul></div>
   <aside class="shop-cta"><p><strong>Wear the work.</strong> Tees, hoodies and signed prints from RJ's lens.</p><a class="btn solid" href="/#shop">Shop VolksVision</a></aside>
@@ -550,6 +572,7 @@ fs.rmSync(OUT, { recursive: true, force: true });
 write("index.html", homePage());
 write("about/index.html", aboutPage());
 write("shipping-returns/index.html", returnsPage());
+if (STORY) write("story/index.html", storyPage());
 write("build/index.html", buildPage());
 write("work-with-me/index.html", workPage());
 write("crew/index.html", crewPage());
@@ -572,6 +595,7 @@ const urls = [
   { loc: `${SITE}/build/`, images: [S.heroImage, ...(BUILD.gallery || []).map(x => x.url)].filter(Boolean).map(abs) },
   { loc: `${SITE}/about/` },
   { loc: `${SITE}/shipping-returns/` },
+  ...(STORY ? [{ loc: `${SITE}/story/`, lastmod: (STORY.updated || "").slice(0, 10), images: (STORY.photos || []).map(p => abs(p.url)) }] : []),
   { loc: `${SITE}/work-with-me/` },
   { loc: `${SITE}/crew/`, images: CREW.map(c => c.photo) },
   { loc: `${SITE}/next/` },

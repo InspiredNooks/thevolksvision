@@ -34,7 +34,7 @@ export const onRequestPut = adminRoute(async ({ request, env }) => {
     youtube: url(b.youtube, "YouTube link"),
     shipping: money(b.shipping, "Shipping"),
     freeShipOver: money(b.freeShipOver, "Free shipping amount"),
-    autoPublish: b.autoPublish !== false,
+    autoPublish: b.autoPublish === true,
     heroImage: photo(b.heroImage), heroAlt: str(b.heroAlt, 160),
     heroHeadline: str(b.heroHeadline, 80),
     dropName: str(b.dropName, 40), dropNote: str(b.dropNote, 60),
@@ -59,6 +59,13 @@ export const onRequestPut = adminRoute(async ({ request, env }) => {
       services: list(b.mediaKit?.services, 12, 120, []), partners: list(b.mediaKit?.partners, 30, 80, []) },
     sponsors: (Array.isArray(b.sponsors) ? b.sponsors : []).slice(0, 12).map(x => ({ name: str(x.name, 80), url: /^https:\/\//.test(str(x.url, 300)) ? str(x.url, 300) : "",
       tagline: str(x.tagline, 120), logo: photo(x.logo), disclosure: str(x.disclosure, 300), show: x.show !== false })).filter(x => x.name),
+    story: b.story && typeof b.story === "object" ? {
+      headline: str(b.story.headline, 120), dek: str(b.story.dek, 300), seoTitle: str(b.story.seoTitle, 70), description: str(b.story.description, 200),
+      body: str(b.story.body, 20000), pullQuote: str(b.story.pullQuote, 300), boilerplate: str(b.story.boilerplate, 800),
+      pitchAngles: list(b.story.pitchAngles, 6, 200, []), notes: str(b.story.notes, 8000), extra: str(b.story.extra, 3000),
+      photos: (Array.isArray(b.story.photos) ? b.story.photos : []).slice(0, 12).map(x => ({ url: photo(x?.url), alt: str(x?.alt, 160) })).filter(x => x.url),
+      published: b.story.published === true, status: ["writing", "ready", "failed"].includes(b.story.status) ? b.story.status : "ready",
+      updated: str(b.story.updated, 40) || new Date().toISOString() } : undefined,
     library: (Array.isArray(b.library) ? b.library : []).slice(0, 60).map(x => ({ url: photo(x?.url), label: str(x?.label, 40) })).filter(x => x.url),
     weeklyGoal: Math.min(21, Math.max(1, Math.round(Number(b.weeklyGoal)) || 5)),
     journalName: str(b.journalName, 40) || "The Glovebox",
@@ -70,6 +77,11 @@ export const onRequestPut = adminRoute(async ({ request, env }) => {
       title: str(t.title, 120), keyword: str(t.keyword, 120), angle: str(t.angle, 400)
     })).filter(t => t.title)
   };
+  // The story is written in the background; a save from a screen that never loaded it must not wipe it.
+  if (data.story === undefined || (data.story.status !== "writing" && !data.story.body && !b.story?.clear)) {
+    const [cur] = await db(env, "vv_settings?id=eq.1&select=data");
+    if (cur?.data?.story) data.story = cur.data.story;
+  }
   await db(env, "vv_settings?id=eq.1", { method: "PATCH", body: JSON.stringify({ data }) });
   const live = await publishSite(env);
   return json({ settings: data, live });

@@ -319,3 +319,11 @@ a.partner:hover{border-color:var(--accent)}
 .pgal-thumb[aria-current="true"],.pgal-thumb:hover{opacity:1;border-color:var(--fg)}
 .shot.has-alt .alt-photo{position:absolute;inset:0;opacity:0;transition:opacity .35s ease}
 @media (hover:hover){.item:hover .shot.has-alt .alt-photo{opacity:1}}
+
+/* Photos inside posts and the story */
+.post-photo{margin:28px 0}
+.post-photo img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.post-photo figcaption{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:8px;letter-spacing:.02em}
+.post-photo figcaption a{color:var(--muted)}
+.prose blockquote.pull{font-size:clamp(22px,3vw,30px);line-height:1.25;font-weight:700;border-left:4px solid var(--accent);padding-left:18px;margin:8px 0 28px;color:var(--fg)}
+.prose blockquote.pull cite{display:block;font-family:var(--mono);font-size:12px;font-style:normal;color:var(--muted);margin-top:10px;text-transform:uppercase;letter-spacing:.08em}

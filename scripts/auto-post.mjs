@@ -1,6 +1,7 @@
 // Writes one Journal post per run, in RJ's voice, and saves it to Supabase.
-// Published right away (or saved as a draft if RJ turned auto-publish off in Settings),
-// then the site rebuilds and RJ gets an email with a link to review or edit it on his phone.
+// Saved as a draft for RJ to approve (unless he switched on auto-publish in Settings), with photos:
+// a cover and 1-2 in the post, from Unsplash (UNSPLASH_ACCESS_KEY) or his own Mk2 / library photos.
+// RJ gets a phone notification and an email with a link to review, edit and publish it.
 // Run weekly by .github/workflows/autoblog.yml.
 // Env: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 //      optional DEPLOY_HOOK_URL, RESEND_API_KEY, ORDER_NOTIFY_EMAIL, ORDER_FROM_EMAIL
@@ -86,12 +87,43 @@ const post = JSON.parse(response.content.filter(b => b.type === "text").map(b =>
 const valid = new Set([...products.map(p => `/shop/${p.id}/`), ...posts.map(p => `/journal/${p.slug}/`), "/#shop", "/about/", "/journal/", "/build/"]);
 const body = post.body.replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, (m, text, url) => valid.has(url) ? m : text);
 
+// ---------- photos for the post ----------
+// Unsplash first (searched by the topic), then RJ's own photos. He swaps any of them before approving.
+async function findPhotos(query) {
+  const out = [];
+  if (env.UNSPLASH_ACCESS_KEY) {
+    try {
+      const r = await fetch(`https://api.unsplash.com/search/photos?${new URLSearchParams({ query, per_page: "6", orientation: "landscape", content_filter: "high" })}`,
+        { headers: { Authorization: `Client-ID ${env.UNSPLASH_ACCESS_KEY}`, "Accept-Version": "v1" } });
+      if (r.ok) for (const p of (await r.json()).results || []) {
+        out.push({ url: p.urls.regular, alt: p.alt_description || query, credit: `Photo: [${p.user.name}](${p.user.links.html}?utm_source=volksvision&utm_medium=referral) / [Unsplash](https://unsplash.com/?utm_source=volksvision&utm_medium=referral)` });
+        if (p.links?.download_location) fetch(p.links.download_location, { headers: { Authorization: `Client-ID ${env.UNSPLASH_ACCESS_KEY}` } }).catch(() => {});
+      }
+    } catch (e) { console.log(`Unsplash skipped: ${e.message}`); }
+  }
+  const own = [...(build.gallery || []).map(g => ({ url: g.url, alt: g.alt || build.car || "RJ's Mk2" })), ...(settings.library || []).map(g => ({ url: g.url, alt: g.label || "VolksVision" }))];
+  for (const p of own.sort(() => Math.random() - .5)) out.push({ ...p, credit: "" });
+  return out.slice(0, 3);
+}
+const photos = await findPhotos(topic?.keyword || post.tags?.[0] || "volkswagen");
+let bodyWithPhotos = body;
+if (photos.length > 1) {
+  // Drop the extra photos in after the first and the middle section headings.
+  const parts = body.split(/\n(?=## )/);
+  const spots = [1, Math.max(2, Math.floor(parts.length / 2) + 1)];
+  photos.slice(1).forEach((ph, i) => { const at = Math.min(spots[i], parts.length - 1); if (at > 0) parts[at] = parts[at].replace(/^(## .*\n)/, `$1\n![${ph.alt.replace(/[\[\]]/g, "")}](${ph.url}${ph.credit ? ` "${ph.credit.replace(/"/g, "'")}"` : ""})\n\n`); });
+  bodyWithPhotos = parts.join("\n");
+}
+const cover = photos[0];
+const coverCredit = cover?.credit ? `\n\n*Cover ${cover.credit.charAt(0).toLowerCase() + cover.credit.slice(1)}*` : "";
+
 const taken = new Set(posts.map(p => p.slug));
 const base = slugify(post.slug || post.title) || "post";
 let slug = base; for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
 const status = settings.autoPublish === false ? "draft" : "published";
-const row = { slug, title: post.title.slice(0, 120), description: post.description.slice(0, 200), body, tags: post.tags.join(", "),
-  status, date: new Date().toISOString().slice(0, 10), source: "auto" };
+const row = { slug, title: post.title.slice(0, 120), description: post.description.slice(0, 200), body: bodyWithPhotos + coverCredit, tags: post.tags.join(", "),
+  status, date: new Date().toISOString().slice(0, 10), source: "auto",
+  ...(cover ? { image: cover.url, image_alt: cover.alt.slice(0, 160) } : {}) };
 
 if (dryRun) { console.log(JSON.stringify(row, null, 2)); process.exit(0); }
 
@@ -116,6 +148,13 @@ if (status === "published" && env.RESEND_API_KEY) {
     text: `${row.description}\n\nRead it: ${SITE}/journal/${slug}/` }).catch(e => { console.log(`Pit Crew email skipped: ${e.message}`); return 0; });
   console.log(`Emailed ${sent} Pit Crew members.`);
 }
+// Ping RJ's phone (and Cara's) so the draft gets reviewed.
+try {
+  const { sendPush } = await import("../lib/push.js");
+  await sendPush(env, "admin", status === "published"
+    ? { title: `📰 New ${settings.journalName || "Glovebox"} post is live`, body: row.title, url: "/admin#posts", tag: "post" }
+    : { title: `📝 New ${settings.journalName || "Glovebox"} draft to approve`, body: `${row.title}. Check the photos, then tap Publish.`, url: "/admin#posts", tag: "post" });
+} catch (e) { console.log(`Push skipped: ${e.message}`); }
 if (env.RESEND_API_KEY && (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com")) {
   await fetch("https://api.resend.com/emails", {
     method: "POST",

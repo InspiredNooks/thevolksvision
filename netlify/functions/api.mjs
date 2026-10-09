@@ -26,6 +26,7 @@ import * as aPublish from "../../functions/api/admin/publish.js";
 import * as aSettings from "../../functions/api/admin/settings.js";
 import * as aUpload from "../../functions/api/admin/upload.js";
 import * as aVideos from "../../functions/api/admin/videos.js";
+import * as aWrite from "../../functions/api/admin/write.js";
 import * as aYoutube from "../../functions/api/admin/youtube.js";
 
 const ROUTES = {
@@ -33,7 +34,7 @@ const ROUTES = {
   "admin/ask": aAsk, "admin/audience": aAudience, "admin/broadcast": aBroadcast, "admin/captions": aCaptions, "admin/coach": aCoach,
   "admin/crew": aCrew, "admin/events": aEvents, "admin/money": aMoney, "admin/orders": aOrders, "admin/plan": aPlan, "admin/photos": aPhotos,
   "admin/posts": aPosts, "admin/products": aProducts, "admin/publish": aPublish, "admin/settings": aSettings,
-  "admin/upload": aUpload, "admin/videos": aVideos, "admin/youtube": aYoutube
+  "admin/upload": aUpload, "admin/videos": aVideos, "admin/write": aWrite, "admin/youtube": aYoutube
 };
 
 export default async (request, context) => {

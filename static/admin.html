@@ -99,6 +99,11 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .field .soc-in input{border:0;background:transparent;padding-left:4px}
 .soc-meta{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
 .soc-meta .link{min-height:0;padding:0;flex:none;font-size:14px}
+/* Photo chooser */
+.chooser{position:fixed;inset:0;z-index:35;background:rgb(0 0 0 / .6);display:flex;align-items:flex-end;justify-content:center}
+.chooser-in{background:var(--paper);width:min(100%,760px);max-height:88vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.chooser-body{overflow-y:auto;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.mk-tile.picked img{outline:3px solid var(--signal);outline-offset:-3px}
 /* Mockup maker */
 .mk{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;color:var(--ink)}
 .mk-stage{position:relative;flex:1;min-height:0;display:grid;place-items:center;touch-action:none;overflow:hidden;background:repeating-conic-gradient(#111 0 25%,#0b0b0b 0 50%) 0 0/24px 24px}
@@ -158,6 +163,7 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .preview{background:var(--frame);border:1px solid var(--rule);border-radius:8px;padding:16px;min-height:42vh}
 .preview h2{font-size:22px;margin:1em 0 .3em}.preview h3{font-size:18px}
 .preview p,.preview ul,.preview ol{margin:0 0 1em}.preview a{color:var(--sea)}
+.preview img{max-width:100%;height:auto;display:block;border-radius:8px}.preview figure{margin:16px 0}.preview figcaption{font-size:13px;color:var(--muted)}
 .preview blockquote{margin:1em 0;padding-left:14px;border-left:3px solid var(--signal);color:var(--muted)}
 .checks{display:flex;flex-direction:column;gap:6px;background:var(--frame);border:1px solid var(--rule);border-radius:8px;padding:12px}
 .check{display:flex;gap:8px;align-items:flex-start;font-size:14px}
@@ -647,7 +653,9 @@ function postsView() {
   const all = state.posts;
   const shown = all.filter(p => state.postFilter === "all" || p.status === state.postFilter);
   return `<div class="top"><div><div class="mono">VolksVision Studio</div><h1>Journal</h1></div><a class="btn" href="/journal/" target="_blank" rel="noopener">View</a></div>
-  <p class="r-sub" style="white-space:normal;margin:0 0 12px">A new post is written and published automatically every week${state.settings && state.settings.autoPublish === false ? " (as a draft, per Settings)" : ""}. Edit anything here.</p>
+  <p class="r-sub" style="white-space:normal;margin:0 0 12px">A new post is written for you every week${state.settings?.autoPublish === true ? " and goes live on its own (Settings)" : " and waits here for your OK"}. You get a notification when it's ready.</p>
+  <button class="btn sea" type="button" data-act="event-writer" style="margin-bottom:12px">✍️ Write a post from my photos</button>
+  ${(() => { const waiting = all.filter(p => p.status === "draft" && p.body); return waiting.length ? `<div class="card" style="margin-bottom:12px;border-color:var(--signal)"><strong>${waiting.length} ${waiting.length === 1 ? "post is" : "posts are"} waiting for your OK</strong><span class="r-sub" style="white-space:normal">Open it, check the photos and words, then tap Publish.</span></div>` : ""; })()}
   <div class="chips" role="group" aria-label="Filter posts">${[["all", "All"], ["published", "Live"], ["draft", "Drafts"]].map(([k, l]) => `<button class="chip" type="button" data-pf="${k}" aria-pressed="${k === state.postFilter}">${l}</button>`).join("")}</div>
   <div class="list">${shown.map(p => `<button class="row" type="button" data-post="${p.id}">${p.image ? `<span class="thumb"><img src="${esc(p.image)}" alt="" loading="lazy"></span>` : `<span class="thumb mono" style="font-size:10px">${p.date.slice(5)}</span>`}
     <span class="r-main"><strong>${esc(p.title)}</strong><span class="r-sub">${p.date} · ${wordCount(p.body)} words${p.source === "auto" ? " · auto-written" : ""}</span></span>
@@ -677,7 +685,7 @@ function openPost(id) {
       <div class="toolbar" role="toolbar" aria-label="Formatting">
         <button type="button" data-md="h2" aria-label="Heading">H</button><button type="button" data-md="bold" aria-label="Bold"><b>B</b></button>
         <button type="button" data-md="list" aria-label="List">• List</button><button type="button" data-md="link" aria-label="Link">Link</button>
-        <button type="button" data-md="shop" aria-label="Link a product">🔗 Shop</button><button type="button" data-md="quote" aria-label="Quote">“ ”</button>
+        <button type="button" data-md="photo" aria-label="Add a photo">📷 Photo</button><button type="button" data-md="shop" aria-label="Link a product">🔗 Shop</button><button type="button" data-md="quote" aria-label="Quote">“ ”</button>
         <button type="button" data-md="preview" id="previewBtn">Preview</button>
       </div>
       <textarea id="b-body" class="body-edit" placeholder="Start writing. Use the buttons above for headings and lists.">${esc(p.body)}</textarea>
@@ -705,7 +713,26 @@ async function savePost(p, status) {
   state.posts.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   closeSheet(); render(); toast(status === "draft" ? "Draft saved." : savedMsg(live));
 }
+// Puts a photo into the post where the cursor is: pick it, adjust it, it uploads, the line is inserted.
+async function insertPostPhoto() {
+  const pick = document.createElement("input"); pick.type = "file"; pick.accept = "image/*";
+  pick.onchange = async () => {
+    const f = pick.files[0]; if (!f) return;
+    const blob = await editPhoto(f, { aspect: 16 / 9, title: "Photo in the post" }); if (!blob) return;
+    toast("Uploading…");
+    try {
+      const { url } = await api("upload?kind=posts", { method: "POST", raw: blob, type: "image/jpeg" });
+      const ta = $("#b-body"), at = ta.selectionStart ?? ta.value.length;
+      const line = `\n\n![Describe what's in this photo](${url})\n\n`;
+      ta.value = ta.value.slice(0, at) + line + ta.value.slice(at);
+      ta.focus(); const s = at + 4; ta.setSelectionRange(s, s + "Describe what's in this photo".length);
+      $("#sheetBody").dispatchEvent(new Event("input")); toast("Photo added. Type what's in it (Google reads that).");
+    } catch (e) { fail(e); }
+  };
+  pick.click();
+}
 function formatMd(kind) {
+  if (kind === "photo") return insertPostPhoto();
   const ta = $("#b-body");
   if (kind === "preview") {
     const pv = $("#b-preview"), showing = !pv.hidden;
@@ -1429,7 +1456,7 @@ function brandView() {
 }
 function textView() {
   const t = state.settings.text || {};
-  return `<form id="textForm" style="display:flex;flex-direction:column;gap:16px">
+  return `${storyCard()}<form id="textForm" style="display:flex;flex-direction:column;gap:16px;margin-top:16px">
     <p class="r-sub" style="white-space:normal;margin:0">Every line of website wording you can change. Leave one blank to go back to the original.</p>
     ${TEXT_FIELDS.map(([k, label]) => `<label class="field" for="tx-${k}"><span>${label}</span><textarea id="tx-${k}" rows="2">${esc(t[k])}</textarea></label>`).join("")}
     <button class="btn solid" type="submit">Save site text</button></form>`;
@@ -1478,6 +1505,7 @@ function settingsBody() {
 // ---------- sheet + photos ----------
 let sheetActions = [];
 function sheet(title, html, actions) {
+  { const old = $("#sheetBody"), fresh = old.cloneNode(false); old.replaceWith(fresh); }   // drop listeners left by the previous editor
   $("#sheetTitle").textContent = title; $("#sheetBody").innerHTML = html;
   sheetActions = actions;
   $("#sheetFoot").innerHTML = actions.map(([label, kind], i) => `<button class="btn ${kind}" type="button" data-sa="${i}">${label}</button>`).join("");
@@ -1494,6 +1522,118 @@ async function shrink(file) {
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.85));
+}
+// ---------- photo chooser (story + post writer) ----------
+// Upload (through the photo editor), pick from his photos (library, Mk2, Crew), or search free photos.
+let chosen = [];
+function renderChosen() {
+  const box = $("#chosen"); if (!box) return;
+  box.innerHTML = `<div class="more-grid">${chosen.map((p, i) => `<div class="more-item"><span class="thumb" style="width:100%;height:auto;aspect-ratio:4/3"><img src="${esc(p.url)}" alt=""></span>
+      <div class="more-acts" style="grid-template-columns:repeat(3,1fr)"><button type="button" class="act-btn" data-ch="left" data-i="${i}"${i ? "" : " disabled"} aria-label="Move earlier">←</button><button type="button" class="act-btn" data-ch="right" data-i="${i}"${i < chosen.length - 1 ? "" : " disabled"} aria-label="Move later">→</button><button type="button" class="act-btn del" data-ch="del" data-i="${i}" aria-label="Remove">✕</button></div></div>`).join("")}</div>
+    ${chosen.length < 8 ? `<div class="photo-actions" style="margin-top:8px"><button type="button" class="btn" data-ch="upload">+ Upload</button><button type="button" class="btn" data-ch="mine">My photos</button><button type="button" class="btn" data-ch="stock">Free photos</button></div>` : ""}
+    <small class="r-sub" style="white-space:normal;display:block;margin-top:6px">${chosen.length ? "The first photo is the cover. " : ""}Up to 8. The writer looks at them, so captions match what's really in each one.</small>`;
+}
+function chooserOverlay(title, html) {
+  let o = $("#chooser"); if (!o) { o = document.createElement("div"); o.id = "chooser"; o.className = "chooser"; document.body.appendChild(o); }
+  o.innerHTML = `<div class="chooser-in"><div class="pe-bar"><button class="link" type="button" data-ch="close">Done</button><h2>${esc(title)}</h2><span style="width:48px"></span></div><div class="chooser-body">${html}</div></div>`;
+  o.hidden = false;
+}
+let chooserItems = [];
+const chooserGrid = items => { chooserItems = items; return items.length ? `<div class="mk-grid">${items.map((x, i) => `<button type="button" class="mk-tile" data-chpick="${i}"><img src="${esc(x.thumb || x.url)}" alt="" loading="lazy"><span>${esc(x.label || "")}</span></button>`).join("")}</div>` : `<p class="r-sub">Nothing here yet.</p>`; };
+async function chooserAction(a, i) {
+  if (a === "close") { $("#chooser").hidden = true; return renderChosen(); }
+  if (a === "del") chosen.splice(i, 1);
+  if (a === "left" && i > 0) [chosen[i - 1], chosen[i]] = [chosen[i], chosen[i - 1]];
+  if (a === "right" && i < chosen.length - 1) [chosen[i + 1], chosen[i]] = [chosen[i], chosen[i + 1]];
+  if (a === "upload") {
+    const pick = document.createElement("input"); pick.type = "file"; pick.accept = "image/*"; pick.multiple = true;
+    pick.onchange = async () => { for (const f of [...pick.files].slice(0, 8 - chosen.length)) {
+      const blob = await editPhoto(f, { aspect: 0, title: "Adjust photo" }); if (!blob) continue;
+      toast("Uploading…"); try { const { url } = await api("upload?kind=posts", { method: "POST", raw: blob, type: "image/jpeg" }); chosen.push({ url, alt: "" }); renderChosen(); } catch (e) { fail(e); break; } } };
+    return pick.click();
+  }
+  if (a === "mine") {
+    const s = state.settings || {};
+    return chooserOverlay("My photos", chooserGrid([...(s.library || []).map(x => ({ url: x.url, label: x.label })), ...((s.build || {}).gallery || []).map(x => ({ url: x.url, label: x.alt || "Mk2" })),
+      ...(state.crew || []).filter(c => c.status === "approved" && c.photo).map(c => ({ url: c.photo, label: c.car, credit: c.handle ? `Car: ${c.handle}` : "" })),
+      ...(state.products || []).filter(p => p.image).map(p => ({ url: p.image, label: p.name }))]));
+  }
+  if (a === "stock") return stockSearch("volkswagen");
+  renderChosen();
+}
+async function stockSearch(q) {
+  chooserOverlay("Free photos", `<form class="ask-row" id="stockForm"><input name="q" value="${esc(q)}" placeholder="car meet, mk2 jetta, detailing…" style="padding:11px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper)"><button class="btn sea" type="submit">Search</button></form><div id="stockOut" style="margin-top:10px"><p class="r-sub">Searching…</p></div>`);
+  try { const r = await api(`photos?q=${encodeURIComponent(q)}`);
+    $("#stockOut").innerHTML = r.off ? `<p class="r-sub" style="white-space:normal">Free photo search needs the Unsplash key in Netlify (UNSPLASH_ACCESS_KEY). Ask Cara.</p>` : chooserGrid(r.photos.map(p => ({ url: p.full, thumb: p.thumb, label: p.by, credit: `Photo: ${p.by} / ${p.source}`, dl: p.download }))); }
+  catch (e) { $("#stockOut").innerHTML = `<p class="r-sub">${esc(e.message)}</p>`; }
+}
+document.addEventListener("submit", e => { if (e.target.id === "stockForm") { e.preventDefault(); stockSearch(new FormData(e.target).get("q") || "volkswagen"); } });
+document.addEventListener("click", e => {
+  const c = e.target.closest("[data-ch]"); if (c) { e.stopPropagation(); return chooserAction(c.dataset.ch, +c.dataset.i); }
+  const pk = e.target.closest("[data-chpick]"); if (pk) { const x = chooserItems[+pk.dataset.chpick]; if (x && chosen.length < 8 && !chosen.some(y => y.url === x.url)) { chosen.push({ url: x.url, alt: x.label || "", credit: x.credit || "" }); if (x.dl) api("photos", { method: "POST", body: { download_location: x.dl } }).catch(() => {}); pk.classList.add("picked"); toast(`Added (${chosen.length}).`); } }
+}, true);
+
+// ---------- writers: the VolksVision story + a post from an event ----------
+const poll = (fn, every = 5000, max = 60) => new Promise((res, rej) => { let n = 0; const t = setInterval(async () => { n++; try { const v = await fn(); if (v) { clearInterval(t); res(v); } else if (n >= max) { clearInterval(t); rej(new Error("Still writing. Check back in a minute.")); } } catch (e) { clearInterval(t); rej(e); } }, every); });
+function storyCard() {
+  const st = state.settings?.story || {};
+  const status = st.status === "writing" ? "✍️ Writing it now… (about a minute)" : st.published ? "✅ Live at thevolksvision.com/story" : st.body ? "Written, not published yet" : "Not written yet";
+  return `<div class="card"><strong>The VolksVision story</strong><span class="r-sub" style="white-space:normal">How it started, in your words. The writer turns it into a newsworthy feature with its own page, built to show up on Google and ready to send to reporters. ${status}.</span>
+    <button class="btn sea" type="button" data-act="story-open">${st.body ? "Open my story" : "Tell my story"}</button></div>`;
+}
+function openStoryNotes() {
+  const st = state.settings?.story || {};
+  chosen = (st.photos || []).map(p => ({ ...p }));
+  sheet("Tell your story", `
+    <p class="r-sub" style="white-space:normal;margin:0">Just talk. Type it or use the mic on your keyboard. How did VolksVision start? Your first car, why VWs, the Mk2, the people, the moments, what's next. Your real words become the quotes.</p>
+    <label class="field" for="st-notes"><span>The story</span><textarea id="st-notes" rows="10" placeholder="I got into VWs when…">${esc(st.notes || "")}</textarea></label>
+    <label class="field" for="st-extra"><span>Facts to get right (optional)</span><textarea id="st-extra" rows="3" placeholder="Year I started filming, first meet, how many followers, any press…">${esc(st.extra || "")}</textarea></label>
+    <div class="field"><span>Photos (you, the Mk2, early days, meets)</span><div id="chosen"></div></div>`,
+    [["✨ Make it newsworthy", "sea", async () => {
+      const r = await api("write", { method: "POST", body: { kind: "story", notes: $("#st-notes").value, extra: $("#st-extra").value, photos: chosen } });
+      state.settings.story = { ...(state.settings.story || {}), status: "writing" }; closeSheet(); render(); toast("Writing your story. About a minute; you'll get a notification.");
+      try { const s = await poll(async () => { const x = await api("settings"); return x.story?.status !== "writing" ? x : null; });
+        state.settings = { ...state.settings, ...s }; render(); if (s.story?.status === "failed") toast(s.story.error || "The writer hit a problem. Try again.", true); else openStoryEdit(); } catch (e) { fail(e); }
+      return r;
+    }]]);
+  renderChosen();
+}
+function openStoryEdit() {
+  const st = state.settings.story;
+  sheet("Your story", `
+    ${st.published ? `<a class="btn" href="/story/" target="_blank" rel="noopener">View it live ↗</a>` : ""}
+    <label class="field" for="se-h"><span>Headline</span><input id="se-h" value="${esc(st.headline)}"></label>
+    <label class="field" for="se-d"><span>Under the headline</span><textarea id="se-d" rows="2">${esc(st.dek)}</textarea></label>
+    <label class="field" for="se-q"><span>Pull quote (your words)</span><textarea id="se-q" rows="2">${esc(st.pullQuote)}</textarea></label>
+    <label class="field" for="b-body"><span>The story</span><div class="toolbar" role="toolbar"><button type="button" data-md="photo">📷 Photo</button><button type="button" data-md="h2">H</button><button type="button" data-md="bold"><b>B</b></button><button type="button" data-md="preview" id="previewBtn">Preview</button></div>
+      <textarea id="b-body" class="body-edit">${esc(st.body)}</textarea><div class="preview" id="b-preview" hidden></div></label>
+    <label class="field" for="se-seo"><span>Google title</span><input id="se-seo" value="${esc(st.seoTitle)}" maxlength="70"></label>
+    <label class="field" for="se-desc"><span>Google description</span><textarea id="se-desc" rows="2" maxlength="200">${esc(st.description)}</textarea></label>
+    <div class="card"><strong>For press and pitches</strong><span class="r-sub" style="white-space:normal">Paste this "About" paragraph into emails to reporters, podcasts and sponsors:</span><p class="copyable" style="margin:0">${esc(st.boilerplate)}</p>
+      ${(st.pitchAngles || []).length ? `<span class="r-sub" style="white-space:normal">Angles a local reporter would bite on:</span><ul style="margin:0;padding-left:18px">${st.pitchAngles.map(a => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}</div>
+    <label class="switch" for="se-pub"><span>Published<br><small class="r-sub" style="white-space:normal">Shows at thevolksvision.com/story, linked from the homepage and About.</small></span><input id="se-pub" type="checkbox"${st.published ? " checked" : ""}></label>
+    <button class="link" type="button" data-act="story-rewrite">Rewrite it from my notes</button>`,
+    [["Save", "solid", async () => {
+      const story = { ...st, headline: $("#se-h").value, dek: $("#se-d").value, pullQuote: $("#se-q").value, body: $("#b-body").value, seoTitle: $("#se-seo").value, description: $("#se-desc").value, published: $("#se-pub").checked, updated: new Date().toISOString(), status: "ready" };
+      const { settings, live } = await api("settings", { method: "PUT", body: { ...state.settings, story } });
+      state.settings = { ...state.settings, ...settings }; closeSheet(); render(); toast(story.published ? savedMsg(live) : "Saved. Switch on Published when it's ready.");
+    }]]);
+}
+function openEventWriter() {
+  chosen = [];
+  sheet("Write a post from my photos", `
+    <p class="r-sub" style="white-space:normal;margin:0">A meet, a shoot, a build day, a drive. Add the details and photos; it writes the post in your voice and saves it as a draft for you to check.</p>
+    <label class="field" for="ev-name"><span>What was it?</span><input id="ev-name" placeholder="Cars & Coffee St. Pete"></label>
+    <div class="pair"><label class="field" for="ev-date"><span>When</span><input id="ev-date" type="date" value="${today()}"></label><label class="field" for="ev-place"><span>Where</span><input id="ev-place" placeholder="St. Petersburg, FL"></label></div>
+    <label class="field" for="ev-notes"><span>What happened?</span><textarea id="ev-notes" rows="7" placeholder="Who showed up, the cars that stood out, what went right or wrong, what you learned, what's next. Bullet points are fine."></textarea><small>Only what you write and what's in the photos gets used. Nothing is made up.</small></label>
+    <div class="field"><span>Photos</span><div id="chosen"></div></div>`,
+    [["✨ Write it", "sea", async () => {
+      const r = await api("write", { method: "POST", body: { kind: "event", name: $("#ev-name").value, date: $("#ev-date").value, place: $("#ev-place").value, notes: $("#ev-notes").value, photos: chosen } });
+      closeSheet(); state.posts = null; go("posts"); toast("Writing your post. About a minute; it opens when it's ready.");
+      try { const p = await poll(async () => { const all = await api("posts"); state.posts = all; const x = all.find(y => y.id === r.postId); return x && x.body ? x : null; });
+        render(); openPost(p.id); toast("Here's your draft. Check it, then Publish."); } catch (e) { fail(e); }
+    }]]);
+  renderChosen();
 }
 // ---------- mockup maker (loaded only when opened) ----------
 async function openMockupTool(productId) {
@@ -1785,6 +1925,9 @@ document.addEventListener("click", async e => {
       const key = t.dataset.kind === "deal" ? "deals" : "income"; state.money[key] = state.money[key].filter(x => x.id !== +t.dataset.id); closeSheet(); render(); toast("Deleted.");
     }
     if (act === "create") openCreate();
+    if (act === "story-open") { const st = state.settings?.story; if (st?.status === "writing") toast("Still writing. You'll get a notification."); else if (st?.body) openStoryEdit(); else openStoryNotes(); }
+    if (act === "story-rewrite") openStoryNotes();
+    if (act === "event-writer") { ["crew", "products"].forEach(k => { if (state[k] === null) load(k); }); openEventWriter(); }
     if (act === "mockup") openMockupTool(t.dataset.prod).catch(fail);
     if (act === "push-on") { t.disabled = true; try { await turnOnPush(); } catch (err) { fail(err); } finally { t.disabled = false; } }
     if (act === "push-off") { try { await turnOffPush(); } catch (err) { fail(err); } }
