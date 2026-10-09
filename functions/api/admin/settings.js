@@ -17,7 +17,8 @@ const money = (v, label) => {
   return n;
 };
 
-export const onRequestGet = adminRoute(async ({ env }) => json(await getSettings(env)));
+// _sync tells the Studio which socials can auto-sync (never the keys themselves).
+export const onRequestGet = adminRoute(async ({ env }) => json({ ...(await getSettings(env)), _sync: { youtube: Boolean(env.YOUTUBE_API_KEY) } }));
 
 export const onRequestPut = adminRoute(async ({ request, env }) => {
   const b = await request.json();

@@ -85,6 +85,14 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .archive .list{border-top:1px solid var(--rule)}
 .archive .prow:last-child{border-bottom:0}
 @media (min-width:1024px){.act-btn span{display:inline}.act-btn:hover{border-color:var(--ink)}.screen{padding-bottom:120px}}
+/* Socials */
+.soc-card{gap:12px}
+.soc{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--rule);padding-top:12px}
+.soc-in{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;border:1px solid var(--rule);border-radius:8px;background:var(--paper)}
+.soc-in b{padding-left:12px;color:var(--muted);font-weight:600}
+.field .soc-in input{border:0;background:transparent;padding-left:4px}
+.soc-meta{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.soc-meta .link{min-height:0;padding:0;flex:none;font-size:14px}
 /* Photo editor */
 .pe{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;color:var(--ink)}
 .pe-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;background:var(--frame);border-bottom:1px solid var(--rule)}
@@ -1335,6 +1343,7 @@ function brandView() {
   return `<form id="settingsForm" style="display:flex;flex-direction:column;gap:16px">
     <div class="pair"><label class="field" for="s-owner"><span>Your name</span><input id="s-owner" value="${esc(s.ownerName)}"></label>
     <label class="field" for="s-title"><span>Your title</span><input id="s-title" value="${esc(s.ownerTitle)}"></label></div>
+    ${socialsCard(s)}
     <label class="field" for="s-legal"><span>Legal business name (optional)</span><input id="s-legal" value="${esc(s.legalName)}" placeholder="BayWay Media Co."><small>Only fill this in once the LLC is active on Sunbiz. Then the site footer says "VolksVision is a brand of …".</small></label>
     <label class="field" for="s-tagline"><span>Tagline</span><input id="s-tagline" value="${esc(s.tagline)}"></label>
     <label class="field" for="s-about"><span>About you</span><textarea id="s-about" rows="6">${esc(s.about)}</textarea><small>Homepage and About page. Who you are, what you shoot, where.</small></label>
@@ -1343,9 +1352,6 @@ function brandView() {
     <label class="field" for="s-goal"><span>Videos per week goal</span><input id="s-goal" type="number" inputmode="numeric" min="1" max="21" value="${esc(s.weeklyGoal)}"><small>Drives your streak and the coach.</small></label>
     <label class="field" for="s-pillars"><span>Your content pillars</span><input id="s-pillars" value="${esc((s.pillars || []).join(", "))}"><small>Comma separated. Used for videos, ideas and coaching.</small></label>
     <label class="field" for="s-hooks"><span>Opening styles you track</span><textarea id="s-hooks" rows="3">${esc((s.hooks || []).join(", "))}</textarea><small>Comma separated.</small></label>
-    <label class="field" for="s-instagram"><span>Instagram link</span><input id="s-instagram" value="${esc(s.instagram)}" inputmode="url" autocapitalize="none"></label>
-    <label class="field" for="s-tiktok"><span>TikTok link</span><input id="s-tiktok" value="${esc(s.tiktok)}" inputmode="url" autocapitalize="none"></label>
-    <label class="field" for="s-youtube"><span>YouTube link</span><input id="s-youtube" value="${esc(s.youtube)}" inputmode="url" autocapitalize="none"></label>
     <div class="pair"><label class="field" for="s-shipping"><span>Shipping ($)</span><input id="s-shipping" inputmode="decimal" value="${esc(s.shipping)}"></label>
     <label class="field" for="s-free"><span>Free shipping over ($)</span><small>Set 0 to turn free shipping off.</small><input id="s-free" inputmode="decimal" value="${esc(s.freeShipOver)}"></label></div>
     <label class="field" for="s-pay"><span>How buyers pay you</span><input id="s-pay" value="${esc(s.payWith)}"></label>
@@ -1402,7 +1408,7 @@ function settingsBody() {
   if (!$("#s-owner")) return s;
   return { ...s, ownerName: $("#s-owner").value, ownerTitle: $("#s-title").value, legalName: $("#s-legal").value, tagline: $("#s-tagline").value, about: $("#s-about").value,
     journalName: $("#s-jn").value, listName: $("#s-ln").value, weeklyGoal: $("#s-goal").value, pillars: split($("#s-pillars").value), hooks: split($("#s-hooks").value),
-    instagram: $("#s-instagram").value, tiktok: $("#s-tiktok").value, youtube: $("#s-youtube").value,
+    instagram: socialUrl("instagram", $("#s-instagram").value), tiktok: socialUrl("tiktok", $("#s-tiktok").value), youtube: socialUrl("youtube", $("#s-youtube").value),
     shipping: $("#s-shipping").value, freeShipOver: $("#s-free").value, payWith: $("#s-pay").value, orderEmail: $("#s-email").value, contactEmail: $("#s-contact").value, autoPublish: $("#s-auto").checked };
 }
 
@@ -1425,6 +1431,30 @@ async function shrink(file) {
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise(r => c.toBlob(b => r(b || file), "image/jpeg", 0.85));
+}
+// ---------- socials ----------
+// RJ types @handle (or pastes a link); the site stores the full profile link.
+const SOCIALS = {
+  instagram: { name: "Instagram", url: h => `https://www.instagram.com/${h}/`, re: /instagram\.com\/([\w.]+)/i },
+  tiktok: { name: "TikTok", url: h => `https://www.tiktok.com/@${h}`, re: /tiktok\.com\/@([\w.]+)/i },
+  youtube: { name: "YouTube", url: h => `https://www.youtube.com/@${h}`, re: /youtube\.com\/@([\w.-]+)/i }
+};
+const handleOf = (k, v) => { const s = String(v || "").trim(); const m = SOCIALS[k].re.exec(s); return m ? m[1] : s.replace(/^@/, "").replace(/^https?:\/\/\S*/, ""); };
+function socialUrl(k, v) {
+  const s = String(v || "").trim(); if (!s) return "";
+  if (/^https:\/\//.test(s)) return s;                                  // a pasted link (e.g. youtube.com/channel/UC…) is kept as is
+  const h = s.replace(/^@/, "").replace(/[^\w.-]/g, ""); return h ? SOCIALS[k].url(h) : "";
+}
+function socialsCard(s) {
+  const sync = s._sync || {};
+  const row = (k, status) => `<div class="soc"><label class="field" for="s-${k}"><span>${SOCIALS[k].name}</span>
+      <span class="soc-in"><b>@</b><input id="s-${k}" value="${esc(/^https:\/\/(www\.)?youtube\.com\/channel\//.test(s[k] || "") ? s[k] : handleOf(k, s[k]))}" placeholder="thevolksvision" autocapitalize="none" autocorrect="off" spellcheck="false"></span></label>
+      <div class="soc-meta"><span class="r-sub" style="white-space:normal">${status}</span>${s[k] ? `<a class="link" href="${esc(s[k])}" target="_blank" rel="noopener">Check it ↗</a>` : ""}</div></div>`;
+  return `<div class="card soc-card"><strong>Your socials</strong><span class="r-sub" style="white-space:normal">Type your handle. The site links to these everywhere, and your Studio uses them for stats.</span>
+    ${row("tiktok", "Stats: log them in Grow → Plan → Numbers, or they fill in when you log videos. TikTok doesn't let outside apps read stats without an approved business app.")}
+    ${row("instagram", "Stats: same as TikTok. Instagram only shares stats with approved Meta business apps; switching to a free Creator account is step one if we apply later.")}
+    ${row("youtube", sync.youtube ? "✅ Auto-sync is on: Grow → Videos → Sync YouTube pulls your videos, views and subscribers." : "Auto-sync is ready to switch on. Cara adds a free YouTube key once and your views pull in automatically.")}
+  </div>`;
 }
 // ---------- photo editor: crop, zoom, reposition, rotate, light ----------
 // Every photo goes through this before upload. Drag to move, pinch or slide to zoom.
