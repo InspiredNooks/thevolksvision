@@ -128,22 +128,24 @@ const footer = () => `<footer><div class="wrap foot">
   <p>${esc(S.brand)} is an independent creator brand from ${esc(S.city)}, run by ${esc(S.ownerName)}${S.legalName ? `. VolksVision is a brand of ${esc(S.legalName)}` : ""}. It is not affiliated with, sponsored by, or endorsed by Volkswagen AG. All vehicle photography is original work by RJ.</p></div>
   <div class="links">${SOCIAL.map(([t, u]) => `<a href="${esc(u)}" rel="me noopener" target="_blank">${t}</a>`).join("")}<a href="/build/">The Mk2</a><a href="/next/">Where's VolksVision next</a><a href="/journal/">${esc(JN)}</a><a href="/crew/">The Crew</a><a href="/media-kit/">Media kit</a><a href="/about/">About</a><a href="/work-with-me/">Work with me</a><a href="/rss.xml">RSS</a>${S.contactEmail ? `<a class="mono" style="text-transform:none" href="mailto:${esc(S.contactEmail)}">${esc(S.contactEmail)}</a>` : ""}<a class="mono" style="text-transform:none" href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a></div>
 </div></footer>`;
+const STRIPE = Boolean(env.STRIPE_SECRET_KEY);   // only a yes/no reaches the page, never the key
+const SHIP_NOTE = S.shipping > 0 ? (S.freeShipOver > 0 ? `Flat ${money(S.shipping)} shipping, free over ${money(S.freeShipOver)}.` : `Flat ${money(S.shipping)} shipping.`) : "Free shipping.";
 const drawer = () => `<div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Shopping bag">
   <header><h2>Your bag</h2><button class="x" id="closeCart" type="button">Close</button></header>
   <div class="lines" id="lines"></div>
   <form class="checkout" id="checkout">
     <div class="total"><span>Subtotal</span><span id="subtotal">$0.00</span></div>
-    <label for="buyerName">Name<input id="buyerName" required autocomplete="name" maxlength="120"></label>
+    ${STRIPE ? `<label class="pick"><input type="checkbox" id="pickup"> Local pickup in St. Pete (no shipping)</label>` : `<label for="buyerName">Name<input id="buyerName" required autocomplete="name" maxlength="120"></label>
     <label for="buyerContact">Email or phone<input id="buyerContact" required maxlength="160"></label>
-    <label for="buyerShip">Shipping address, or "pickup"<input id="buyerShip" required autocomplete="street-address" maxlength="300"></label>
+    <label for="buyerShip">Shipping address, or "pickup"<input id="buyerShip" required autocomplete="street-address" maxlength="300"></label>`}
     <input id="website" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
-    <button class="btn solid" type="submit" id="placeOrder">Place order request</button>
-    <p class="note">Free shipping over ${money(S.freeShipOver)}. RJ confirms every order personally, then sends a payment request (${esc(S.payWith)}).</p>
-    <div class="done" id="done" hidden></div>
+    <button class="btn solid" type="submit" id="placeOrder">${STRIPE ? "Checkout" : "Place order request"}</button>
+    <p class="note">${SHIP_NOTE}${STRIPE ? " Secure checkout by Stripe: cards, Apple Pay and Google Pay." : ` RJ confirms every order personally, then sends a payment request (${esc(S.payWith)}).`}</p>
+    <div class="done" id="done" role="status" hidden></div>
   </form>
 </aside>`;
-const shopScript = () => `<script>window.VV=${JSON.stringify({ config: { brand: S.brand, orderEmail: S.orderEmail, payWith: S.payWith, shipping: S.shipping, freeShipOver: S.freeShipOver }, products: PRODUCTS.map(({ id, name, price, sizes, stripe }) => ({ id, name, price, sizes, stripe })) }).replace(/</g, "\\u003c")};</script>
+const shopScript = () => `<script>window.VV=${JSON.stringify({ config: { brand: S.brand, orderEmail: S.orderEmail, payWith: S.payWith, shipping: S.shipping, freeShipOver: S.freeShipOver, checkout: STRIPE ? "stripe" : "request" }, products: PRODUCTS.map(({ id, name, price, sizes, stripe }) => ({ id, name, price, sizes, stripe })) }).replace(/</g, "\\u003c")};</script>
 <script>${read("templates/shop.js")}</script>
 <script>${read("templates/forms.js")}</script>`;
 const page = (h, main) => `<!doctype html>
@@ -323,7 +325,7 @@ function productPage(p) {
       <p class="dek">${esc(p.blurb)}</p>
       ${buyRow(p)}
       ${p.details ? `<div class="prose" style="margin:24px 0 0">${markdown(p.details, SITE)}</div>` : ""}
-      <p class="note" style="margin-top:20px">Ships from ${esc(S.city)}. Flat ${money(S.shipping)} shipping, free over ${money(S.freeShipOver)}, or local pickup.</p>
+      <p class="note" style="margin-top:20px">Ships from ${esc(S.city)}. ${SHIP_NOTE} Local pickup available.</p>
     </div>
   </div>
   ${others.length ? `<section style="margin-top:56px"><div class="sheet-head"><h2>More from the roll</h2></div><div class="grid">${others.map((x) => productCard(x, PRODUCTS.indexOf(x))).join("")}</div></section>` : ""}
@@ -513,6 +515,12 @@ write("media-kit/index.html", mediaKitPage());
 write("journal/index.html", journalIndex());
 for (const p of posts) write(`journal/${p.slug}/index.html`, postPage(p));
 for (const p of PRODUCTS) write(`shop/${p.id}/index.html`, productPage(p));
+write("thanks/index.html", page(head({ title: `Order confirmed | ${S.brand}`, description: "Thanks for your order.", url: SITE + "/thanks/", noindex: true }),
+  `<main class="wrap article"><article><header><div class="crumbs">Order confirmed</div><h1>You're in the crew.</h1>
+  <p class="dek">Thanks for repping ${esc(S.brand)}. Your payment went through and a receipt is on its way to your inbox. RJ packs every order himself.</p></header>
+  <div class="prose"><p id="ordno"></p><p>Questions about your order? Email <a href="mailto:${esc(S.orderEmail)}">${esc(S.orderEmail)}</a>.</p>
+  <p><a class="btn solid" href="/build/">Follow the Mk2 build</a> <a class="btn" href="${esc(S.instagram || "/")}" rel="noopener" target="_blank">Tag @thevolksvision</a></p></div></article></main>
+  <script>try{localStorage.removeItem("vv-cart")}catch(e){}var o=new URLSearchParams(location.search).get("order");if(o&&/^VV-[A-Z0-9]+$/.test(o))document.getElementById("ordno").textContent="Order "+o+".";</script>`));
 write("404.html", page(head({ title: `Out of frame | ${S.brand}`, description: "This page doesn't exist.", url: SITE + "/404", noindex: true }),
   `<main class="wrap article"><article><header><div class="crumbs">Frame 404</div><h1 class="wide">Out of frame.</h1><p class="dek">That page moved or never existed.</p><p style="margin-top:24px"><a class="btn solid" href="/">Back to VolksVision</a></p></header></article></main>`));
 

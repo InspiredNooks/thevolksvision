@@ -1293,7 +1293,7 @@ function brandView() {
     <label class="field" for="s-tiktok"><span>TikTok link</span><input id="s-tiktok" value="${esc(s.tiktok)}" inputmode="url" autocapitalize="none"></label>
     <label class="field" for="s-youtube"><span>YouTube link</span><input id="s-youtube" value="${esc(s.youtube)}" inputmode="url" autocapitalize="none"></label>
     <div class="pair"><label class="field" for="s-shipping"><span>Shipping ($)</span><input id="s-shipping" inputmode="decimal" value="${esc(s.shipping)}"></label>
-    <label class="field" for="s-free"><span>Free shipping over ($)</span><input id="s-free" inputmode="decimal" value="${esc(s.freeShipOver)}"></label></div>
+    <label class="field" for="s-free"><span>Free shipping over ($)</span><small>Set 0 to turn free shipping off.</small><input id="s-free" inputmode="decimal" value="${esc(s.freeShipOver)}"></label></div>
     <label class="field" for="s-pay"><span>How buyers pay you</span><input id="s-pay" value="${esc(s.payWith)}"></label>
     <label class="field" for="s-email"><span>Order email shown to buyers</span><input id="s-email" type="email" value="${esc(s.orderEmail)}" autocapitalize="none"></label>
     <label class="field" for="s-contact"><span>Contact email for brands and collabs</span><input id="s-contact" type="email" value="${esc(s.contactEmail || "")}" autocapitalize="none"></label>

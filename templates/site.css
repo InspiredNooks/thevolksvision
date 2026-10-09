@@ -231,13 +231,16 @@ footer{padding-block:48px 56px}
 .drawer>header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
 .drawer h2{font-size:20px;text-transform:uppercase;font-stretch:125%}
 .x{background:none;border:0;color:var(--fg);font:600 14px var(--body);text-transform:uppercase;letter-spacing:.06em;cursor:pointer;min-height:44px}
-.lines{flex:1;overflow:auto;padding:12px 20px;display:flex;flex-direction:column;gap:14px}
+.drawer{overflow-y:auto;overscroll-behavior:contain}
+.lines{flex:1 0 auto;min-height:120px;overflow:visible;padding:12px 20px;display:flex;flex-direction:column;gap:14px}
 .line{display:grid;grid-template-columns:1fr auto;gap:4px 12px;border-bottom:1px solid var(--line);padding-bottom:12px}
 .line .qty{display:flex;gap:8px;align-items:center}
 .qty button{width:34px;height:34px;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;font:16px var(--body)}
 .empty{color:var(--muted);padding:24px 0}
 .checkout{border-top:1px solid var(--line);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
 .total{display:flex;justify-content:space-between;font-family:var(--mono);font-size:16px}
+.checkout label.pick{flex-direction:row;align-items:center;gap:10px;font-weight:500;cursor:pointer}
+.checkout label.pick input{width:20px;height:20px;padding:0;accent-color:var(--accent)}
 .checkout label{font-size:14px;display:flex;flex-direction:column;gap:4px;font-weight:600}
 .checkout input{font:16px var(--body);padding:12px;border:1px solid var(--line);border-radius:2px;background:var(--bg);color:var(--fg)}
 .done{background:var(--bg);border:1px solid var(--line);padding:12px;font-size:14px}

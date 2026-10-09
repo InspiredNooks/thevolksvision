@@ -11,7 +11,8 @@
 
   function totals() {
     const sub = cart.reduce((a, l) => a + l.qty * l.price, 0);
-    const ship = sub === 0 || sub >= CONFIG.freeShipOver ? 0 : CONFIG.shipping;
+    const pickup = !!(document.getElementById("pickup") || {}).checked;
+    const ship = sub === 0 || pickup || (CONFIG.freeShipOver > 0 && sub >= CONFIG.freeShipOver) ? 0 : CONFIG.shipping;
     return { sub, ship };
   }
 
@@ -70,39 +71,57 @@
     ].join("\n");
   }
 
+  const pickupBox = document.getElementById("pickup");
+  if (pickupBox) pickupBox.addEventListener("change", renderCart);
+
+  function manualFallback(buyer) {
+    const text = orderText(buyer), done = $("#done");
+    done.hidden = false;
+    done.innerHTML = `<strong>We couldn't send that automatically.</strong> Copy your order and send it to <span style="user-select:all">${esc(CONFIG.orderEmail)}</span>.
+      <pre id="orderText">${esc(text)}</pre><button class="btn" type="button" id="copyOrder">Copy order</button>`;
+    $("#copyOrder").addEventListener("click", ev => {
+      const b = ev.currentTarget;
+      navigator.clipboard.writeText(text).then(() => { b.textContent = "Copied"; }, () => {
+        const r = document.createRange(); r.selectNodeContents($("#orderText"));
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected";
+      });
+    });
+    done.scrollIntoView({ block: "nearest" });
+  }
+  const showMsg = html => { const done = $("#done"); done.hidden = false; done.innerHTML = html; done.scrollIntoView({ block: "nearest" }); };
+
   $("#checkout").addEventListener("submit", async e => {
     e.preventDefault();
     if (!cart.length) return;
-    const buyer = { name: $("#buyerName").value.trim(), contact: $("#buyerContact").value.trim(), ship: $("#buyerShip").value.trim() };
-    const btn = $("#placeOrder"), done = $("#done");
-    btn.disabled = true; btn.textContent = "Sending…";
+    const stripe = CONFIG.checkout === "stripe";
+    const val = id => (document.getElementById(id) || { value: "" }).value.trim();
+    const buyer = { name: val("buyerName"), contact: val("buyerContact"), ship: val("buyerShip") };
+    const btn = $("#placeOrder"), label = btn.textContent;
+    btn.disabled = true; btn.textContent = stripe ? "Opening secure checkout…" : "Sending…";
+    let res, data = {};
     try {
-      const res = await fetch("/api/order", {
+      res = await fetch("/api/order", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ buyer, items: cart.map(l => ({ id: l.id, size: l.size, qty: l.qty })), website: $("#website").value })
+        body: JSON.stringify({ buyer, pickup: !!(pickupBox && pickupBox.checked), items: cart.map(l => ({ id: l.id, size: l.size, qty: l.qty })), website: $("#website").value })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Order failed");
-      done.hidden = false;
-      done.innerHTML = `<strong>Order ${esc(data.orderNumber)} received.</strong> RJ will reach out at ${esc(buyer.contact)} with a payment request (${esc(CONFIG.payWith)}). Total: ${money(data.total)}.`;
-      cart = []; save(); renderCart();
-    } catch (err) {
-      // The order API is unreachable (preview, outage): give the buyer a manual path.
-      const text = orderText(buyer);
-      done.hidden = false;
-      done.innerHTML = `<strong>We couldn't send that automatically.</strong> Copy your order and send it to <span style="user-select:all">${esc(CONFIG.orderEmail)}</span>.
-        <pre id="orderText">${esc(text)}</pre><button class="btn" type="button" id="copyOrder">Copy order</button>`;
-      $("#copyOrder").addEventListener("click", ev => {
-        const b = ev.currentTarget;
-        navigator.clipboard.writeText(text).then(() => { b.textContent = "Copied"; }, () => {
-          const r = document.createRange(); r.selectNodeContents($("#orderText"));
-          const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected";
-        });
-      });
-    } finally {
-      btn.disabled = false; btn.textContent = "Place order request";
+      data = await res.json().catch(() => ({}));
+    } catch (err) { res = null; }
+    btn.disabled = false; btn.textContent = label;
+    if (res && res.ok && data.checkoutUrl) { btn.disabled = true; btn.textContent = "Opening secure checkout…"; window.location.href = data.checkoutUrl; return; }
+    if (res && res.ok) {
+      showMsg(`<strong>Order ${esc(data.orderNumber)} received.</strong> RJ will reach out at ${esc(buyer.contact)} with a payment request (${esc(CONFIG.payWith)}). Total: ${money(data.total)}.`);
+      cart = []; save(); renderCart(); return;
     }
+    // A 4xx means something in the bag needs fixing (sold out, size gone): say exactly what.
+    if (res && res.status < 500) { showMsg(`<strong>${esc(data.error || "Something in your bag needs a look.")}</strong>`); return; }
+    // Network trouble or an outage: card checkout just asks them to retry; order requests can be sent by hand.
+    if (stripe) showMsg(`<strong>Checkout didn't open.</strong> Give it a minute and try again. Your bag is saved.`);
+    else manualFallback(buyer);
   });
 
+  if (/[?&]checkout=cancelled/.test(location.search)) {
+    openCart(true); showMsg("Checkout cancelled. Your bag is saved whenever you're ready.");
+    history.replaceState(null, "", location.pathname + location.hash);
+  }
   renderCart();
 })();
