@@ -64,7 +64,7 @@ document.addEventListener("submit", async e => {
     try {
       const fd = new FormData(f);
       await going(id, { email: fd.get("email") || "", join: fd.get("join") === "on", website: fd.get("website") || "" });
-      msg.textContent = fd.get("email") ? "See you there. Reminder's coming." : "See you there.";
+      msg.textContent = fd.get("join") === "on" && fd.get("email") ? "See you there. You're in the Pit Crew too." : "See you there.";
     } catch (err) { msg.textContent = err.message; btn.disabled = false; }
   });
   document.addEventListener("click", async e => {

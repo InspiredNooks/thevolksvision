@@ -300,3 +300,9 @@ alter table public.vv_events add constraint vv_events_origin_chk check (origin i
 alter table public.vv_events drop constraint if exists vv_events_review_chk;
 alter table public.vv_events add constraint vv_events_review_chk check (review is null or review in ('pending','skipped'));
 create unique index if not exists vv_events_scout_key_idx on public.vv_events (scout_key);
+
+-- Stripe checkout bookkeeping (already applied: orders_stripe)
+alter table public.vv_orders add column if not exists stripe_session text, add column if not exists paid_at timestamptz;
+-- "I'm going" counts once per visitor per stop (migration: pullups_dedupe). who = one-way hash, never a raw IP.
+alter table public.vv_pullups add column if not exists who text;
+create unique index if not exists vv_pullups_event_who_idx on public.vv_pullups (event_id, who);

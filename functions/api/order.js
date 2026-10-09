@@ -52,7 +52,8 @@ export async function onRequestPost({ request, env }) {
   if (stripe) {
     try {
       const session = await createCheckout(env, { orderNumber, items, shipping, pickup, site: CONFIG.siteUrl, brand: CONFIG.brand });
-      await db(env, `vv_orders?order_number=eq.${orderNumber}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ stripe_session: session.id }) });
+      // Bookkeeping only: if it fails, the buyer still gets their checkout (the webhook finds the order by number).
+      await db(env, `vv_orders?order_number=eq.${orderNumber}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ stripe_session: session.id }) }).catch(err => console.error(err));
       return json({ orderNumber, total, checkoutUrl: session.url });
     } catch (err) {
       console.error(err);

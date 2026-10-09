@@ -12,6 +12,7 @@ async function token(env, email) {
 }
 
 export async function onRequestPost({ request, env }) {
+  if ((request.headers.get("content-type") || "").includes("application/x-www-form-urlencoded")) return confirmRejoin(env, await request.formData());
   let b; try { b = await request.json(); } catch { return json({ error: "Invalid request." }, 400); }
   if (b.website) return json({ ok: true });                         // honeypot
   const email = str(b.email, 160).toLowerCase();
@@ -34,11 +35,21 @@ export async function onRequestPost({ request, env }) {
   return json({ ok: true });
 }
 
+const page = (inner, status = 200) => new Response(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Pit Crew | VolksVision</title><body style="margin:0;background:#0b0d0c;color:#eef0ec;font:18px/1.5 Arial,sans-serif;display:grid;place-items:center;min-height:100vh;padding:16px"><main style="max-width:420px">${inner}<p><a href="/" style="color:#f2a93b">Back to VolksVision</a></p></main>`,
+  { status, headers: { "Content-Type": "text/html; charset=utf-8" } });
+const h1 = t => `<h1 style="font-size:24px;text-transform:uppercase">${t}</h1>`;
+const attr = v => String(v).replace(/[&"<>]/g, c => ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[c]);
+
+// The emailed rejoin link only shows a button. Email scanners open links, so a GET must never change anything.
 export async function onRequestGet({ request, env }) {
   const u = new URL(request.url), email = (u.searchParams.get("rejoin") || "").toLowerCase(), t = u.searchParams.get("t") || "";
-  const ok = email && t && t === await token(env, email);
-  if (ok) await db(env, `vv_subscribers?email=eq.${encodeURIComponent(email)}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ unsubscribed: false }) }).catch(() => {});
-  const msg = ok ? "You're back in the Pit Crew." : "That link didn't work. Sign up again on the site.";
-  return new Response(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Pit Crew | VolksVision</title><body style="margin:0;background:#0b0d0c;color:#eef0ec;font:18px/1.5 Arial,sans-serif;display:grid;place-items:center;min-height:100vh;padding:16px"><main style="max-width:420px"><h1 style="font-size:24px;text-transform:uppercase">${msg}</h1><p><a href="/" style="color:#f2a93b">Back to VolksVision</a></p></main>`,
-    { status: ok ? 200 : 400, headers: { "Content-Type": "text/html; charset=utf-8" } });
+  if (!(email && t && t === await token(env, email))) return page(h1("That link didn't work. Sign up again on the site."), 400);
+  return page(`${h1("Rejoin the Pit Crew?")}<form method="post" action="/api/subscribe"><input type="hidden" name="rejoin" value="${attr(email)}"><input type="hidden" name="t" value="${attr(t)}">
+    <button type="submit" style="font:700 16px Arial,sans-serif;text-transform:uppercase;background:#f2a93b;color:#0b0d0c;border:0;padding:14px 20px;cursor:pointer">Yes, rejoin</button></form>`);
+}
+async function confirmRejoin(env, form) {
+  const email = String(form.get("rejoin") || "").toLowerCase(), t = String(form.get("t") || "");
+  if (!(email && t && t === await token(env, email))) return page(h1("That link didn't work. Sign up again on the site."), 400);
+  await db(env, `vv_subscribers?email=eq.${encodeURIComponent(email)}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ unsubscribed: false }) }).catch(() => {});
+  return page(h1("You're back in the Pit Crew."));
 }

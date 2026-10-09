@@ -16,9 +16,9 @@ export async function onRequestPost({ request, env }) {
   const orderNumber = s.metadata?.order_number || s.client_reference_id;
   if (!orderNumber || !/^VV-[A-Z0-9]+$/.test(orderNumber)) return json({ ignored: true });
 
-  if (event.type === "checkout.session.expired") {
+  if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
     await db(env, `vv_orders?order_number=eq.${orderNumber}&status=eq.awaiting_payment`, { method: "PATCH", headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({ status: "cancelled", notes: "Checkout abandoned", updated_at: new Date().toISOString() }) });
+      body: JSON.stringify({ status: "cancelled", notes: event.type === "checkout.session.expired" ? "Checkout abandoned" : "Payment failed", updated_at: new Date().toISOString() }) });
     return json({ ok: true });
   }
   if (!["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(event.type) || s.payment_status !== "paid") return json({ ignored: true });

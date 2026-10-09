@@ -239,7 +239,7 @@ const eventCard = (e, big) => `<article class="event${big ? " big" : ""}" id="st
   ${e.details ? `<p>${esc(e.details)}</p>` : ""}
   ${(e.ends_at || e.starts_at) >= NOW ? `<form class="pullup" data-pullup="${e.id}">
     <button class="btn solid" type="submit">I'm going</button><span class="mono pull-count" data-count="${e.id}">${e.pullups} going</span>
-    <input name="email" type="email" placeholder="Email for a reminder (optional)" aria-label="Email for a reminder" autocomplete="email">
+    <input name="email" type="email" placeholder="Email (optional)" aria-label="Email (optional)" autocomplete="email">
     <label class="check-line"><input type="checkbox" name="join"> Also join ${esc(LIST)}</label>
     <input name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true"><p class="form-msg" role="status"></p></form>` : ""}
   ${e.link ? `<a class="link-out" href="${esc(e.link)}" rel="noopener" target="_blank">${e.rj_going === false ? "Organizer's page" : "Event details"}</a>` : ""}
