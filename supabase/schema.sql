@@ -250,3 +250,12 @@ revoke all on function public.vv_pullup(bigint) from public, anon, authenticated
 
 alter table public.vv_events  enable row level security;
 alter table public.vv_pullups enable row level security;
+
+-- Access: only the server (service_role key, kept in Netlify) reads or writes these tables.
+-- Explicit grants so this works whether or not the project auto-exposes new tables to the Data API.
+grant usage on schema public to service_role;
+grant all on all tables in schema public to service_role;
+grant all on all sequences in schema public to service_role;
+grant execute on function public.vv_pullup(bigint) to service_role;
+revoke all on all tables in schema public from anon, authenticated;
+revoke all on all sequences in schema public from anon, authenticated;
