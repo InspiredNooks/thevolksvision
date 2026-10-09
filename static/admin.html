@@ -277,7 +277,7 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .login-art h2 em{color:var(--signal);font-style:italic}
 .login-art p{position:relative;color:var(--muted);max-width:44ch;margin:18px 0 0}
 .login-panel{display:flex;flex-direction:column;gap:14px}
-.pinmap{position:relative;border:1px solid var(--rule);background:#0b0d0c;aspect-ratio:923/1026;cursor:crosshair;max-width:420px;width:100%}
+.pinmap{position:relative;border:1px solid var(--rule);background:#0b0d0c;aspect-ratio:829/1013;cursor:crosshair;max-width:420px;width:100%}
 .pinmap.small{max-width:360px;cursor:default;margin-bottom:14px}
 .pinmap img{display:block;width:100%;height:100%;pointer-events:none}
 .mpin{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#f2a93b;border:2px solid #0b0d0c;box-shadow:0 0 0 2px rgb(242 169 59 / .35)}
@@ -853,7 +853,7 @@ function studioCal(ev) {
     <small class="r-sub" style="white-space:normal">Amber days have a stop. Tap an empty day to add one. Fans can add any stop to their own calendar from the site, or subscribe to all of them.</small></div>`;
 }
 // The Bay map in the Studio (same projection as lib/bay-map.js): shows the pin, tap to move it.
-const BAY = { W: -83.02, N: 28.4, WIDTH: 923, HEIGHT: 1026, C: Math.cos(27.83 * Math.PI / 180), K: 900 };
+const BAY = { W: -82.95, N: 28.26, WIDTH: 829, HEIGHT: 1013, C: Math.cos(27.855 * Math.PI / 180), K: 1250 };
 const bayXY = (lat, lng) => lat == null || lng == null ? null : { x: (lng - BAY.W) * BAY.C * BAY.K / BAY.WIDTH * 100, y: (BAY.N - lat) * BAY.K / BAY.HEIGHT * 100 };
 const bayLatLng = (x, y) => ({ lat: Math.round((BAY.N - y / 100 * BAY.HEIGHT / BAY.K) * 1e5) / 1e5, lng: Math.round((BAY.W + x / 100 * BAY.WIDTH / (BAY.C * BAY.K)) * 1e5) / 1e5 });
 const pinDot = (xy, cls = "") => xy && xy.x > 0 && xy.x < 100 && xy.y > 0 && xy.y < 100 ? `<span class="mpin ${cls}" style="left:${xy.x}%;top:${xy.y}%"></span>` : "";

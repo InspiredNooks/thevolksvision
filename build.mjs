@@ -306,7 +306,7 @@ function mapBlock(list) {
   }).join("");
   const off = list.filter(e => !(e.lat != null && pinXY(e.lat, e.lng))).length;
   return `<div class="bay" id="map">
-    <img src="/img/bay-map.svg" alt="Map of the Tampa Bay area with upcoming car events marked" width="923" height="1026" loading="lazy" decoding="async">
+    <img src="/img/bay-map.svg" alt="Map of the Tampa Bay area with upcoming car events marked" width="829" height="1013" loading="lazy" decoding="async">
     ${pins}
   </div>
   <p class="bay-key"><span class="k-rj"></span>RJ's going <span class="k-comm"></span>Community events${off ? ` · ${off} more ${off === 1 ? "stop isn't" : "stops aren't"} on the map, see the list` : ""}<span class="attr">Map data © OpenStreetMap contributors, Natural Earth</span></p>`;

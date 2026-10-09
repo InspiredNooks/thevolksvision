@@ -5,7 +5,7 @@
 // Usage: npm i @turf/bbox-clip@7 && node --max-old-space-size=6000 make-bay-map.mjs
 import fs from "fs";
 import bboxClip from "@turf/bbox-clip";
-const W = -83.02, E = -81.86, S = 27.26, N = 28.40, LAT0 = (S + N) / 2, K = 900;
+const W = -82.95, E = -82.20, S = 27.45, N = 28.26, LAT0 = (S + N) / 2, K = 1250;
 const C = Math.cos(LAT0 * Math.PI / 180);
 const px = ([lon, lat]) => [(lon - W) * C * K, (N - lat) * K];
 const WIDTH = Math.round((E - W) * C * K), HEIGHT = Math.round((N - S) * K);
@@ -55,8 +55,9 @@ const lakes = load("ne_10m_lakes").features.filter(near).map(f => { const c = bb
 const roadsAll = load("ne_10m_roads").features.filter(f => f.properties.sov_a3 === "USA" && near(f));
 const roads = roadsAll.filter(f => f.properties.expressway === 1 || /Interstate|Federal/.test(f.properties.type || "")).map(f => clipped(f, false)).join("");
 console.error("roads", roadsAll.length, [...new Set(roadsAll.map(f => f.properties.type))]);
-const CITIES = [["St. Petersburg", 27.7676, -82.6403, "s"], ["Tampa", 27.9506, -82.4572, "n"], ["Clearwater", 27.9659, -82.8001, "w"], ["Bradenton", 27.4989, -82.5748, "s"], ["Sarasota", 27.3364, -82.5307, "s"],
-  ["Lakeland", 28.0395, -81.9498, "w"], ["Brandon", 27.9378, -82.2859, "s"], ["New Port Richey", 28.2442, -82.7193, "e"], ["Wesley Chapel", 28.2397, -82.3279, "s"], ["Largo", 27.9095, -82.7873, "w"], ["Plant City", 28.0186, -82.1129, "s"]];
+const CITIES = [["St. Petersburg", 27.7676, -82.6403, "s"], ["Tampa", 27.9506, -82.4572, "n"], ["Clearwater", 27.9659, -82.8001, "w"], ["Largo", 27.9095, -82.7873, "w"], ["Dunedin", 28.0197, -82.7718, "w"],
+  ["Pinellas Park", 27.8428, -82.6995, "e"], ["St. Pete Beach", 27.7253, -82.7412, "w"], ["Oldsmar", 28.0342, -82.6651, "n"], ["Lutz", 28.1511, -82.4615, "s"], ["Wesley Chapel", 28.2397, -82.3279, "s"],
+  ["Brandon", 27.9378, -82.2859, "s"], ["Riverview", 27.8661, -82.3265, "s"], ["Apollo Beach", 27.7731, -82.4076, "e"], ["Bradenton", 27.4989, -82.5748, "e"]];
 const label = ([n, lat, lon, side]) => { const [x, y] = px([lon, lat]); const t = side === "w" ? [x - 9, y + 4, "end"] : side === "e" ? [x + 9, y + 4, "start"] : side === "n" ? [x, y - 9, "middle"] : [x, y + 18, "middle"];
   return `<circle cx="${r(x)}" cy="${r(y)}" r="2.6" class="c"/><text x="${r(t[0])}" y="${r(t[1])}" text-anchor="${t[2]}">${n}</text>`; };
 const water = (n, lat, lon, cls = "w") => { const [x, y] = px([lon, lat]); return `<text x="${r(x)}" y="${r(y)}" class="${cls}" text-anchor="middle">${n}</text>`; };
@@ -64,9 +65,9 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEI
 <style>.l{fill:#171b19}.k{fill:none;stroke:#2a302d;stroke-width:.8}.s{fill:none;stroke:#646c68;stroke-width:1.3;stroke-linejoin:round}.q{fill:#0b0d0c;stroke:#3a413e;stroke-width:.8}.r{fill:none;stroke:#2f3532;stroke-width:1.1;stroke-dasharray:1 0}.c{fill:#8a918d}text{font:600 13px system-ui,-apple-system,Segoe UI,sans-serif;fill:#8a918d;letter-spacing:.04em}.w{font:italic 500 14px Georgia,serif;fill:#3c4440;letter-spacing:.3em;text-transform:uppercase}.wb{font:italic 500 22px Georgia,serif;fill:#333a37;letter-spacing:.45em}</style>
 <rect width="100%" height="100%" fill="#0b0d0c"/>
 <defs><clipPath id="land"><path d="${land}"/></clipPath></defs><path class="l" d="${land}"/><g clip-path="url(#land)"><path class="k" d="${counties}"/><path class="q" d="${lakes}"/><path class="r" d="${roads}"/></g><path class="s" d="${land}"/>
-${water("TAMPA BAY", 27.71, -82.555)}${water("THE GULF", 27.62, -82.86, "wb")}
+${water("TAMPA BAY", 27.67, -82.585)}${water("OLD TAMPA BAY", 27.93, -82.61)}${water("THE GULF", 27.56, -82.80, "wb")}
 ${CITIES.map(label).join("")}
 </svg>`;
 fs.writeFileSync("bay-map.svg", svg);
-fs.writeFileSync("bounds.json", JSON.stringify({ W, E, S, N, LAT0, WIDTH, HEIGHT }));
+fs.writeFileSync("bounds.json", JSON.stringify({ W, E, S, N, LAT0, K, WIDTH, HEIGHT }));
 console.log(WIDTH, HEIGHT, svg.length);

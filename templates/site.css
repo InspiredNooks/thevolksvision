@@ -358,7 +358,7 @@ a.partner:hover{border-color:var(--accent)}
 .add-cal{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:14px}
 .add-cal a{color:var(--muted)}
 /* The Bay map (/next/): dark map, gray coastline, yellow pins */
-.bay{position:relative;max-width:min(920px,calc(82vh * .9));margin:0 auto;border:1px solid var(--line);background:#0b0d0c;aspect-ratio:923/1026}
+.bay{position:relative;max-width:min(920px,calc(82vh * .82));margin:0 auto;border:1px solid var(--line);background:#0b0d0c;aspect-ratio:829/1013}
 .bay>img{display:block;width:100%;height:100%}
 .pin-wrap{position:absolute;width:0;height:0;z-index:1}
 .pin-wrap.open{z-index:5}
@@ -388,7 +388,7 @@ a.partner:hover{border-color:var(--accent)}
   .pc-close{display:block}.pc-ev:first-of-type{padding-right:30px}
   .pin-card,.pin-card.left,.pin-card.below{position:fixed;left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;max-height:55vh;z-index:30}
 }
-.bay-key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;max-width:min(920px,calc(82vh * .9));margin:12px auto 0;font-size:13px;color:var(--muted)}
+.bay-key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;max-width:min(920px,calc(82vh * .82));margin:12px auto 0;font-size:13px;color:var(--muted)}
 .bay-key .k-rj,.bay-key .k-comm{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--accent)}
 .bay-key .k-comm{background:transparent;border:2px solid var(--accent);margin-left:8px}
 .bay-key .attr{margin-left:auto;font-size:11px;opacity:.7}
@@ -396,5 +396,5 @@ a.partner:hover{border-color:var(--accent)}
 .tag-comm{color:var(--muted)}
 .bay-home{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(24px,4vw,56px);align-items:center}
 .bay-home .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-.bay-home .bay,.bay-home .bay-key{max-width:min(560px,calc(70vh * .9));margin-inline:auto 0}
+.bay-home .bay,.bay-home .bay-key{max-width:min(560px,calc(70vh * .82));margin-inline:auto 0}
 @media (max-width:860px){.bay-home{grid-template-columns:1fr}.bay-home .bay,.bay-home .bay-key{margin-inline:auto}}
