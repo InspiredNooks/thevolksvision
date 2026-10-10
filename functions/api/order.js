@@ -4,7 +4,7 @@
 // Without Stripe: records an order request and RJ sends a payment request by hand.
 import { json, db, sendEmail } from "../../lib/server.js";
 import { getProducts, getSettings } from "../../lib/content.js";
-import { createCheckout } from "../../lib/stripe.js";
+import { createCheckout, itemName } from "../../lib/stripe.js";
 import { sendPush } from "../../lib/push.js";
 
 const clean = (s, max) => String(s ?? "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max);
@@ -62,7 +62,7 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  const lines = items.map(l => `${l.qty} x ${l.name} (${l.size})  $${(l.qty * l.price).toFixed(2)}`).join("\n");
+  const lines = items.map(l => `${l.qty} x ${itemName(l)}  $${(l.qty * l.price).toFixed(2)}`).join("\n");
   await Promise.allSettled([
     sendPush(env, "admin", { title: `🛒 Order request: $${total.toFixed(2)}`, body: `${buyer.name}: send them a payment request.`, url: "/admin", tag: `order-${orderNumber}` }),
     sendEmail(env, { to: (env.ORDER_NOTIFY_EMAIL || "thevolksvision@gmail.com"), subject: `New order request ${orderNumber}: $${total.toFixed(2)}`,

@@ -22,7 +22,7 @@
     $("#subtotal").textContent = money(sub) + (ship ? ` + ${money(ship)} ship` : sub ? " · free ship" : "");
     $("#lines").innerHTML = cart.length ? cart.map((l, i) => `<div class="line">
         <strong>${esc(l.name)}</strong><span class="mono">${money(l.price * l.qty)}</span>
-        <span class="mono">${esc(l.size)}</span>
+        <span class="mono">${/^one size$/i.test(l.size) ? "" : esc(l.size)}</span>
         <span class="qty"><button type="button" data-i="${i}" data-d="-1" aria-label="Remove one">−</button><span>${l.qty}</span><button type="button" data-i="${i}" data-d="1" aria-label="Add one">+</button></span>
       </div>`).join("") : `<p class="empty">Your bag is empty. Pick a frame from the first roll.</p>`;
   }
@@ -66,7 +66,7 @@
     return [
       `${CONFIG.brand} order request`,
       `Name: ${buyer.name}`, `Contact: ${buyer.contact}`, `Ship to: ${buyer.ship}`, ``,
-      ...cart.map(l => `${l.qty} x ${l.name} (${l.size}) ${money(l.qty * l.price)}`), ``,
+      ...cart.map(l => `${l.qty} x ${l.name}${/^one size$/i.test(l.size) ? "" : ` (${l.size})`} ${money(l.qty * l.price)}`), ``,
       `Subtotal ${money(sub)}  Shipping ${money(ship)}  Total ${money(sub + ship)}`
     ].join("\n");
   }

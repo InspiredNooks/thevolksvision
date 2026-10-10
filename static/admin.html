@@ -563,7 +563,7 @@ function openOrder(id) {
   sheet(`Order ${o.order_number}`, `
     <div><div class="mono">Customer</div><p style="margin:6px 0 0"><strong>${esc(o.customer_name)}</strong><br><span class="copyable">${esc(o.customer_contact)}</span><br><span class="copyable">${esc(o.ship_to)}</span></p>
     <p class="mono" style="margin-top:6px">${history.length} order(s) · ${money(history.filter(x => x.status !== "cancelled").reduce((a, x) => a + Number(x.total), 0))} lifetime</p></div>
-    <table class="order-items">${o.items.map(i => `<tr><td>${i.qty} × ${esc(i.name)} (${esc(i.size)})</td><td>${money(i.qty * i.price)}</td></tr>`).join("")}
+    <table class="order-items">${o.items.map(i => `<tr><td>${i.qty} × ${esc(i.name)}${/^one size$/i.test(i.size || "") ? "" : ` (${esc(i.size)})`}</td><td>${money(i.qty * i.price)}</td></tr>`).join("")}
       <tr><td>Shipping</td><td>${money(o.shipping)}</td></tr><tr><td><strong>Total</strong></td><td><strong>${money(o.total)}</strong></td></tr></table>
     <label class="field" for="o-status"><span>Status</span><select id="o-status">${ORDER_STATUSES.map(([k, l]) => `<option value="${k}"${k === o.status ? " selected" : ""}>${l}</option>`).join("")}</select></label>
     <label class="field" for="o-tracking"><span>Tracking number</span><input id="o-tracking" value="${esc(o.tracking)}" autocomplete="off"></label>

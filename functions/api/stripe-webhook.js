@@ -3,7 +3,7 @@
 // Expired (buyer walked away): marks the order cancelled. Each order is handled once.
 import { json, db, sendEmail } from "../../lib/server.js";
 import { getSettings } from "../../lib/content.js";
-import { verifyWebhook } from "../../lib/stripe.js";
+import { verifyWebhook, itemName } from "../../lib/stripe.js";
 import { sendPush } from "../../lib/push.js";
 
 const addr = a => a ? [a.line1, a.line2, `${a.city || ""}, ${a.state || ""} ${a.postal_code || ""}`.trim(), a.country !== "US" ? a.country : ""].filter(Boolean).join(", ") : "";
@@ -40,7 +40,7 @@ export async function onRequestPost({ request, env }) {
   if (!order) return json({ ok: true, duplicate: true });
 
   const S = await getSettings(env);
-  const lines = (order.items || []).map(l => `${l.qty} x ${l.name} (${l.size})  $${(l.qty * l.price).toFixed(2)}`).join("\n");
+  const lines = (order.items || []).map(l => `${l.qty} x ${itemName(l)}  $${(l.qty * l.price).toFixed(2)}`).join("\n");
   const pickup = order.ship_to === "Local pickup";
   await Promise.allSettled([
     sendPush(env, "admin", { title: `💸 New order: $${total.toFixed(2)}`, body: `${update.customer_name} · ${(order.items || []).map(l => `${l.qty}× ${l.name}`).join(", ").slice(0, 100)}${pickup ? " · pickup" : ""}`, url: "/admin", tag: `order-${orderNumber}` }),
