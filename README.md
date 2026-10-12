@@ -28,6 +28,17 @@ Every save that changes the public site rebuilds it automatically; changes are l
 - **Posting** uses the phone's share sheet (one tap per app, caption copied). Fully automatic posting needs the same platform approvals.
 - **Quick Edit** is for short-form finishing. Long multi-clip edits belong in CapCut; the Studio handles the thumbnail, titles, chapters, posting and tracking.
 
+## School First
+
+School comes before the business. The **School** tab in the Studio holds RJ's semester plan and his weekly check-ins, and Cara reviews both.
+
+- **The plan:** RJ accepts the agreement, adds his classes (teacher, link, current and target grade) and writes how he'll stay on top of each one. Cara approves it or sends it back.
+- **Every week:** RJ lists what's due and keeps it updated. By **Sunday 8 PM Eastern** he submits his current grade for every class, a screenshot of his grades portal, and an honest check-in. Cara approves it or sends it back with a note.
+- **The lock:** while the agreement isn't accepted, the plan isn't approved, the latest check-in past its deadline is missing or sent back, Cara turns on a hold, or (optional) a class is below the grade floor, RJ's Studio is **School-only**. The server refuses his posts, publishing, captions, emails to the list and site edits, and the auto-blog saves drafts instead of publishing. Paid orders still ship, so buyers are never hurt. Cara (MANAGER_TOKEN) is never locked.
+- **Reminders** (`.github/workflows/school.yml`): RJ's phone gets what's due today at about 8 AM, what's due tomorrow at about 3 PM, and the check-in reminder on Sunday afternoon and evening, each with a "this is your future" line (Cara's own message on alternate days). Cara gets a push when he submits and when something waits on her, plus a push and an email (`SCHOOL_PARENT_EMAIL` GitHub secret) if he misses a check-in.
+- **Privacy:** grades and school files are kept in the private `vv-private` bucket and are only shown through one-hour signed links.
+- **Payouts:** Stripe pays out to RJ's own account. To hold payouts until he's caught up, set Stripe → Settings → Payouts to a manual schedule and release them from the Stripe dashboard.
+
 ## The coach
 
 Every Sunday (and on demand) the coach reads RJ's numbers and writes what worked, what to change, a 5-video plan, a suggested pillar mix and one crew-building move. Its reference is `lib/playbook.js`, distilled from research on Cleetus McFarland, Westen Champlin, Adam LZ, Hoonigan, TJ Hunt, Donut Media, Mighty Car Mods, Hoovie's Garage, B is for Build, Daniel Mac, Garage Goblin and others, plus platform guidance from Instagram, TikTok and YouTube. It knows the Mk2 is mid-build and never suggests street racing (a felony for takeovers in Florida since July 2025), fake giveaways or bought engagement.

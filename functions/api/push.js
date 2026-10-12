@@ -2,7 +2,7 @@
 // GET            the public signing key the browser needs to subscribe
 // POST {subscription, role}   save a phone. role "admin" needs the Studio passphrase; everyone else is a fan.
 // DELETE {endpoint}           turn alerts off for that phone
-import { json, db, isAdmin } from "../../lib/server.js";
+import { json, db, adminWho } from "../../lib/server.js";
 import { vapidKeys, sendPush } from "../../lib/push.js";
 
 // Only the real browser push services (Chrome/Android, Apple, Firefox, Edge/Windows).
@@ -19,8 +19,10 @@ export async function onRequestPost({ request, env }) {
   let b; try { b = await request.json(); } catch { return json({ error: "Invalid request." }, 400); }
   if (!validSub(b.subscription)) return json({ error: "That phone didn't send a valid subscription." }, 400);
   const admin = b.role === "admin";
-  if (admin && !(await isAdmin(request, env))) return json({ error: "Wrong passphrase." }, 401);
-  const row = { endpoint: b.subscription.endpoint, keys: { p256dh: b.subscription.keys.p256dh, auth: b.subscription.keys.auth }, role: admin ? "admin" : "fan" };
+  const who = admin ? await adminWho(request, env) : null;
+  if (admin && !who) return json({ error: "Wrong passphrase." }, 401);
+  // who lets School First reminders go to RJ's phone and check-in reviews to Cara's.
+  const row = { endpoint: b.subscription.endpoint, keys: { p256dh: b.subscription.keys.p256dh, auth: b.subscription.keys.auth }, role: admin ? "admin" : "fan", ...(admin ? { who } : {}) };
   try {
     // A fan sign-up never downgrades a phone that already gets Studio alerts (same browser, same endpoint).
     await db(env, "vv_push?on_conflict=endpoint", { method: "POST", headers: { Prefer: `resolution=${admin ? "merge" : "ignore"}-duplicates,return=minimal` }, body: JSON.stringify(row) });

@@ -9,6 +9,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { supa, getSettings, getProducts, getPosts, hasDb } from "../lib/content.js";
 import { slugify } from "../lib/markdown.js";
+import { schoolGate } from "../lib/school.js";
 
 const env = process.env;
 const dryRun = process.argv.includes("--dry-run");
@@ -122,7 +123,9 @@ const coverCredit = cover?.credit ? `\n\n*${cover.credit.replace(/^Photo by/, "C
 const taken = new Set(posts.map(p => p.slug));
 const base = slugify(post.slug || post.title) || "post";
 let slug = base; for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
-const status = settings.autoPublish === false ? "draft" : "published";
+// School First: while RJ is locked, nothing goes live on its own; it waits as a draft.
+const schoolLocked = dryRun ? false : await schoolGate(env).then(g => g.locked).catch(() => true);
+const status = settings.autoPublish === false || schoolLocked ? "draft" : "published";
 const row = { slug, title: post.title.slice(0, 120), description: post.description.slice(0, 200), body: bodyWithPhotos + coverCredit, tags: post.tags.join(", "),
   status, date: new Date().toISOString().slice(0, 10), source: "auto",
   ...(cover ? { image: cover.url, image_alt: cover.alt.slice(0, 160) } : {}) };

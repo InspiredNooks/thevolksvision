@@ -40,7 +40,7 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 /* Screens */
 .screen{max-width:760px;margin:0 auto;padding-inline:16px;padding-top:calc(env(safe-area-inset-top,0px) + 18px);padding-bottom:calc(var(--tabbar) + env(safe-area-inset-bottom,0px) + 24px)}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--frame);border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--frame);border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabbar button{background:none;border:0;height:var(--tabbar);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer}
 .tabbar svg{width:24px;height:24px}
 .tabbar button[aria-current="page"]{color:var(--ink)}
@@ -221,6 +221,14 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
 .seg button{background:none;border:0;padding:10px 4px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted);min-height:44px}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 .card{background:var(--frame);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.sch-lock{border-color:var(--bad);margin-bottom:12px}.sch-lock ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.sch-ok{border-color:var(--ok);margin-bottom:12px}.sch-future{border-color:var(--signal)}.sch-quote{font-size:20px;line-height:1.25}
+.sch-strip{text-align:left;cursor:pointer;color:inherit;font:inherit;margin-bottom:12px;border-color:var(--signal);width:100%}
+.sch-review{border-color:var(--warn);margin-top:10px}.sch-sum{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.sch-note{color:var(--bad);font-weight:600;white-space:normal}.sch-agree{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.sch-files{display:flex;flex-wrap:wrap;gap:8px}.sch-file{position:relative;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:8px;padding:4px;max-width:100%}
+.sch-file img{width:84px;height:84px;object-fit:cover;border-radius:6px;display:block}.sch-file a{color:inherit;word-break:break-word}.sch-file .act-btn{min-width:32px;min-height:32px;padding:0}
+[data-cl] input{padding:11px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit;min-width:0;width:100%;box-sizing:border-box}
 .md h2{font-size:18px;margin:.8em 0 .2em}.md p,.md ul,.md ol{margin:0 0 .7em}.md blockquote{margin:.6em 0;padding-left:12px;border-left:3px solid var(--signal);color:var(--muted)}
 .progress{height:8px;background:var(--rule);border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:var(--signal)}
 .task{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--rule)}
@@ -318,6 +326,7 @@ a.btn{color:var(--ink);text-decoration:none;display:inline-flex;align-items:cent
   <main class="screen" id="screen"></main>
   <nav class="tabbar" aria-label="Studio sections">
     <div class="side-brand"><svg width="30" height="30" aria-hidden="true" viewBox="0 0 40 40"><defs><mask id="vvw2"><rect width="40" height="40" fill="#fff"/><g fill="#000" stroke="#000" stroke-width=".35" stroke-linejoin="round"><path d="M21.98 12.87 L22.26 7.20 L27.46 9.35 L23.64 13.56Z"/><path d="M20.00 9.40 L19.18 7.03 L20.82 7.03Z"/><path d="M26.44 16.36 L30.65 12.54 L32.80 17.74 L27.13 18.02Z"/><path d="M27.50 12.50 L28.60 10.25 L29.75 11.40Z"/><path d="M27.13 21.98 L32.80 22.26 L30.65 27.46 L26.44 23.64Z"/><path d="M30.60 20.00 L32.97 19.18 L32.97 20.82Z"/><path d="M23.64 26.44 L27.46 30.65 L22.26 32.80 L21.98 27.13Z"/><path d="M27.50 27.50 L29.75 28.60 L28.60 29.75Z"/><path d="M18.02 27.13 L17.74 32.80 L12.54 30.65 L16.36 26.44Z"/><path d="M20.00 30.60 L20.82 32.97 L19.18 32.97Z"/><path d="M13.56 23.64 L9.35 27.46 L7.20 22.26 L12.87 21.98Z"/><path d="M12.50 27.50 L11.40 29.75 L10.25 28.60Z"/><path d="M12.87 18.02 L7.20 17.74 L9.35 12.54 L13.56 16.36Z"/><path d="M9.40 20.00 L7.03 20.82 L7.03 19.18Z"/><path d="M16.36 13.56 L12.54 9.35 L17.74 7.20 L18.02 12.87Z"/><path d="M12.50 12.50 L10.25 11.40 L11.40 10.25Z"/></g><g fill="#000"><circle transform="rotate(22.5 20 20)" cx="20" cy="14.6" r="0.9"/><circle transform="rotate(112.5 20 20)" cx="20" cy="14.6" r="0.9"/><circle transform="rotate(202.5 20 20)" cx="20" cy="14.6" r="0.9"/><circle transform="rotate(292.5 20 20)" cx="20" cy="14.6" r="0.9"/></g><circle cx="20" cy="20" r="3.6" fill="#000"/></mask></defs><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="20" cy="20" r="14.4" fill="currentColor" mask="url(#vvw2)"/><circle cx="20" cy="20" r="2.8" fill="#f2a93b"/></svg><div><div class="mono">VolksVision</div><b>Studio</b></div></div>
+    <button type="button" data-tab="school"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/><path d="M22 9v6"/></svg><span>School</span></button>
     <button type="button" data-tab="grow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/></svg><span>Grow</span></button>
     <button type="button" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v18"/><path d="M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/></svg><span>Money <span class="badge" id="newBadge" hidden></span></span></button>
     <button type="button" data-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3q-2 2-4 2T8 3z"/></svg><span>Shop</span></button>
@@ -364,7 +373,7 @@ const store = { get(k) { try { return localStorage.getItem(k) || sessionStorage.
   set(k, v, keep) { try { (keep ? localStorage : sessionStorage).setItem(k, v); } catch (e) {} },
   clear(k) { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} } };
 let token = store.get("vv-admin") || "";
-const state = { events: null, money: null, moneyView: "overview", tab: "grow", orders: null, products: null, posts: null, settings: null, audience: null, plan: null, videos: null, coach: null, crew: null, orderFilter: "open", postFilter: "all", growView: "today", planView: "playbook", ideaStage: "idea" };
+const state = { school: null, schView: "week", schWeek: null, events: null, money: null, moneyView: "overview", tab: "grow", orders: null, products: null, posts: null, settings: null, audience: null, plan: null, videos: null, coach: null, crew: null, orderFilter: "open", postFilter: "all", growView: "today", planView: "playbook", ideaStage: "idea" };
 const dataKey = tab => tab === "build" ? "settings" : tab === "grow" ? "plan" : tab;
 
 async function api(path, { method = "GET", body, raw, type } = {}) {
@@ -373,6 +382,8 @@ async function api(path, { method = "GET", body, raw, type } = {}) {
     body: raw || (body ? JSON.stringify(body) : undefined) });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) { lock("That passphrase didn't work."); throw new Error("locked"); }
+  // School First: the server refused because RJ is behind on school. Show why and take him there.
+  if (res.status === 423) { state.school = null; closeSheet(); toast(data.error, true); state.schView = "week"; go("school"); throw new Error("locked"); }
   if (!res.ok) throw new Error(data.error || "Something went wrong. Try again.");
   return data;
 }
@@ -410,7 +421,7 @@ function render() {
   const data = state[dataKey(state.tab)];
   if (data === null) { s.innerHTML = `<div class="loading">Loading…</div>`; return; }
   if (state.tab === "grow" && (state.videos === null || state.coach === null)) { s.innerHTML = `<div class="loading">Loading…</div>`; return; }
-  s.innerHTML = ({ orders: moneyView, products: productsView, posts: postsView, build: buildView, grow: growView, settings: settingsView })[state.tab]();
+  s.innerHTML = (state.tab === "school" ? "" : lockBanner()) + ({ school: schoolView, orders: moneyView, products: productsView, posts: postsView, build: buildView, grow: growView, settings: settingsView })[state.tab]();
   $("#helpBtn").hidden = false;
   if (!s.querySelector(".loading")) setTimeout(() => { if ($("#sheet").hidden) showTip(tipKey()); }, 250);
   const n = (state.orders || []).filter(o => o.status === "new").length;
@@ -1077,8 +1088,9 @@ function growView() {
   if (state.videos === null || state.coach === null) return `<div class="loading">Loading…</div>`;
   const head = `<div class="top"><div><div class="mono">${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</div><h1>${state.growView === "today" ? greeting() : "Grow"}</h1></div></div>`;
   const seg = `<div class="seg" style="grid-template-columns:repeat(5,1fr)" role="group" aria-label="Grow sections">${[["today", "Today"], ["videos", "Videos"], ["stats", "Stats"], ["ideas", "Ideas"], ["plan", "Plan"]].map(([k, l]) => `<button type="button" data-gv="${k}" aria-pressed="${state.growView === k}">${l}</button>`).join("")}</div>`;
-  if (!state.plan.length && state.growView !== "videos" && state.growView !== "stats") return head + seg + `<div class="empty"><span>Your growth hub: what to film today, your video stats, a weekly coach, an idea bank and your playbook. Only you can see it.</span><button class="btn sea" type="button" data-act="plan-import">Set up my growth plan</button><button class="btn solid" type="button" data-act="create">🎬 Edit &amp; post a video</button><button class="btn" type="button" data-act="mockup">🎨 Make a mockup</button></div>`;
-  return head + seg + ({ today: todayView, videos: videosView, stats: statsView, ideas: ideasView, plan: planView })[state.growView]();
+  const strip = state.growView === "today" ? schoolStrip() : "";
+  if (!state.plan.length && state.growView !== "videos" && state.growView !== "stats") return head + strip + seg + `<div class="empty"><span>Your growth hub: what to film today, your video stats, a weekly coach, an idea bank and your playbook. Only you can see it.</span><button class="btn sea" type="button" data-act="plan-import">Set up my growth plan</button><button class="btn solid" type="button" data-act="create">🎬 Edit &amp; post a video</button><button class="btn" type="button" data-act="mockup">🎨 Make a mockup</button></div>`;
+  return head + strip + seg + ({ today: todayView, videos: videosView, stats: statsView, ideas: ideasView, plan: planView })[state.growView]();
 }
 
 // ---------- Today ----------
@@ -1541,7 +1553,7 @@ async function logPosted(platform) {
 }
 
 // ---------- Help popups ----------
-const tipKey = () => state.tab === "grow" ? `grow:${state.growView}` : state.tab === "orders" ? `orders:${state.moneyView}` : state.tab === "build" ? `build:${state.buildView || "build"}` : state.tab === "settings" ? `settings:${state.moreView || "fans"}` : state.tab;
+const tipKey = () => state.tab === "school" ? `school:${state.schView || "week"}` : state.tab === "grow" ? `grow:${state.growView}` : state.tab === "orders" ? `orders:${state.moneyView}` : state.tab === "build" ? `build:${state.buildView || "build"}` : state.tab === "settings" ? `settings:${state.moreView || "fans"}` : state.tab;
 const tipStore = { get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 function showTip(key, force = false) {
   const h = HELP[key]; if (!h) return;
@@ -1694,6 +1706,273 @@ function settingsBody() {
     instagram: socialUrl("instagram", $("#s-instagram").value), tiktok: socialUrl("tiktok", $("#s-tiktok").value), youtube: socialUrl("youtube", $("#s-youtube").value),
     shipping: $("#s-shipping").value, freeShipOver: $("#s-free").value, payWith: $("#s-pay").value, orderEmail: $("#s-email").value, contactEmail: $("#s-contact").value, autoPublish: $("#s-auto").checked };
 }
+
+// ---------- School First ----------
+// RJ's semester plan, weekly check-ins and Cara's reviews. While RJ is behind, the server refuses his
+// changes everywhere else (orders still ship); this tab is how he gets unlocked.
+const SCH_STATUS = [["todo", "To do"], ["done", "Done"], ["submitted", "Turned in"], ["late", "Late"], ["missing", "Missing"]];
+const WEEK_STATUS = { draft: ["Draft", "p-draft"], submitted: ["Waiting on Cara", "p-awaiting_payment"], approved: ["Approved", "p-paid"], returned: ["Sent back", "p-cancelled"] };
+const PLAN_STATUS = { draft: ["Not submitted", "p-draft"], submitted: ["Waiting on Cara", "p-awaiting_payment"], approved: ["Approved", "p-paid"], returned: ["Sent back", "p-cancelled"] };
+const schLocked = () => whoNow() === "rj" && Boolean(state.school?.gate?.locked);
+const dayLabel = iso => iso ? new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }) : "";
+const addD = (iso, n) => { const x = new Date(iso + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+let schDraft = null;          // the week being edited, kept between renders
+const schWeekOf = () => state.schWeek || state.school.gate.currentWeek;
+function schWeek(weekOf) {
+  const w = state.school.weeks.find(x => x.week_of === weekOf);
+  return w ? JSON.parse(JSON.stringify(w)) : { week_of: weekOf, assignments: [], grades: {}, proof: [], reflection: "", status: "draft", review_note: "" };
+}
+const weekEditable = w => whoNow() !== "cara" && ["draft", "returned"].includes(w.status);
+const className = id => state.school.school.classes.find(c => c.id === id)?.name || "";
+function readWeekForm() {
+  if (!schDraft) return;
+  state.school.school.classes.forEach(c => { const el = document.getElementById("g-" + c.id); if (el) schDraft.grades[c.id] = el.value.trim(); });
+  const r = $("#sch-reflect"); if (r) schDraft.reflection = r.value;
+}
+const fileChip = (f, i, kind, canEdit) => `<span class="sch-file">${/\.pdf$/i.test(f.path) ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">📄 ${esc(f.name || "Document")}</a>` : `<a href="${esc(f.url)}" target="_blank" rel="noopener"><img src="${esc(f.url)}" alt="${esc(f.name || "Proof screenshot")}"></a>`}${canEdit ? `<button type="button" class="act-btn del" data-sch="${kind}-del" data-i="${i}" aria-label="Remove">✕</button>` : ""}</span>`;
+
+function lockBanner() {
+  if (!schLocked()) return "";
+  const g = state.school.gate;
+  return `<div class="card sch-lock" role="alert"><strong>🔒 School first. The Studio is School-only right now.</strong>
+    <ul>${g.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
+    <span class="r-sub" style="white-space:normal">Shipping orders still works. Everything else unlocks as soon as you're caught up.</span>
+    <button class="btn solid" type="button" data-goto-school>Open School</button></div>`;
+}
+function schoolStrip() {
+  if (!state.school || whoNow() !== "rj" || schLocked()) return "";
+  const { school, gate } = state.school, w = schWeek(gate.currentWeek), open = w.assignments.filter(a => ["todo", "late"].includes(a.status)).length;
+  return `<button class="card sch-strip" type="button" data-goto-school><span class="mono">School first · GPA ${Number(school.gpaNow).toFixed(2)} → ${Number(school.gpaGoal).toFixed(2)}</span>
+    <strong>${open ? `${open} assignment${open > 1 ? "s" : ""} open this week` : w.assignments.length ? "This week's list is handled" : "List what's due this week"} · check-in ${dayLabel(gate.deadline)}, 8 PM</strong>
+    <span class="r-sub" style="white-space:normal">${esc(state.school.line)}</span></button>`;
+}
+
+function schoolView() {
+  const S = state.school, { school, gate } = S, cara = whoNow() === "cara", v = state.schView || "week";
+  const head = `<div class="top"><div><div class="mono">${esc(school.term || "This term")}${school.termEnd ? ` · ends ${dayLabel(school.termEnd)}` : ""}</div><h1>School first</h1></div></div>`;
+  const status = cara
+    ? `<div class="card ${gate.locked ? "sch-lock" : "sch-ok"}"><strong>${gate.locked ? "🔒 RJ's Studio is School-only" : "✓ RJ is caught up"}</strong>${gate.locked ? `<ul>${gate.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>` : `<span class="r-sub">Next check-in due ${dayLabel(gate.deadline)}, 8 PM.</span>`}</div>`
+    : gate.locked ? lockBanner().replace(`<button class="btn solid" type="button" data-goto-school>Open School</button>`, "")
+    : `<div class="card sch-ok"><strong>✓ You're caught up. The Studio is open.</strong><span class="r-sub">Next check-in due ${dayLabel(gate.deadline)}, 8 PM.</span></div>`;
+  const pct = Math.max(0, Math.min(100, school.gpaNow / (school.gpaGoal || 4) * 100));
+  const daysLeft = school.termEnd ? Math.max(0, Math.round((new Date(school.termEnd + "T12:00:00Z") - new Date(S.today + "T12:00:00Z")) / 864e5)) : null;
+  const future = `<div class="card sch-future"><div class="mono">${S.line === school.message ? "From Cara" : "This is your future"}</div><strong class="sch-quote">${esc(S.line)}</strong>
+    ${school.message && S.line !== school.message ? `<span class="r-sub" style="white-space:normal">From Cara: "${esc(school.message)}"</span>` : ""}
+    <div class="stats" style="margin:6px 0 0;grid-template-columns:repeat(3,minmax(0,1fr))"><div class="stat"><span class="mono">Was</span><b>${Number(school.gpaStart).toFixed(2)}</b></div><div class="stat"><span class="mono">Now</span><b>${Number(school.gpaNow).toFixed(2)}</b></div><div class="stat"><span class="mono">Goal</span><b>${Number(school.gpaGoal).toFixed(2)}</b></div></div>
+    <div class="progress" role="img" aria-label="GPA ${school.gpaNow} of goal ${school.gpaGoal}"><span style="width:${pct}%"></span></div>
+    ${daysLeft !== null ? `<span class="r-sub">${daysLeft} days left in the term. Every one counts.</span>` : ""}</div>`;
+  const tabs = [["week", "This week"], ["plan", "Plan"], ["history", "History"], ...(cara ? [["controls", "Controls"]] : [])];
+  const seg = `<div class="seg" style="grid-template-columns:repeat(${tabs.length},1fr)" role="group" aria-label="School sections">${tabs.map(([k, l]) => `<button type="button" data-schv="${k}" aria-pressed="${v === k}">${l}</button>`).join("")}</div>`;
+  return head + status + (cara ? reviewQueue() : "") + future + `<div style="height:14px"></div>` + seg + ({ week: schWeekView, plan: schPlanView, history: schHistoryView, controls: schControlsView })[v]();
+}
+
+function reviewQueue() {
+  const { school, weeks } = state.school, items = [];
+  if (school.plan.status === "submitted" || school.plan.changedSinceApproval)
+    items.push(`<div class="card sch-review"><div class="mono">Semester plan${school.plan.changedSinceApproval ? " · changed since you approved it" : ""}</div>
+      ${school.classes.map(c => `<span>${esc(c.name)}${c.teacher ? ` · ${esc(c.teacher)}` : ""} · target ${esc(c.target)}${c.grade ? ` · now ${esc(c.grade)}` : ""}</span>`).join("")}
+      ${school.plan.text ? `<p style="white-space:pre-wrap;margin:0">${esc(school.plan.text)}</p>` : ""}
+      <div class="sch-files">${school.plan.files.map((f, i) => fileChip(f, i, "plan", false)).join("")}</div>
+      <div class="pair"><button class="btn" type="button" data-sch="review" data-target="plan" data-decision="return">Send back</button><button class="btn solid" type="button" data-sch="review" data-target="plan" data-decision="approve">Approve</button></div></div>`);
+  weeks.filter(w => w.status === "submitted").forEach(w => items.push(`<div class="card sch-review"><div class="mono">Check-in · week of ${dayLabel(w.week_of)}</div>${weekSummary(w)}
+      <div class="pair"><button class="btn" type="button" data-sch="review" data-target="week" data-week="${w.week_of}" data-decision="return">Send back</button><button class="btn solid" type="button" data-sch="review" data-target="week" data-week="${w.week_of}" data-decision="approve">Approve</button></div></div>`));
+  return items.length ? `<div class="mono week-h" style="margin-top:16px">Waiting for you</div>${items.join("")}` : "";
+}
+function weekSummary(w) {
+  const { school } = state.school;
+  return `${school.classes.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${school.classes.map(c => `<span class="pill ${w.grades?.[c.id] && /^[DF]/i.test(w.grades[c.id]) ? "p-cancelled" : "p-hidden"}">${esc(c.name)}: ${esc(w.grades?.[c.id] || "—")}</span>`).join("")}</div>` : ""}
+    ${w.assignments.length ? `<ul class="sch-sum">${w.assignments.map(a => `<li><b>${esc(a.title)}</b>${a.cls ? ` · ${esc(className(a.cls))}` : ""}${a.due ? ` · due ${dayLabel(a.due)}` : ""} · ${esc((SCH_STATUS.find(s => s[0] === a.status) || [, a.status])[1])}${a.grade ? ` · ${esc(a.grade)}` : ""}</li>`).join("")}</ul>` : `<span class="r-sub">No assignments listed.</span>`}
+    ${w.reflection ? `<p style="white-space:pre-wrap;margin:0">${esc(w.reflection)}</p>` : ""}
+    <div class="sch-files">${(w.proof || []).map((f, i) => fileChip(f, i, "proof", false)).join("")}</div>`;
+}
+
+function schWeekView() {
+  const { school, gate } = state.school, weekOf = schWeekOf();
+  if (!school.classes.length) return `<div class="empty"><span>Start with your plan: add your classes and how you'll stay on top of each one.</span><button class="btn solid" type="button" data-schv="plan">Set up my plan</button></div>`;
+  if (!schDraft || schDraft.week_of !== weekOf) schDraft = schWeek(weekOf);
+  const w = schDraft, canEdit = weekEditable(w), [label, cls] = WEEK_STATUS[w.status] || WEEK_STATUS.draft;
+  const weeks = [[gate.currentWeek, "This week"], [addD(gate.currentWeek, 7), "Next week"]];
+  const started = school.startedOn ? school.startedOn.slice(0, 10) : gate.currentWeek;
+  if (gate.dueWeek !== gate.currentWeek && addD(gate.dueWeek, 6) >= started) weeks.unshift([gate.dueWeek, "Last week"]);
+  const sorted = [...w.assignments].sort((a, b) => (a.due || "9").localeCompare(b.due || "9"));
+  return `<div class="chips" role="radiogroup" aria-label="Week" style="margin-bottom:12px">${weeks.map(([k, l]) => `<button class="chip" type="button" role="radio" data-schweek="${k}" aria-pressed="${k === weekOf}">${l}</button>`).join("")}</div>
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><div class="mono">Week of ${dayLabel(weekOf)}</div><strong>Due ${dayLabel(addD(weekOf, 6))}, 8 PM</strong></div><span class="pill ${cls}">${label}</span></div>
+    ${w.status === "returned" && w.review_note ? `<span class="sch-note">Cara: "${esc(w.review_note)}"</span>` : ""}
+    ${w.status === "approved" && w.review_note ? `<span class="r-sub" style="white-space:normal">Cara: "${esc(w.review_note)}"</span>` : ""}</div>
+
+  <div class="mono week-h" style="margin-top:16px">1 · What's due</div>
+  <div class="list">${sorted.map(a => { const st = SCH_STATUS.find(s => s[0] === a.status) || SCH_STATUS[0]; const overdue = a.due && a.due < state.school.today && ["todo", "late"].includes(a.status);
+    return `<button class="row" type="button" data-sch="asg" data-id="${esc(a.id)}" ${canEdit ? "" : "disabled"} style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong style="white-space:normal">${esc(a.title)}</strong><span class="r-sub">${esc(className(a.cls) || "No class")}${a.due ? ` · due ${dayLabel(a.due)}` : ""}${a.grade ? ` · ${esc(a.grade)}` : ""}</span></span>
+      <span class="pill ${a.status === "done" || a.status === "submitted" ? "p-paid" : a.status === "missing" || overdue ? "p-cancelled" : "p-draft"}">${overdue ? "Overdue" : st[1]}</span></button>`; }).join("")
+    || `<div class="empty" style="padding:16px 2px"><span>List every assignment, quiz and test due this week. Reminders use this list.</span></div>`}</div>
+  ${canEdit ? `<button class="btn" type="button" data-sch="asg-new" style="margin-top:10px">+ Add assignment</button>` : ""}
+
+  <div class="mono week-h" style="margin-top:20px">2 · Current grades (from your portal)</div>
+  <div class="card">${school.classes.map(c => `<label class="field" for="g-${c.id}"><span>${esc(c.name)} · target ${esc(c.target)}</span><input id="g-${c.id}" value="${esc(w.grades?.[c.id] || "")}" placeholder="e.g. B+ or 87%" ${canEdit ? "" : "disabled"}></label>`).join("")}</div>
+
+  <div class="mono week-h" style="margin-top:20px">3 · Proof</div>
+  <div class="card"><span class="r-sub" style="white-space:normal">A screenshot of your grades portal showing every class. Add more for anything you turned in.</span>
+    <div class="sch-files">${(w.proof || []).map((f, i) => fileChip(f, i, "proof", canEdit)).join("")}</div>
+    ${canEdit ? `<button class="btn" type="button" data-sch="proof-add">+ Upload screenshot</button>` : ""}</div>
+
+  <div class="mono week-h" style="margin-top:20px">4 · Honest check-in</div>
+  <label class="field" for="sch-reflect"><span>What got done, what's at risk, and what help you need</span><textarea id="sch-reflect" rows="5" ${canEdit ? "" : "disabled"} placeholder="Turned in the lab report. Behind on the reading for history, catching up Tuesday night. Need help studying for Friday's quiz.">${esc(w.reflection)}</textarea></label>
+
+  ${canEdit ? `<div class="pair" style="margin-top:14px"><button class="btn" type="button" data-sch="week-save">Save</button><button class="btn solid" type="button" data-sch="week-submit">Submit check-in</button></div>` : ""}`;
+}
+
+function schPlanView() {
+  const { school } = state.school, cara = whoNow() === "cara", [pl, pc] = PLAN_STATUS[school.plan.status] || PLAN_STATUS.draft;
+  const accepted = school.agreement.acceptedAt;
+  return `<div class="card"><div class="mono">The agreement</div>
+    <ol class="sch-agree">
+      <li>School comes before VolksVision. Every week I list what's due and keep it updated.</li>
+      <li>By Sunday at 8 PM I submit my check-in: real grades, a screenshot of my grades portal, and an honest reflection.</li>
+      <li>If I miss a check-in or Cara sends one back, the Studio goes School-only until I fix it. Orders that are already paid still ship.</li>
+      <li>Posting, publishing and payouts wait while I'm behind. Once I'm caught up, everything opens back up.</li>
+      <li>If a class slips below ${esc(school.gradeFloor)}, I tell Cara right away and we make a plan with the teacher.</li>
+      <li>This is my future. I'm building it on purpose.</li></ol>
+    ${accepted ? `<span class="pill p-paid" style="align-self:flex-start">Accepted ${new Date(accepted).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>`
+      : cara ? `<span class="r-sub">RJ accepts this from his own sign-in.</span>` : `<button class="btn solid" type="button" data-sch="accept">I agree</button>`}</div>
+
+  <div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="mono">Semester plan</div><span class="pill ${pc}">${pl}</span></div>
+    ${school.plan.status === "returned" && school.plan.note ? `<span class="sch-note">Cara: "${esc(school.plan.note)}"</span>` : ""}
+    <div class="stats"><div class="stat"><span class="mono">Term</span><b style="font-size:16px">${esc(school.term || "Not set")}</b></div><div class="stat"><span class="mono">Current GPA</span><b>${Number(school.gpaNow).toFixed(2)}</b></div></div>
+    ${school.classes.length ? `<div class="list">${school.classes.map(c => `<div class="row" style="grid-template-columns:minmax(0,1fr) auto;cursor:default"><span class="r-main"><strong>${esc(c.name)}</strong><span class="r-sub">${esc(c.teacher || "")}${c.portal ? ` · <a href="${esc(c.portal)}" target="_blank" rel="noopener">class page</a>` : ""}</span></span><span class="r-end">${esc(c.grade || "—")}<span class="mono" style="font-size:11px">target ${esc(c.target)}</span></span></div>`).join("")}</div>` : `<span class="r-sub">No classes yet.</span>`}
+    ${school.plan.text ? `<p style="white-space:pre-wrap;margin:0">${esc(school.plan.text)}</p>` : ""}
+    <div class="sch-files">${school.plan.files.map((f, i) => fileChip(f, i, "plan", false)).join("")}</div>
+    <button class="btn" type="button" data-sch="setup">${school.classes.length ? "Edit classes & plan" : "Set up classes & plan"}</button>
+    ${!cara && ["draft", "returned"].includes(school.plan.status) && school.classes.length ? `<button class="btn solid" type="button" data-sch="plan-submit">Submit plan to Cara</button>` : ""}
+    ${!cara && school.plan.changedSinceApproval ? `<span class="r-sub" style="white-space:normal">You changed the plan since Cara approved it. She'll see the update.</span>` : ""}</div>`;
+}
+
+function schHistoryView() {
+  const ws = state.school.weeks;
+  return `<div class="list">${ws.map(w => { const [l, c] = WEEK_STATUS[w.status] || WEEK_STATUS.draft; const done = w.assignments.filter(a => ["done", "submitted"].includes(a.status)).length;
+    return `<button class="row" type="button" data-sch="hist" data-week="${w.week_of}" style="grid-template-columns:minmax(0,1fr) auto"><span class="r-main"><strong>Week of ${dayLabel(w.week_of)}</strong><span class="r-sub">${done}/${w.assignments.length} done${w.review_note ? ` · Cara: ${esc(w.review_note)}` : ""}</span></span><span class="pill ${c}">${l}</span></button>`; }).join("")
+    || `<div class="empty">Your check-ins will show here, week by week.</div>`}</div>`;
+}
+
+function schControlsView() {
+  const { school } = state.school;
+  return `<form id="schControls" class="card" style="gap:12px">
+    <label class="field" for="sc-msg"><span>Your message to RJ (shows in School and on his reminders)</span><textarea id="sc-msg" rows="3" maxlength="400" placeholder="I believe in you. Finish strong.">${esc(school.message)}</textarea></label>
+    <div class="pair"><label class="field" for="sc-start"><span>GPA before</span><input id="sc-start" inputmode="decimal" value="${esc(school.gpaStart)}"></label>
+      <label class="field" for="sc-goal"><span>GPA goal</span><input id="sc-goal" inputmode="decimal" value="${esc(school.gpaGoal)}"></label></div>
+    <label class="field" for="sc-floor"><span>Grade floor (no class below this)</span><select id="sc-floor">${["A", "B", "C", "D"].map(g => `<option${g === school.gradeFloor ? " selected" : ""}>${g}</option>`).join("")}</select></label>
+    <label class="switch" for="sc-lowlock"><span>Lock the Studio if any class is below the floor</span><input id="sc-lowlock" type="checkbox"${school.lockBelowFloor ? " checked" : ""}></label>
+    <label class="switch" for="sc-hold"><span>Hold the Studio now (School-only for RJ)</span><input id="sc-hold" type="checkbox"${school.hold.on ? " checked" : ""}></label>
+    <label class="field" for="sc-holdnote"><span>Reason RJ sees</span><input id="sc-holdnote" maxlength="200" value="${esc(school.hold.note)}" placeholder="Missing assignments in Biology. Fix them first."></label>
+    <button class="btn solid" type="submit">Save</button></form>
+  <div class="card" style="margin-top:12px"><div class="mono">How the lock works</div>
+    <span class="r-sub" style="white-space:normal">RJ is School-only when the agreement isn't accepted, the plan isn't approved, the latest check-in past its Sunday 8 PM deadline is missing or sent back, you turn on a hold, or (if you switch it on) a class is below the floor. Submitted check-ins unlock him while they wait for you. Paid orders always ship.</span></div>`;
+}
+
+// ---------- School actions ----------
+async function schReload() { state.school = await api("school"); schDraft = null; render(); }
+async function schUpload(file) {
+  const isPdf = file.type === "application/pdf";
+  const blob = isPdf ? file : await shrink(file);
+  toast("Uploading…");
+  return api(`school?upload=1&name=${encodeURIComponent((file.name || "Screenshot").slice(0, 100))}`, { method: "POST", raw: blob, type: isPdf ? "application/pdf" : (blob.type || "image/jpeg") });
+}
+const pickFiles = (accept, multiple) => new Promise(res => { const p = document.createElement("input"); p.type = "file"; p.accept = accept; p.multiple = multiple; p.onchange = () => res([...p.files]); p.click(); });
+const weekBody = action => ({ action, weekOf: schDraft.week_of, assignments: schDraft.assignments, grades: schDraft.grades, proof: schDraft.proof.map(({ path, name }) => ({ path, name })), reflection: schDraft.reflection });
+
+function editAssignment(a) {
+  const isNew = !a, { school } = state.school;
+  a = a || { id: "", cls: school.classes[0]?.id || "", title: "", due: "", status: "todo", grade: "" };
+  sheet(isNew ? "Add assignment" : "Assignment", `
+    <label class="field" for="as-cls"><span>Class</span><select id="as-cls">${school.classes.map(c => `<option value="${esc(c.id)}"${c.id === a.cls ? " selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>
+    <label class="field" for="as-title"><span>What is it?</span><input id="as-title" value="${esc(a.title)}" maxlength="160" placeholder="Chapter 5 quiz, lab report, essay draft…"></label>
+    <div class="pair"><label class="field" for="as-due"><span>Due</span><input id="as-due" type="date" value="${esc(a.due)}"></label>
+      <label class="field" for="as-grade"><span>Grade (when back)</span><input id="as-grade" value="${esc(a.grade)}" maxlength="12" placeholder="—"></label></div>
+    <div class="field"><span>Status</span><div class="chips" role="radiogroup" aria-label="Status" style="flex-wrap:wrap">${SCH_STATUS.map(([k, l]) => `<button class="chip" type="button" role="radio" data-pick="as-status" data-val="${k}" aria-pressed="${k === a.status}">${l}</button>`).join("")}</div></div>
+    ${isNew ? "" : `<button class="btn danger" type="button" data-sch="asg-del" data-id="${esc(a.id)}">Delete</button>`}`,
+    [["Done", "solid", () => {
+      const title = $("#as-title").value.trim(); if (!title) return toast("Name the assignment.", true);
+      const status = document.querySelector('[data-pick="as-status"][aria-pressed="true"]')?.dataset.val || "todo";
+      const row = { id: a.id || Math.random().toString(36).slice(2, 10), cls: $("#as-cls").value, title, due: $("#as-due").value, status, grade: $("#as-grade").value.trim() };
+      const i = schDraft.assignments.findIndex(x => x.id === row.id);
+      i >= 0 ? schDraft.assignments.splice(i, 1, row) : schDraft.assignments.push(row);
+      closeSheet(); render(); toast("Added. Tap Save so it's stored.");
+    }]]);
+}
+
+function editSetup() {
+  const { school } = state.school;
+  let rows = school.classes.length ? school.classes.map(c => ({ ...c })) : [{ id: "", name: "", teacher: "", portal: "", grade: "", target: "B" }];
+  let files = school.plan.files.map(f => ({ ...f }));
+  const read = () => { rows = [...document.querySelectorAll("[data-cl]")].map(el => ({ id: el.dataset.id, name: el.querySelector("[data-f=name]").value, teacher: el.querySelector("[data-f=teacher]").value, portal: el.querySelector("[data-f=portal]").value, grade: el.querySelector("[data-f=grade]").value, target: el.querySelector("[data-f=target]").value })); };
+  const draw = () => {
+    $("#cls-list").innerHTML = rows.map((c, i) => `<div class="card" data-cl data-id="${esc(c.id)}" style="gap:8px"><div style="display:flex;justify-content:space-between"><span class="mono">Class ${i + 1}</span><button class="link" type="button" data-clrm="${i}">Remove</button></div>
+      <input data-f="name" value="${esc(c.name)}" placeholder="Class name (e.g. Biology 101)" aria-label="Class name" maxlength="80">
+      <div class="pair"><input data-f="teacher" value="${esc(c.teacher)}" placeholder="Teacher" aria-label="Teacher" maxlength="80"><input data-f="portal" value="${esc(c.portal)}" placeholder="Class page link (https://…)" aria-label="Class page link" inputmode="url" autocapitalize="none"></div>
+      <div class="pair"><input data-f="grade" value="${esc(c.grade)}" placeholder="Grade now (B+ / 87%)" aria-label="Current grade" maxlength="12"><input data-f="target" value="${esc(c.target)}" placeholder="Target (A / B)" aria-label="Target grade" maxlength="12"></div></div>`).join("");
+    $("#plan-files").innerHTML = files.map((f, i) => `<span class="sch-file">${/\.pdf$/i.test(f.path) ? `📄 ${esc(f.name)}` : `<img src="${esc(f.url)}" alt="">`}<button type="button" class="act-btn del" data-pfrm="${i}" aria-label="Remove">✕</button></span>`).join("");
+  };
+  sheet("Classes & plan", `
+    <div class="pair"><label class="field" for="su-term"><span>Term</span><input id="su-term" value="${esc(school.term)}" placeholder="Fall 2026" maxlength="60"></label>
+      <label class="field" for="su-end"><span>Term ends</span><input id="su-end" type="date" value="${esc(school.termEnd)}"></label></div>
+    <label class="field" for="su-gpa"><span>Current GPA</span><input id="su-gpa" inputmode="decimal" value="${esc(school.gpaNow)}"></label>
+    <div class="mono">Classes</div><div id="cls-list" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button class="btn" type="button" id="cls-add">+ Add class</button>
+    <label class="field" for="su-plan"><span>Your plan: how you'll stay on top of each class</span><textarea id="su-plan" rows="8" maxlength="6000" placeholder="For each class: when you study (days and times), how you'll prep for tests, when you'll check the portal, who you'll ask for help, and what you'll do differently from last term.">${esc(school.plan.text)}</textarea></label>
+    <div class="mono">Syllabi or a photo of your written plan (optional)</div>
+    <div class="sch-files" id="plan-files"></div><button class="btn" type="button" id="pf-add">+ Upload photo or PDF</button>`,
+    [["Save", "solid", async () => {
+      read();
+      try { await api("school", { method: "POST", body: { action: "setup", term: $("#su-term").value, termEnd: $("#su-end").value, gpaNow: $("#su-gpa").value, classes: rows, planText: $("#su-plan").value, planFiles: files.map(({ path, name }) => ({ path, name })) } });
+        closeSheet(); await schReload(); toast("Saved."); } catch (e) { fail(e); }
+    }]]);
+  draw();
+  const body = $("#sheetBody");
+  body.addEventListener("click", async ev => {
+    if (ev.target.id === "cls-add") { read(); rows.push({ id: "", name: "", teacher: "", portal: "", grade: "", target: "B" }); draw(); }
+    const rm = ev.target.closest("[data-clrm]"); if (rm) { read(); rows.splice(+rm.dataset.clrm, 1); draw(); }
+    const pr = ev.target.closest("[data-pfrm]"); if (pr) { read(); files.splice(+pr.dataset.pfrm, 1); draw(); }
+    if (ev.target.id === "pf-add") { read(); for (const f of await pickFiles("image/*,application/pdf", true)) { try { files.push(await schUpload(f)); draw(); } catch (e) { fail(e); break; } } toast("Uploaded. Tap Save."); }
+  });
+}
+
+document.addEventListener("click", async e => {
+  const t = e.target;
+  if (t.closest("[data-goto-school]")) { state.schView = "week"; return go("school"); }
+  const sv = t.closest("[data-schv]"); if (sv) { readWeekForm(); state.schView = sv.dataset.schv; return render(); }
+  const sw = t.closest("[data-schweek]"); if (sw) { readWeekForm(); state.schWeek = sw.dataset.schweek; schDraft = null; return render(); }
+  const b = t.closest("[data-sch]"); if (!b) return;
+  const a = b.dataset.sch;
+  readWeekForm();
+  try {
+    if (a === "asg-new") return editAssignment(null);
+    if (a === "asg") return editAssignment(schDraft.assignments.find(x => x.id === b.dataset.id));
+    if (a === "asg-del") { schDraft.assignments = schDraft.assignments.filter(x => x.id !== b.dataset.id); closeSheet(); return render(); }
+    if (a === "proof-add") { for (const f of await pickFiles("image/*,application/pdf", true)) { schDraft.proof.push(await schUpload(f)); render(); } return toast("Uploaded. Tap Save or Submit."); }
+    if (a === "proof-del") { schDraft.proof.splice(+b.dataset.i, 1); return render(); }
+    if (a === "week-save") { await api("school", { method: "POST", body: weekBody("save-week") }); const keep = schDraft.week_of; await schReload(); state.schWeek = keep; return toast("Saved."); }
+    if (a === "week-submit") {
+      if (!confirm("Submit this week's check-in to Cara? You can't change it after.")) return;
+      await api("school", { method: "POST", body: weekBody("submit-week") }); await schReload(); return toast("Submitted. Cara's been notified.");
+    }
+    if (a === "setup") return editSetup();
+    if (a === "plan-submit") { await api("school", { method: "POST", body: { action: "submit-plan" } }); await schReload(); return toast("Sent to Cara for approval."); }
+    if (a === "accept") { if (!confirm("Accept the School First agreement?")) return; await api("school", { method: "POST", body: { action: "accept" } }); await schReload(); return toast("Agreement accepted. Next: your plan."); }
+    if (a === "hist") { const w = state.school.weeks.find(x => x.week_of === b.dataset.week); return sheet(`Week of ${dayLabel(w.week_of)}`, weekSummary(w), [["Close", "solid", closeSheet]]); }
+    if (a === "review") {
+      const approve = b.dataset.decision === "approve";
+      const note = prompt(approve ? "Optional note for RJ (encouragement counts):" : "What does RJ need to fix?", "");
+      if (note === null) return;
+      await api("school", { method: "POST", body: { action: "review", target: b.dataset.target, weekOf: b.dataset.week, decision: b.dataset.decision, note } });
+      await schReload(); return toast(approve ? "Approved. RJ's been notified." : "Sent back. RJ's been notified.");
+    }
+  } catch (err) { fail(err); }
+});
+document.addEventListener("submit", async e => {
+  if (e.target.id !== "schControls") return;
+  e.preventDefault();
+  try { await api("school", { method: "POST", body: { action: "cara", message: $("#sc-msg").value, gpaStart: $("#sc-start").value, gpaGoal: $("#sc-goal").value, gradeFloor: $("#sc-floor").value, lockBelowFloor: $("#sc-lowlock").checked, holdOn: $("#sc-hold").checked, holdNote: $("#sc-holdnote").value } });
+    await schReload(); toast("Saved."); } catch (err) { fail(err); }
+});
 
 // ---------- sheet + photos ----------
 let sheetActions = [];
@@ -1873,6 +2152,14 @@ async function turnOnPush() {
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "Couldn't turn alerts on.");
   pushOn = true; render(); toast("Alerts are on. A test notification is on its way.");
 }
+// Phones that turned on alerts before School First get re-saved with who's signed in, so school reminders
+// reach RJ's phone and review requests reach Cara's.
+async function syncPushWho() {
+  try { if (!pushReady() || Notification.permission !== "granted") return;
+    const reg = await navigator.serviceWorker.getRegistration("/"); const sub = reg && await reg.pushManager.getSubscription(); if (!sub) return;
+    await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ subscription: sub.toJSON(), role: "admin" }) });
+  } catch (e) {}
+}
 async function turnOffPush() {
   const reg = await navigator.serviceWorker.getRegistration("/"); const sub = reg && await reg.pushManager.getSubscription();
   if (sub) { await fetch("/api/push", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }); await sub.unsubscribe(); }
@@ -2014,6 +2301,7 @@ async function upload(input) {
 document.addEventListener("click", async e => {
   const t = e.target;
   const tab = t.closest(".tabbar button"); if (tab) return go(tab.dataset.tab);
+  const lockedAct = t.closest('[data-act="create"],[data-act="mockup"]'); if (lockedAct && schLocked()) { toast("School first. Get caught up and this opens back up.", true); return go("school"); }
   const of = t.closest("[data-of]"); if (of) { state.orderFilter = of.dataset.of; return render(); }
   const pf = t.closest("[data-pf]"); if (pf) { state.postFilter = pf.dataset.pf; return render(); }
   const ord = t.closest("[data-order]"); if (ord) return openOrder(+ord.dataset.order);
@@ -2295,7 +2583,10 @@ const greeting = () => whoNow() === "cara" ? "Hi Cara" : "What's good, RJ";
 function start() {
   $("#loginView").hidden = true; $("#appView").hidden = false;
   const hash = location.hash.slice(1);
-  go(["orders", "products", "posts", "build", "grow", "settings"].includes(hash) ? hash : "grow");
+  go(["school", "orders", "products", "posts", "build", "grow", "settings"].includes(hash) ? hash : "grow");
+  // School First comes first: if RJ is locked, open School instead of the business.
+  if (state.school === null) api("school").then(s => { state.school = s; if (s.who === "rj" && s.gate.locked && !["school", "orders"].includes(state.tab)) go("school"); else render(); }).catch(() => {});
+  syncPushWho();
   if (state.settings === null) api("settings").then(s => { state.settings = s; if (s._who) store.set("vv-who", s._who, true); render(); }).catch(() => {});
 }
 token ? start() : lock();

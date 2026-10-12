@@ -306,3 +306,29 @@ alter table public.vv_orders add column if not exists stripe_session text, add c
 -- "I'm going" counts once per visitor per stop (migration: pullups_dedupe). who = one-way hash, never a raw IP.
 alter table public.vv_pullups add column if not exists who text;
 create unique index if not exists vv_pullups_event_who_idx on public.vv_pullups (event_id, who);
+
+-- ---------- School First (RJ's plan, weekly check-ins, Cara's reviews; see lib/school.js) ----------
+create table if not exists public.vv_school (
+  id int primary key default 1 check (id = 1),
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.vv_school_weeks (
+  id bigserial primary key,
+  week_of date not null unique,
+  assignments jsonb not null default '[]'::jsonb,
+  grades jsonb not null default '{}'::jsonb,
+  proof jsonb not null default '[]'::jsonb,
+  reflection text not null default '',
+  status text not null default 'draft' check (status in ('draft','submitted','approved','returned')),
+  submitted_at timestamptz,
+  reviewed_at timestamptz,
+  review_note text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.vv_school enable row level security;
+alter table public.vv_school_weeks enable row level security;
+alter table public.vv_push add column if not exists who text check (who in ('rj','cara'));
+-- Grades and school files are private: only shown through short-lived signed links.
+insert into storage.buckets (id, name, public) values ('vv-private', 'vv-private', false) on conflict (id) do nothing;
